@@ -42,6 +42,7 @@ class SCRM_AJAX {
 			'scrm_sync_paypal',
 			'scrm_sync_stripe',
 			'scrm_sync_paypal_nvp',
+			'scrm_cancel_sync',
 			'scrm_check_import_progress',
 			'scrm_send_email',
 			'scrm_dashboard_stats',
@@ -567,6 +568,26 @@ class SCRM_AJAX {
 			), 600 );
 			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $e->getMessage() );
 			wp_send_json_error( array( 'message' => 'PHP Error: ' . $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * Cancel running sync.
+	 */
+	public function handle_cancel_sync() {
+		$this->verify_request();
+
+		$log_id = isset( $_POST['log_id'] ) ? absint( $_POST['log_id'] ) : 0;
+		if ( ! $log_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid log ID.', 'syncpoint-crm' ) ) );
+		}
+
+		$result = scrm_complete_sync_log( $log_id, 'cancelled', 0, 0, 0, __( 'Cancelled by user.', 'syncpoint-crm' ) );
+
+		if ( $result ) {
+			wp_send_json_success( array( 'message' => __( 'Sync cancelled.', 'syncpoint-crm' ) ) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to cancel sync.', 'syncpoint-crm' ) ) );
 		}
 	}
 

@@ -3,7 +3,7 @@
  * Plugin Name: SyncPoint CRM
  * Plugin URI: https://gatilab.com/syncpoint-crm
  * Description: A lightweight, extensible WordPress CRM with PayPal & Stripe sync, invoicing, contact management, and powerful automation capabilities.
- * Version: 1.1.5
+ * Version: 1.1.7
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Gatilab
@@ -14,12 +14,13 @@
  * Domain Path: /languages
  *
  * @package SyncPointCRM
+ * @version 1.1.7
  */
 
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants.
-define( 'SCRM_VERSION', '1.1.5' );
+define( 'SCRM_VERSION', '1.1.7' );
 define( 'SCRM_PLUGIN_FILE', __FILE__ );
 define( 'SCRM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SCRM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -298,9 +299,9 @@ final class SyncPoint_CRM {
 		 * @param array $gateways Array of gateway class names.
 		 */
 		$gateway_classes = apply_filters( 'scrm_payment_gateways', array(
-			'paypal' => 'SCRM_PayPal',
-			'stripe' => 'SCRM_Stripe',
-			'manual' => 'SCRM_Manual',
+			'paypal' => 'SCRM\Gateways\PayPal',
+			'stripe' => 'SCRM\Gateways\Stripe',
+			'manual' => 'SCRM\Gateways\Manual',
 		) );
 
 		// Initialize gateway instances.

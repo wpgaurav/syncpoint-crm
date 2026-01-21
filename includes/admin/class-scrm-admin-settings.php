@@ -550,6 +550,11 @@ class SCRM_Admin_Settings {
 							<span class="scrm-status scrm-status--<?php echo esc_attr( $status_class ); ?>">
 								<?php echo esc_html( ucfirst( $log->status ) ); ?>
 							</span>
+							<?php if ( 'running' === $log->status ) : ?>
+								<button type="button" class="button button-link scrm-cancel-sync" data-id="<?php echo absint( $log->id ); ?>" style="color: #d63638; text-decoration: none;">
+									<?php esc_html_e( 'Cancel', 'syncpoint-crm' ); ?>
+								</button>
+							<?php endif; ?>
 							<?php if ( ! empty( $log->error_message ) ) : ?>
 								<br><small style="color: red;"><?php echo esc_html( $log->error_message ); ?></small>
 							<?php endif; ?>

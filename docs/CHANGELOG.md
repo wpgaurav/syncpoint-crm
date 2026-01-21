@@ -19,6 +19,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.7] - 2026-01-21
+
+### Added
+- Genuine data sources for dashboard revenue and contact charts.
+- "Cancel" option for running PayPal synchronization processes.
+
+### Fixed
+- Fatal error: `Class "SCRM\Gateways\PayPal" not found` in `init_gateways()`.
+- Namespace mapping for gateway classes in the plugin core.
+
+## [1.1.6] - 2026-01-21
+
+### Fixed
+- Internal bug fixes and preparation for Namespacing.
+
 ## [1.1.5] - 2026-01-21
 
 ### Fixed

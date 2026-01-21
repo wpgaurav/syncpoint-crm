@@ -29,6 +29,9 @@
             // AJAX form submissions.
             $(document).on('submit', '.scrm-ajax-form', this.handleAjaxForm);
 
+            // Cancel sync.
+            $(document).on('click', '.scrm-cancel-sync', this.handleCancelSync);
+
             // Tag color picker.
             $('.scrm-color-picker').wpColorPicker();
         },
@@ -79,6 +82,46 @@
                 error: function () {
                     alert(scrm.i18n.error);
                     $submit.text(originalText).prop('disabled', false);
+                }
+            });
+        },
+
+        /**
+         * Handle sync cancellation.
+         *
+         * @param {Event} e Click event.
+         */
+        handleCancelSync: function (e) {
+            e.preventDefault();
+
+            var $button = $(this);
+            var logId = $button.data('id');
+
+            if (!confirm(scrm.i18n.confirm_cancel || 'Are you sure you want to cancel this sync?')) {
+                return;
+            }
+
+            $button.prop('disabled', true).text('...');
+
+            $.ajax({
+                url: scrm.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'scrm_cancel_sync',
+                    log_id: logId,
+                    nonce: scrm.nonce
+                },
+                success: function (response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert(response.data.message || scrm.i18n.error);
+                        $button.prop('disabled', false).text('Cancel');
+                    }
+                },
+                error: function () {
+                    alert(scrm.i18n.error);
+                    $button.prop('disabled', false).text('Cancel');
                 }
             });
         },

@@ -28,6 +28,10 @@
         var ctx = canvas.getContext('2d');
         var chartData = scrm_charts_data.revenue;
 
+        if (!chartData || !chartData.labels || !chartData.datasets) {
+            return;
+        }
+
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -96,6 +100,10 @@
 
         var ctx = canvas.getContext('2d');
         var chartData = scrm_charts_data.contacts;
+
+        if (!chartData || !chartData.labels || !chartData.datasets) {
+            return;
+        }
 
         new Chart(ctx, {
             type: 'line',
