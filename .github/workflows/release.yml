@@ -1,0 +1,100 @@
+name: Build and Release Plugin
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+
+      - name: Install Composer dependencies (if any)
+        run: |
+          if [ -f composer.json ]; then
+            composer install --no-dev --optimize-autoloader --prefer-dist
+          fi
+
+      - name: Create plugin directory structure
+        run: |
+          mkdir -p build/syncpoint-crm
+
+          # Copy plugin files
+          rsync -av --progress . build/syncpoint-crm/ \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitignore' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='phpunit.xml' \
+            --exclude='phpcs.xml' \
+            --exclude='.phpcs.xml' \
+            --exclude='composer.lock' \
+            --exclude='package-lock.json' \
+            --exclude='.DS_Store' \
+            --exclude='*.md' \
+            --exclude='build' \
+            --exclude='.editorconfig' \
+            --exclude='.eslintrc*' \
+            --exclude='.prettierrc*' \
+            --exclude='Thumbs.db' \
+            --exclude='*.log' \
+            --exclude='*.sql'
+
+          # Keep readme.txt (WordPress plugin readme)
+          if [ -f readme.txt ]; then
+            cp readme.txt build/syncpoint-crm/
+          fi
+
+      - name: Create ZIP archive
+        run: |
+          cd build
+          zip -r ../syncpoint-crm-${{ steps.get_version.outputs.version }}.zip syncpoint-crm
+          cd ..
+          ls -la syncpoint-crm-*.zip
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        if: github.event_name == 'release'
+        with:
+          files: syncpoint-crm-${{ steps.get_version.outputs.version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact (for manual runs)
+        uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          name: syncpoint-crm-${{ steps.get_version.outputs.version }}
+          path: syncpoint-crm-${{ steps.get_version.outputs.version }}.zip
+          retention-days: 30

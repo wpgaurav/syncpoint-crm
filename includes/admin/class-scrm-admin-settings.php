@@ -29,11 +29,13 @@ class SCRM_Admin_Settings {
 	 */
 	public function __construct() {
 		$this->tabs = array(
-			'general'  => __( 'General', 'syncpoint-crm' ),
-			'paypal'   => __( 'PayPal', 'syncpoint-crm' ),
-			'stripe'   => __( 'Stripe', 'syncpoint-crm' ),
-			'invoices' => __( 'Invoices', 'syncpoint-crm' ),
-			'webhooks' => __( 'Webhooks', 'syncpoint-crm' ),
+			'general'       => __( 'General', 'syncpoint-crm' ),
+			'paypal'        => __( 'PayPal', 'syncpoint-crm' ),
+			'paypal_import' => __( 'PayPal Import', 'syncpoint-crm' ),
+			'stripe'        => __( 'Stripe', 'syncpoint-crm' ),
+			'invoices'      => __( 'Invoices', 'syncpoint-crm' ),
+			'webhooks'      => __( 'Webhooks', 'syncpoint-crm' ),
+			'tools'         => __( 'Tools', 'syncpoint-crm' ),
 		);
 
 		add_action( 'admin_init', array( $this, 'save_settings' ) );
@@ -67,6 +69,9 @@ class SCRM_Admin_Settings {
 					case 'paypal':
 						$this->render_paypal_settings();
 						break;
+					case 'paypal_import':
+						$this->render_paypal_import_settings();
+						break;
 					case 'stripe':
 						$this->render_stripe_settings();
 						break;
@@ -75,6 +80,9 @@ class SCRM_Admin_Settings {
 						break;
 					case 'webhooks':
 						$this->render_webhooks_settings();
+						break;
+					case 'tools':
+						$this->render_tools_settings();
 						break;
 				}
 				?>
@@ -241,6 +249,75 @@ class SCRM_Admin_Settings {
 			</tr>
 		</table>
 
+		<h2 class="title"><?php esc_html_e( 'Legacy NVP API (Historical Import)', 'syncpoint-crm' ); ?></h2>
+		<p class="description" style="margin-bottom: 15px;">
+			<?php esc_html_e( 'The NVP API allows importing historical transactions up to 3 years back. Get these credentials from PayPal Developer Dashboard > API Credentials.', 'syncpoint-crm' ); ?>
+		</p>
+
+		<table class="form-table">
+			<tr>
+				<th scope="row">
+					<label for="paypal_email"><?php esc_html_e( 'PayPal Email', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="email" name="paypal[paypal_email]" id="paypal_email"
+						   value="<?php echo esc_attr( $settings['paypal_email'] ?? '' ); ?>"
+						   class="regular-text">
+					<p class="description"><?php esc_html_e( 'Your PayPal business account email.', 'syncpoint-crm' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_api_username"><?php esc_html_e( 'API Username', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="text" name="paypal[api_username]" id="paypal_api_username"
+						   value="<?php echo esc_attr( $settings['api_username'] ?? '' ); ?>"
+						   class="regular-text">
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_api_password"><?php esc_html_e( 'API Password', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="password" name="paypal[api_password]" id="paypal_api_password"
+						   value="<?php echo esc_attr( $settings['api_password'] ?? '' ); ?>"
+						   class="regular-text">
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_api_signature"><?php esc_html_e( 'API Signature', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="text" name="paypal[api_signature]" id="paypal_api_signature"
+						   value="<?php echo esc_attr( $settings['api_signature'] ?? '' ); ?>"
+						   class="regular-text code">
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_first_txn_date"><?php esc_html_e( 'First Transaction Date', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="date" name="paypal[first_txn_date]" id="paypal_first_txn_date"
+						   value="<?php echo esc_attr( $settings['first_txn_date'] ?? date( 'Y-m-d', strtotime( '-3 years' ) ) ); ?>">
+					<p class="description"><?php esc_html_e( 'Import transactions starting from this date. PayPal allows up to 3 years of history.', 'syncpoint-crm' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Import Historical', 'syncpoint-crm' ); ?></th>
+				<td>
+					<button type="button" id="scrm-paypal-import-historical" class="button button-secondary" <?php disabled( $is_running ); ?>>
+						<?php esc_html_e( 'Import Historical Transactions', 'syncpoint-crm' ); ?>
+					</button>
+					<span id="scrm-paypal-import-status" style="margin-left: 10px;"></span>
+					<p class="description"><?php esc_html_e( 'One-time import using the NVP API. This may take several minutes for large transaction histories.', 'syncpoint-crm' ); ?></p>
+				</td>
+			</tr>
+		</table>
+
 		<h2 class="title"><?php esc_html_e( 'Transaction Sync', 'syncpoint-crm' ); ?></h2>
 
 		<table class="form-table">
@@ -336,6 +413,164 @@ class SCRM_Admin_Settings {
 					error: function() {
 						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Sync Now', 'syncpoint-crm' ) ); ?>');
 						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred.', 'syncpoint-crm' ) ); ?></span>');
+					}
+				});
+			});
+
+			$('#scrm-paypal-import-historical').on('click', function() {
+				var $button = $(this);
+				var $status = $('#scrm-paypal-import-status');
+
+				if (!confirm('<?php echo esc_js( __( 'This will import all historical transactions from PayPal. This may take several minutes. Continue?', 'syncpoint-crm' ) ); ?>')) {
+					return;
+				}
+
+				$button.prop('disabled', true).text('<?php echo esc_js( __( 'Importing...', 'syncpoint-crm' ) ); ?>');
+				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					timeout: 300000,
+					data: {
+						action: 'scrm_sync_paypal_nvp',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_sync_paypal_nvp' ) ); ?>'
+					},
+					success: function(response) {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
+						if (response.success) {
+							$status.html('<span style="color: green;">' + response.data.message + '</span>');
+							setTimeout(function() { location.reload(); }, 2000);
+						} else {
+							$status.html('<span style="color: red;">' + response.data.message + '</span>');
+						}
+					},
+					error: function() {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
+						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred or the request timed out.', 'syncpoint-crm' ) ); ?></span>');
+					}
+				});
+			});
+		});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render PayPal Import settings (separate tab).
+	 */
+	private function render_paypal_import_settings() {
+		$settings = scrm_get_settings( 'paypal' );
+		$is_running = scrm_is_sync_running( 'paypal' );
+		?>
+		<h2><?php esc_html_e( 'PayPal Historical Transaction Import', 'syncpoint-crm' ); ?></h2>
+		<p class="description" style="margin-bottom: 20px;">
+			<?php esc_html_e( 'Import historical transactions from PayPal using the Legacy NVP API. This allows importing transactions up to 3 years back.', 'syncpoint-crm' ); ?>
+		</p>
+
+		<h3><?php esc_html_e( 'NVP API Credentials', 'syncpoint-crm' ); ?></h3>
+		<p class="description" style="margin-bottom: 15px;">
+			<?php esc_html_e( 'Get these credentials from PayPal Developer Dashboard → API Credentials → NVP/SOAP API.', 'syncpoint-crm' ); ?>
+		</p>
+
+		<table class="form-table">
+			<tr>
+				<th scope="row">
+					<label for="paypal_email"><?php esc_html_e( 'PayPal Email', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="email" name="paypal[paypal_email]" id="paypal_email"
+						   value="<?php echo esc_attr( $settings['paypal_email'] ?? '' ); ?>"
+						   class="regular-text">
+					<p class="description"><?php esc_html_e( 'Your PayPal business account email.', 'syncpoint-crm' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_api_username"><?php esc_html_e( 'API Username', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="text" name="paypal[api_username]" id="paypal_api_username"
+						   value="<?php echo esc_attr( $settings['api_username'] ?? '' ); ?>"
+						   class="regular-text">
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_api_password"><?php esc_html_e( 'API Password', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="password" name="paypal[api_password]" id="paypal_api_password"
+						   value="<?php echo esc_attr( $settings['api_password'] ?? '' ); ?>"
+						   class="regular-text">
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_api_signature"><?php esc_html_e( 'API Signature', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="text" name="paypal[api_signature]" id="paypal_api_signature"
+						   value="<?php echo esc_attr( $settings['api_signature'] ?? '' ); ?>"
+						   class="regular-text code">
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_first_txn_date"><?php esc_html_e( 'Start Date', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="date" name="paypal[first_txn_date]" id="paypal_first_txn_date"
+						   value="<?php echo esc_attr( $settings['first_txn_date'] ?? date( 'Y-m-d', strtotime( '-3 years' ) ) ); ?>">
+					<p class="description"><?php esc_html_e( 'Import transactions starting from this date. PayPal allows up to 3 years of history.', 'syncpoint-crm' ); ?></p>
+				</td>
+			</tr>
+		</table>
+
+		<h3><?php esc_html_e( 'Import Transactions', 'syncpoint-crm' ); ?></h3>
+		<p>
+			<button type="button" id="scrm-paypal-import-historical" class="button button-primary button-hero" <?php disabled( $is_running ); ?>>
+				<?php esc_html_e( 'Import Historical Transactions', 'syncpoint-crm' ); ?>
+			</button>
+		</p>
+		<p id="scrm-paypal-import-status"></p>
+		<p class="description"><?php esc_html_e( 'This will import all transactions from the start date. This process may take several minutes for large transaction histories.', 'syncpoint-crm' ); ?></p>
+
+		<?php $this->render_sync_history( 'paypal' ); ?>
+
+		<script>
+		jQuery(document).ready(function($) {
+			$('#scrm-paypal-import-historical').on('click', function() {
+				var $button = $(this);
+				var $status = $('#scrm-paypal-import-status');
+
+				if (!confirm('<?php echo esc_js( __( 'This will import all historical transactions from PayPal. This may take several minutes. Continue?', 'syncpoint-crm' ) ); ?>')) {
+					return;
+				}
+
+				$button.prop('disabled', true).text('<?php echo esc_js( __( 'Importing...', 'syncpoint-crm' ) ); ?>');
+				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span> <?php echo esc_js( __( 'Importing transactions, please wait...', 'syncpoint-crm' ) ); ?>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					timeout: 300000,
+					data: {
+						action: 'scrm_sync_paypal_nvp',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_sync_paypal_nvp' ) ); ?>'
+					},
+					success: function(response) {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
+						if (response.success) {
+							$status.html('<span style="color: green; font-weight: bold;">' + response.data.message + '</span>');
+							setTimeout(function() { location.reload(); }, 2000);
+						} else {
+							$status.html('<span style="color: red;">' + response.data.message + '</span>');
+						}
+					},
+					error: function() {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
+						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred or the request timed out.', 'syncpoint-crm' ) ); ?></span>');
 					}
 				});
 			});
@@ -738,6 +973,208 @@ class SCRM_Admin_Settings {
 					key += chars.charAt(Math.floor(Math.random() * chars.length));
 				}
 				$('#webhook_secret_key').val(key);
+			});
+		});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render Tools settings.
+	 */
+	private function render_tools_settings() {
+		global $wpdb;
+
+		// Get table status.
+		$tables = array(
+			'scrm_contacts'          => __( 'Contacts', 'syncpoint-crm' ),
+			'scrm_companies'         => __( 'Companies', 'syncpoint-crm' ),
+			'scrm_transactions'      => __( 'Transactions', 'syncpoint-crm' ),
+			'scrm_invoices'          => __( 'Invoices', 'syncpoint-crm' ),
+			'scrm_invoice_items'     => __( 'Invoice Items', 'syncpoint-crm' ),
+			'scrm_tags'              => __( 'Tags', 'syncpoint-crm' ),
+			'scrm_tag_relationships' => __( 'Tag Relationships', 'syncpoint-crm' ),
+			'scrm_activity_log'      => __( 'Activity Log', 'syncpoint-crm' ),
+			'scrm_webhook_log'       => __( 'Webhook Log', 'syncpoint-crm' ),
+			'scrm_sync_log'          => __( 'Sync Log', 'syncpoint-crm' ),
+			'scrm_email_log'         => __( 'Email Log', 'syncpoint-crm' ),
+		);
+
+		$table_status = array();
+		foreach ( $tables as $table => $label ) {
+			$full_name = $wpdb->prefix . $table;
+			$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $full_name ) ) === $full_name;
+			$rows = $exists ? $wpdb->get_var( "SELECT COUNT(*) FROM {$full_name}" ) : 0;
+			$table_status[ $table ] = array(
+				'label'  => $label,
+				'exists' => $exists,
+				'rows'   => $rows,
+			);
+		}
+		?>
+		<h2><?php esc_html_e( 'Database Tools', 'syncpoint-crm' ); ?></h2>
+
+		<h3><?php esc_html_e( 'Table Status', 'syncpoint-crm' ); ?></h3>
+		<table class="wp-list-table widefat fixed striped" style="max-width: 600px;">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Table', 'syncpoint-crm' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'syncpoint-crm' ); ?></th>
+					<th><?php esc_html_e( 'Records', 'syncpoint-crm' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $table_status as $table => $info ) : ?>
+					<tr>
+						<td><code><?php echo esc_html( $wpdb->prefix . $table ); ?></code></td>
+						<td>
+							<?php if ( $info['exists'] ) : ?>
+								<span style="color: green;">&#10004; <?php esc_html_e( 'OK', 'syncpoint-crm' ); ?></span>
+							<?php else : ?>
+								<span style="color: red;">&#10008; <?php esc_html_e( 'Missing', 'syncpoint-crm' ); ?></span>
+							<?php endif; ?>
+						</td>
+						<td><?php echo $info['exists'] ? number_format_i18n( $info['rows'] ) : '—'; ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+
+		<h3 style="margin-top: 30px;"><?php esc_html_e( 'Database Actions', 'syncpoint-crm' ); ?></h3>
+		<table class="form-table">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Recreate Tables', 'syncpoint-crm' ); ?></th>
+				<td>
+					<button type="button" id="scrm-recreate-tables" class="button button-secondary">
+						<?php esc_html_e( 'Recreate Missing Tables', 'syncpoint-crm' ); ?>
+					</button>
+					<span id="scrm-recreate-status" style="margin-left: 10px;"></span>
+					<p class="description"><?php esc_html_e( 'Creates any missing database tables. Existing tables will not be affected.', 'syncpoint-crm' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Optimize Tables', 'syncpoint-crm' ); ?></th>
+				<td>
+					<button type="button" id="scrm-optimize-tables" class="button button-secondary">
+						<?php esc_html_e( 'Optimize All Tables', 'syncpoint-crm' ); ?>
+					</button>
+					<span id="scrm-optimize-status" style="margin-left: 10px;"></span>
+					<p class="description"><?php esc_html_e( 'Optimizes database tables for better performance.', 'syncpoint-crm' ); ?></p>
+				</td>
+			</tr>
+		</table>
+
+		<h3 style="margin-top: 30px;"><?php esc_html_e( 'Export Data', 'syncpoint-crm' ); ?></h3>
+		<table class="form-table">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Export All Data', 'syncpoint-crm' ); ?></th>
+				<td>
+					<button type="button" id="scrm-export-all" class="button button-primary">
+						<?php esc_html_e( 'Export All Data (CSV)', 'syncpoint-crm' ); ?>
+					</button>
+					<span id="scrm-export-status" style="margin-left: 10px;"></span>
+					<p class="description"><?php esc_html_e( 'Downloads a ZIP file containing CSV exports of all CRM data.', 'syncpoint-crm' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Export Contacts', 'syncpoint-crm' ); ?></th>
+				<td>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=scrm-contacts&action=export' ) ); ?>" class="button button-secondary">
+						<?php esc_html_e( 'Export Contacts Only', 'syncpoint-crm' ); ?>
+					</a>
+				</td>
+			</tr>
+		</table>
+
+		<script>
+		jQuery(document).ready(function($) {
+			$('#scrm-recreate-tables').on('click', function() {
+				var $button = $(this);
+				var $status = $('#scrm-recreate-status');
+
+				$button.prop('disabled', true);
+				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'scrm_recreate_tables',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_recreate_tables' ) ); ?>'
+					},
+					success: function(response) {
+						$button.prop('disabled', false);
+						if (response.success) {
+							$status.html('<span style="color: green;">' + response.data.message + '</span>');
+							setTimeout(function() { location.reload(); }, 1500);
+						} else {
+							$status.html('<span style="color: red;">' + response.data.message + '</span>');
+						}
+					},
+					error: function() {
+						$button.prop('disabled', false);
+						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred.', 'syncpoint-crm' ) ); ?></span>');
+					}
+				});
+			});
+
+			$('#scrm-optimize-tables').on('click', function() {
+				var $button = $(this);
+				var $status = $('#scrm-optimize-status');
+
+				$button.prop('disabled', true);
+				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'scrm_optimize_tables',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_optimize_tables' ) ); ?>'
+					},
+					success: function(response) {
+						$button.prop('disabled', false);
+						if (response.success) {
+							$status.html('<span style="color: green;">' + response.data.message + '</span>');
+						} else {
+							$status.html('<span style="color: red;">' + response.data.message + '</span>');
+						}
+					},
+					error: function() {
+						$button.prop('disabled', false);
+						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred.', 'syncpoint-crm' ) ); ?></span>');
+					}
+				});
+			});
+
+			$('#scrm-export-all').on('click', function() {
+				var $button = $(this);
+				var $status = $('#scrm-export-status');
+
+				$button.prop('disabled', true);
+				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span> <?php echo esc_js( __( 'Preparing export...', 'syncpoint-crm' ) ); ?>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'scrm_export_all',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_export_all' ) ); ?>'
+					},
+					success: function(response) {
+						$button.prop('disabled', false);
+						if (response.success) {
+							$status.html('<span style="color: green;">' + response.data.message + '</span>');
+							window.location.href = response.data.download_url;
+						} else {
+							$status.html('<span style="color: red;">' + response.data.message + '</span>');
+						}
+					},
+					error: function() {
+						$button.prop('disabled', false);
+						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred.', 'syncpoint-crm' ) ); ?></span>');
+					}
+				});
 			});
 		});
 		</script>

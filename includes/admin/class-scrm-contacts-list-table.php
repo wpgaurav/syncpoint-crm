@@ -69,6 +69,7 @@ class SCRM_Contacts_List_Table extends WP_List_Table {
 	 */
 	public function get_bulk_actions() {
 		return array(
+			'email'   => __( 'Send Email', 'syncpoint-crm' ),
 			'archive' => __( 'Archive', 'syncpoint-crm' ),
 			'delete'  => __( 'Delete Permanently', 'syncpoint-crm' ),
 			'export'  => __( 'Export to CSV', 'syncpoint-crm' ),

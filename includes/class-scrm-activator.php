@@ -303,6 +303,23 @@ class SCRM_Activator {
 			KEY started_at (started_at)
 		) {$charset_collate};";
 		dbDelta( $sql );
+
+		// Email log table.
+		$table_name = $wpdb->prefix . 'scrm_email_log';
+		$sql = "CREATE TABLE {$table_name} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			contact_id bigint(20) unsigned NOT NULL,
+			subject varchar(255) NOT NULL,
+			message longtext NOT NULL,
+			status varchar(20) NOT NULL DEFAULT 'sent',
+			opened_at datetime DEFAULT NULL,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY contact_id (contact_id),
+			KEY status (status),
+			KEY created_at (created_at)
+		) {$charset_collate};";
+		dbDelta( $sql );
 	}
 
 	/**

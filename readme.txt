@@ -1,11 +1,11 @@
 === SyncPoint CRM ===
-Contributors: yourname
-Donate link: https://example.com/donate
-Tags: crm, customer relationship management, invoicing, paypal, stripe
+Contributors: gatilab
+Donate link: https://gatilab.com/donate
+Tags: crm, customer relationship management, invoicing, paypal, stripe, contacts, billing
 Requires at least: 6.0
-Tested up to: 6.4
+Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -140,6 +140,18 @@ Definitely! We provide 50+ hooks and filters for customization. Check the Develo
 
 == Changelog ==
 
+= 1.1.0 =
+* Added automatic transaction sync scheduling for PayPal and Stripe
+* Added "Sync Now" button for manual gateway synchronization
+* Added sync history and status tracking
+* Added Legacy NVP API support for historical PayPal transaction import
+* Added email functionality for sending to single or multiple contacts
+* Added email compose interface with contact search and merge tags
+* Added email log tracking
+* Added bulk "Send Email" action to contacts list
+* Added Tools tab with database status, recreate tables, optimize, and export all data
+* Added GitHub Actions workflow for automated plugin releases
+
 = 1.0.0 =
 * Initial release
 * Contact and company management
@@ -152,6 +164,9 @@ Definitely! We provide 50+ hooks and filters for customization. Check the Develo
 * Webhook support
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+New features: PayPal Import tab for historical transactions, Email functionality, automatic gateway sync scheduling, and database Tools tab.
 
 = 1.0.0 =
 Initial release of SyncPoint CRM.

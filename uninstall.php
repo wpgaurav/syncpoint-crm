@@ -38,6 +38,8 @@ $tables = array(
 	$wpdb->prefix . 'scrm_invoice_items',
 	$wpdb->prefix . 'scrm_activity_log',
 	$wpdb->prefix . 'scrm_webhook_log',
+	$wpdb->prefix . 'scrm_sync_log',
+	$wpdb->prefix . 'scrm_email_log',
 );
 
 foreach ( $tables as $table ) {
@@ -111,27 +113,32 @@ foreach ( $events as $event ) {
 }
 
 /**
- * Remove uploaded files (invoices PDFs, etc.)
+ * Remove uploaded files (invoices PDFs, exports, etc.)
  */
 $upload_dir = wp_upload_dir();
-$scrm_dir = $upload_dir['basedir'] . '/syncpoint-crm';
+$directories = array(
+	$upload_dir['basedir'] . '/syncpoint-crm',
+	$upload_dir['basedir'] . '/scrm-exports',
+);
 
-if ( is_dir( $scrm_dir ) ) {
-	// Recursively delete directory.
-	$files = new RecursiveIteratorIterator(
-		new RecursiveDirectoryIterator( $scrm_dir, RecursiveDirectoryIterator::SKIP_DOTS ),
-		RecursiveIteratorIterator::CHILD_FIRST
-	);
+foreach ( $directories as $scrm_dir ) {
+	if ( is_dir( $scrm_dir ) ) {
+		// Recursively delete directory.
+		$files = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator( $scrm_dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+			RecursiveIteratorIterator::CHILD_FIRST
+		);
 
-	foreach ( $files as $file ) {
-		if ( $file->isDir() ) {
-			rmdir( $file->getRealPath() );
-		} else {
-			unlink( $file->getRealPath() );
+		foreach ( $files as $file ) {
+			if ( $file->isDir() ) {
+				rmdir( $file->getRealPath() );
+			} else {
+				unlink( $file->getRealPath() );
+			}
 		}
-	}
 
-	rmdir( $scrm_dir );
+		rmdir( $scrm_dir );
+	}
 }
 
 // Clear any object cache.

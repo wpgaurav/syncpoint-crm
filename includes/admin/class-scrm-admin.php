@@ -136,6 +136,16 @@ class SCRM_Admin {
 			array( $this, 'render_tags' )
 		);
 
+		// Email.
+		add_submenu_page(
+			'syncpoint-crm',
+			__( 'Email', 'syncpoint-crm' ),
+			__( 'Email', 'syncpoint-crm' ),
+			$capability,
+			'scrm-email',
+			array( $this, 'render_email' )
+		);
+
 		// Import.
 		add_submenu_page(
 			'syncpoint-crm',
@@ -389,6 +399,15 @@ class SCRM_Admin {
 	 */
 	public function render_contacts() {
 		$action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : 'list';
+
+		// Handle bulk email action.
+		if ( isset( $_GET['action2'] ) && 'email' === $_GET['action2'] || isset( $_GET['action'] ) && 'email' === $_GET['action'] ) {
+			$contact_ids = isset( $_GET['contact'] ) ? array_map( 'absint', (array) $_GET['contact'] ) : array();
+			if ( ! empty( $contact_ids ) ) {
+				wp_safe_redirect( admin_url( 'admin.php?page=scrm-email&action=compose&contacts=' . implode( ',', $contact_ids ) ) );
+				exit;
+			}
+		}
 
 		?>
 		<div class="wrap scrm-wrap">
@@ -1822,6 +1841,336 @@ class SCRM_Admin {
 				</div>
 			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render email page.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_email() {
+		$action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : 'list';
+
+		if ( 'compose' === $action ) {
+			$this->render_email_compose();
+			return;
+		}
+
+		$logs = scrm_get_all_email_logs( array( 'limit' => 50 ) );
+		?>
+		<div class="wrap scrm-wrap">
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Email', 'syncpoint-crm' ); ?></h1>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=scrm-email&action=compose' ) ); ?>" class="page-title-action">
+				<?php esc_html_e( 'Compose New', 'syncpoint-crm' ); ?>
+			</a>
+			<hr class="wp-header-end">
+
+			<?php if ( empty( $logs ) ) : ?>
+				<div class="scrm-empty-state">
+					<div class="scrm-empty-state__icon">
+						<span class="dashicons dashicons-email-alt"></span>
+					</div>
+					<h2><?php esc_html_e( 'No emails sent yet', 'syncpoint-crm' ); ?></h2>
+					<p><?php esc_html_e( 'Start by composing a new email to your contacts.', 'syncpoint-crm' ); ?></p>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=scrm-email&action=compose' ) ); ?>" class="button button-primary">
+						<?php esc_html_e( 'Compose Email', 'syncpoint-crm' ); ?>
+					</a>
+				</div>
+			<?php else : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Date', 'syncpoint-crm' ); ?></th>
+							<th><?php esc_html_e( 'Recipient', 'syncpoint-crm' ); ?></th>
+							<th><?php esc_html_e( 'Subject', 'syncpoint-crm' ); ?></th>
+							<th><?php esc_html_e( 'Status', 'syncpoint-crm' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $logs as $log ) : ?>
+							<tr>
+								<td><?php echo esc_html( scrm_format_datetime( $log->created_at ) ); ?></td>
+								<td>
+									<?php if ( $log->contact_id ) : ?>
+										<a href="<?php echo esc_url( admin_url( 'admin.php?page=scrm-contacts&action=edit&id=' . $log->contact_id ) ); ?>">
+											<?php echo esc_html( trim( $log->first_name . ' ' . $log->last_name ) ?: $log->contact_email ); ?>
+										</a>
+									<?php else : ?>
+										<?php esc_html_e( 'Unknown', 'syncpoint-crm' ); ?>
+									<?php endif; ?>
+								</td>
+								<td><?php echo esc_html( $log->subject ); ?></td>
+								<td>
+									<span class="scrm-status scrm-status--<?php echo 'sent' === $log->status ? 'success' : 'error'; ?>">
+										<?php echo esc_html( ucfirst( $log->status ) ); ?>
+									</span>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render email compose page.
+	 *
+	 * @since 1.0.0
+	 */
+	private function render_email_compose() {
+		$contact_ids = isset( $_GET['contacts'] ) ? array_map( 'absint', explode( ',', sanitize_text_field( wp_unslash( $_GET['contacts'] ) ) ) ) : array();
+		$contacts = array();
+		foreach ( $contact_ids as $id ) {
+			$contact = scrm_get_contact( $id );
+			if ( $contact ) {
+				$contacts[] = $contact;
+			}
+		}
+		?>
+		<div class="wrap scrm-wrap">
+			<h1><?php esc_html_e( 'Compose Email', 'syncpoint-crm' ); ?></h1>
+
+			<div class="scrm-email-composer" style="max-width: 800px; margin-top: 20px;">
+				<form id="scrm-email-form">
+					<?php wp_nonce_field( 'scrm_send_email', 'scrm_email_nonce' ); ?>
+
+					<table class="form-table">
+						<tr>
+							<th scope="row">
+								<label for="email_recipients"><?php esc_html_e( 'Recipients', 'syncpoint-crm' ); ?></label>
+							</th>
+							<td>
+								<div id="scrm-email-recipients" class="scrm-recipients-box">
+									<?php if ( ! empty( $contacts ) ) : ?>
+										<?php foreach ( $contacts as $contact ) : ?>
+											<span class="scrm-recipient-tag" data-id="<?php echo esc_attr( $contact->id ); ?>">
+												<?php echo esc_html( trim( $contact->first_name . ' ' . $contact->last_name ) ?: $contact->email ); ?>
+												<button type="button" class="scrm-remove-recipient">&times;</button>
+												<input type="hidden" name="contact_ids[]" value="<?php echo esc_attr( $contact->id ); ?>">
+											</span>
+										<?php endforeach; ?>
+									<?php endif; ?>
+								</div>
+								<div style="margin-top: 10px;">
+									<input type="text" id="scrm-contact-search" placeholder="<?php esc_attr_e( 'Search and add contacts...', 'syncpoint-crm' ); ?>" class="regular-text" autocomplete="off">
+									<div id="scrm-contact-suggestions" class="scrm-suggestions" style="display: none;"></div>
+								</div>
+								<p class="description"><?php esc_html_e( 'Search for contacts to add as recipients.', 'syncpoint-crm' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="email_subject"><?php esc_html_e( 'Subject', 'syncpoint-crm' ); ?></label>
+							</th>
+							<td>
+								<input type="text" id="email_subject" name="subject" class="large-text" required>
+								<p class="description"><?php esc_html_e( 'Use {first_name}, {last_name} for personalization.', 'syncpoint-crm' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="email_message"><?php esc_html_e( 'Message', 'syncpoint-crm' ); ?></label>
+							</th>
+							<td>
+								<?php
+								wp_editor( '', 'email_message', array(
+									'textarea_name' => 'message',
+									'textarea_rows' => 15,
+									'media_buttons' => true,
+									'teeny'         => false,
+								) );
+								?>
+								<p class="description"><?php esc_html_e( 'Available merge tags: {first_name}, {last_name}, {email}, {company}', 'syncpoint-crm' ); ?></p>
+							</td>
+						</tr>
+					</table>
+
+					<p class="submit">
+						<button type="submit" class="button button-primary button-large" id="scrm-send-email">
+							<?php esc_html_e( 'Send Email', 'syncpoint-crm' ); ?>
+						</button>
+						<span id="scrm-email-status" style="margin-left: 15px;"></span>
+					</p>
+				</form>
+			</div>
+		</div>
+
+		<style>
+			.scrm-recipients-box {
+				background: #fff;
+				border: 1px solid #ddd;
+				padding: 8px;
+				min-height: 40px;
+				border-radius: 4px;
+			}
+			.scrm-recipient-tag {
+				display: inline-flex;
+				align-items: center;
+				background: #0073aa;
+				color: #fff;
+				padding: 4px 8px;
+				border-radius: 3px;
+				margin: 2px;
+				font-size: 13px;
+			}
+			.scrm-remove-recipient {
+				background: none;
+				border: none;
+				color: #fff;
+				margin-left: 6px;
+				cursor: pointer;
+				font-size: 16px;
+				line-height: 1;
+				padding: 0;
+			}
+			.scrm-suggestions {
+				position: absolute;
+				background: #fff;
+				border: 1px solid #ddd;
+				max-height: 200px;
+				overflow-y: auto;
+				z-index: 1000;
+				width: 300px;
+				box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			}
+			.scrm-suggestion-item {
+				padding: 8px 12px;
+				cursor: pointer;
+			}
+			.scrm-suggestion-item:hover {
+				background: #f0f0f0;
+			}
+		</style>
+
+		<script>
+		jQuery(document).ready(function($) {
+			var searchTimeout;
+
+			$('#scrm-contact-search').on('input', function() {
+				var query = $(this).val();
+				clearTimeout(searchTimeout);
+
+				if (query.length < 2) {
+					$('#scrm-contact-suggestions').hide();
+					return;
+				}
+
+				searchTimeout = setTimeout(function() {
+					$.ajax({
+						url: ajaxurl,
+						type: 'POST',
+						data: {
+							action: 'scrm_search_contacts',
+							nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_ajax_nonce' ) ); ?>',
+							search: query
+						},
+						success: function(response) {
+							if (response.success && response.data.length > 0) {
+								var html = '';
+								var existingIds = [];
+								$('input[name="contact_ids[]"]').each(function() {
+									existingIds.push(parseInt($(this).val()));
+								});
+
+								$.each(response.data, function(i, contact) {
+									if (existingIds.indexOf(contact.id) === -1) {
+										var name = (contact.first_name + ' ' + contact.last_name).trim() || contact.email;
+										html += '<div class="scrm-suggestion-item" data-id="' + contact.id + '" data-name="' + name + '" data-email="' + contact.email + '">';
+										html += name + ' <small>(' + contact.email + ')</small>';
+										html += '</div>';
+									}
+								});
+
+								if (html) {
+									$('#scrm-contact-suggestions').html(html).show();
+								} else {
+									$('#scrm-contact-suggestions').hide();
+								}
+							} else {
+								$('#scrm-contact-suggestions').hide();
+							}
+						}
+					});
+				}, 300);
+			});
+
+			$(document).on('click', '.scrm-suggestion-item', function() {
+				var id = $(this).data('id');
+				var name = $(this).data('name');
+
+				var tag = '<span class="scrm-recipient-tag" data-id="' + id + '">';
+				tag += name;
+				tag += '<button type="button" class="scrm-remove-recipient">&times;</button>';
+				tag += '<input type="hidden" name="contact_ids[]" value="' + id + '">';
+				tag += '</span>';
+
+				$('#scrm-email-recipients').append(tag);
+				$('#scrm-contact-search').val('');
+				$('#scrm-contact-suggestions').hide();
+			});
+
+			$(document).on('click', '.scrm-remove-recipient', function() {
+				$(this).closest('.scrm-recipient-tag').remove();
+			});
+
+			$(document).on('click', function(e) {
+				if (!$(e.target).closest('#scrm-contact-search, #scrm-contact-suggestions').length) {
+					$('#scrm-contact-suggestions').hide();
+				}
+			});
+
+			$('#scrm-email-form').on('submit', function(e) {
+				e.preventDefault();
+
+				var $form = $(this);
+				var $button = $('#scrm-send-email');
+				var $status = $('#scrm-email-status');
+
+				var contactIds = [];
+				$('input[name="contact_ids[]"]').each(function() {
+					contactIds.push($(this).val());
+				});
+
+				if (contactIds.length === 0) {
+					alert('<?php echo esc_js( __( 'Please add at least one recipient.', 'syncpoint-crm' ) ); ?>');
+					return;
+				}
+
+				$button.prop('disabled', true).text('<?php echo esc_js( __( 'Sending...', 'syncpoint-crm' ) ); ?>');
+				$status.html('<span class="spinner is-active" style="float: none;"></span>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'scrm_send_email',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_send_email' ) ); ?>',
+						contact_ids: contactIds,
+						subject: $('#email_subject').val(),
+						message: typeof tinyMCE !== 'undefined' && tinyMCE.get('email_message') ? tinyMCE.get('email_message').getContent() : $('#email_message').val()
+					},
+					success: function(response) {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Send Email', 'syncpoint-crm' ) ); ?>');
+						if (response.success) {
+							$status.html('<span style="color: green;">' + response.data.message + '</span>');
+							setTimeout(function() {
+								window.location.href = '<?php echo esc_js( admin_url( 'admin.php?page=scrm-email' ) ); ?>';
+							}, 2000);
+						} else {
+							$status.html('<span style="color: red;">' + response.data.message + '</span>');
+						}
+					},
+					error: function() {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Send Email', 'syncpoint-crm' ) ); ?>');
+						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred.', 'syncpoint-crm' ) ); ?></span>');
+					}
+				});
+			});
+		});
+		</script>
 		<?php
 	}
 

@@ -41,8 +41,13 @@ class SCRM_AJAX {
 			'scrm_sync_gateway',
 			'scrm_sync_paypal',
 			'scrm_sync_stripe',
+			'scrm_sync_paypal_nvp',
+			'scrm_send_email',
 			'scrm_dashboard_stats',
 			'scrm_dashboard_chart_data',
+			'scrm_recreate_tables',
+			'scrm_optimize_tables',
+			'scrm_export_all',
 		);
 
 		foreach ( $actions as $action ) {
@@ -487,6 +492,156 @@ class SCRM_AJAX {
 	}
 
 	/**
+	 * Sync PayPal transactions using NVP API (historical import).
+	 */
+	public function handle_sync_paypal_nvp() {
+		if ( ! check_ajax_referer( 'scrm_sync_paypal_nvp', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( scrm_is_sync_running( 'paypal' ) ) {
+			wp_send_json_error( array( 'message' => __( 'A sync is already in progress.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		$log_id = scrm_start_sync_log( 'paypal', 'historical' );
+
+		$gateway = new SCRM\Gateways\PayPal();
+
+		if ( ! $gateway->is_available() ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'PayPal is not enabled.', 'syncpoint-crm' ) );
+			wp_send_json_error( array( 'message' => __( 'PayPal is not enabled.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		$results = $gateway->sync_transactions_nvp();
+
+		if ( is_wp_error( $results ) ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $results->get_error_message() );
+			wp_send_json_error( array( 'message' => $results->get_error_message() ) );
+			return;
+		}
+
+		scrm_complete_sync_log(
+			$log_id,
+			'completed',
+			$results['synced'] ?? 0,
+			$results['skipped'] ?? 0,
+			$results['contacts_added'] ?? 0
+		);
+
+		wp_send_json_success( array(
+			'message' => sprintf(
+				/* translators: 1: transactions synced, 2: contacts created */
+				__( 'Imported %1$d historical transactions, created %2$d contacts.', 'syncpoint-crm' ),
+				$results['synced'] ?? 0,
+				$results['contacts_added'] ?? 0
+			),
+			'results' => $results,
+		) );
+	}
+
+	/**
+	 * Send email to contacts.
+	 */
+	public function handle_send_email() {
+		if ( ! check_ajax_referer( 'scrm_send_email', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		$contact_ids = isset( $_POST['contact_ids'] ) ? array_map( 'absint', (array) $_POST['contact_ids'] ) : array();
+		$subject     = isset( $_POST['subject'] ) ? sanitize_text_field( wp_unslash( $_POST['subject'] ) ) : '';
+		$message     = isset( $_POST['message'] ) ? wp_kses_post( wp_unslash( $_POST['message'] ) ) : '';
+
+		if ( empty( $contact_ids ) ) {
+			wp_send_json_error( array( 'message' => __( 'No contacts selected.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( empty( $subject ) || empty( $message ) ) {
+			wp_send_json_error( array( 'message' => __( 'Subject and message are required.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		$sent     = 0;
+		$failed   = 0;
+		$settings = scrm_get_settings( 'invoices' );
+		$from_name = $settings['company_name'] ?? get_bloginfo( 'name' );
+		$from_email = get_option( 'admin_email' );
+
+		$headers = array(
+			'Content-Type: text/html; charset=UTF-8',
+			'From: ' . $from_name . ' <' . $from_email . '>',
+		);
+
+		foreach ( $contact_ids as $contact_id ) {
+			$contact = scrm_get_contact( $contact_id );
+
+			if ( ! $contact || empty( $contact->email ) ) {
+				$failed++;
+				continue;
+			}
+
+			$personalized_message = str_replace(
+				array( '{first_name}', '{last_name}', '{email}', '{company}' ),
+				array(
+					$contact->first_name ?: '',
+					$contact->last_name ?: '',
+					$contact->email,
+					$contact->company_id ? scrm_get_company( $contact->company_id )->name ?? '' : '',
+				),
+				$message
+			);
+
+			$personalized_subject = str_replace(
+				array( '{first_name}', '{last_name}' ),
+				array( $contact->first_name ?: '', $contact->last_name ?: '' ),
+				$subject
+			);
+
+			$email_body = scrm_get_email_template( $personalized_message );
+
+			$result = wp_mail( $contact->email, $personalized_subject, $email_body, $headers );
+
+			if ( $result ) {
+				$sent++;
+				scrm_log_activity( 'contact', $contact_id, 'email_sent', sprintf(
+					/* translators: %s: email subject */
+					__( 'Email sent: %s', 'syncpoint-crm' ),
+					$personalized_subject
+				) );
+				scrm_log_email( $contact_id, $personalized_subject, $personalized_message, 'sent' );
+			} else {
+				$failed++;
+				scrm_log_email( $contact_id, $personalized_subject, $personalized_message, 'failed' );
+			}
+		}
+
+		wp_send_json_success( array(
+			'message' => sprintf(
+				/* translators: 1: emails sent, 2: emails failed */
+				__( 'Sent %1$d emails, %2$d failed.', 'syncpoint-crm' ),
+				$sent,
+				$failed
+			),
+			'sent'   => $sent,
+			'failed' => $failed,
+		) );
+	}
+
+	/**
 	 * Dashboard stats.
 	 */
 	public function handle_dashboard_stats() {
@@ -520,6 +675,165 @@ class SCRM_AJAX {
 		}
 
 		wp_send_json_success( $data );
+	}
+
+	/**
+	 * Recreate missing database tables.
+	 */
+	public function handle_recreate_tables() {
+		if ( ! check_ajax_referer( 'scrm_recreate_tables', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		// Re-run the activator to create any missing tables.
+		require_once SCRM_PLUGIN_DIR . 'includes/class-scrm-activator.php';
+		SCRM_Activator::activate();
+
+		wp_send_json_success( array(
+			'message' => __( 'Tables recreated successfully.', 'syncpoint-crm' ),
+		) );
+	}
+
+	/**
+	 * Optimize database tables.
+	 */
+	public function handle_optimize_tables() {
+		if ( ! check_ajax_referer( 'scrm_optimize_tables', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		global $wpdb;
+
+		$tables = array(
+			$wpdb->prefix . 'scrm_contacts',
+			$wpdb->prefix . 'scrm_companies',
+			$wpdb->prefix . 'scrm_transactions',
+			$wpdb->prefix . 'scrm_invoices',
+			$wpdb->prefix . 'scrm_invoice_items',
+			$wpdb->prefix . 'scrm_tags',
+			$wpdb->prefix . 'scrm_tag_relationships',
+			$wpdb->prefix . 'scrm_activity_log',
+			$wpdb->prefix . 'scrm_webhook_log',
+			$wpdb->prefix . 'scrm_sync_log',
+			$wpdb->prefix . 'scrm_email_log',
+		);
+
+		$optimized = 0;
+		foreach ( $tables as $table ) {
+			$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
+			if ( $exists ) {
+				$wpdb->query( "OPTIMIZE TABLE {$table}" );
+				$optimized++;
+			}
+		}
+
+		wp_send_json_success( array(
+			'message' => sprintf(
+				/* translators: %d: number of tables optimized */
+				__( 'Optimized %d tables.', 'syncpoint-crm' ),
+				$optimized
+			),
+		) );
+	}
+
+	/**
+	 * Export all CRM data.
+	 */
+	public function handle_export_all() {
+		if ( ! check_ajax_referer( 'scrm_export_all', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		global $wpdb;
+
+		$upload_dir = wp_upload_dir();
+		$export_dir = $upload_dir['basedir'] . '/scrm-exports';
+
+		// Create export directory if it doesn't exist.
+		if ( ! file_exists( $export_dir ) ) {
+			wp_mkdir_p( $export_dir );
+			file_put_contents( $export_dir . '/.htaccess', 'deny from all' );
+			file_put_contents( $export_dir . '/index.php', '<?php // Silence is golden.' );
+		}
+
+		$timestamp = date( 'Y-m-d-His' );
+		$zip_filename = "scrm-export-{$timestamp}.zip";
+		$zip_path = $export_dir . '/' . $zip_filename;
+
+		// Create ZIP file.
+		$zip = new ZipArchive();
+		if ( $zip->open( $zip_path, ZipArchive::CREATE ) !== true ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to create export file.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		// Export each table.
+		$tables = array(
+			'scrm_contacts'      => 'contacts.csv',
+			'scrm_companies'     => 'companies.csv',
+			'scrm_transactions'  => 'transactions.csv',
+			'scrm_invoices'      => 'invoices.csv',
+			'scrm_invoice_items' => 'invoice_items.csv',
+			'scrm_tags'          => 'tags.csv',
+			'scrm_activity_log'  => 'activity_log.csv',
+			'scrm_email_log'     => 'email_log.csv',
+		);
+
+		foreach ( $tables as $table => $filename ) {
+			$full_table = $wpdb->prefix . $table;
+			$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $full_table ) ) === $full_table;
+
+			if ( ! $exists ) {
+				continue;
+			}
+
+			$rows = $wpdb->get_results( "SELECT * FROM {$full_table}", ARRAY_A );
+
+			if ( empty( $rows ) ) {
+				continue;
+			}
+
+			// Generate CSV content.
+			$csv = fopen( 'php://temp', 'r+' );
+			fputcsv( $csv, array_keys( $rows[0] ) );
+
+			foreach ( $rows as $row ) {
+				fputcsv( $csv, $row );
+			}
+
+			rewind( $csv );
+			$csv_content = stream_get_contents( $csv );
+			fclose( $csv );
+
+			$zip->addFromString( $filename, $csv_content );
+		}
+
+		$zip->close();
+
+		$download_url = $upload_dir['baseurl'] . '/scrm-exports/' . $zip_filename;
+
+		wp_send_json_success( array(
+			'message'      => __( 'Export completed.', 'syncpoint-crm' ),
+			'download_url' => $download_url,
+		) );
 	}
 }
 
