@@ -19,6 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2026-01-22
+
+### Fixed
+- Fixed critical error: "Cannot redeclare function scrm_update_company()" by removing duplicate function definitions.
+- Fixed critical error: "Cannot redeclare function scrm_get_company_by_name()" by consolidating function definitions.
+- Fixed critical error: "Cannot redeclare function scrm_cache_delete_group()" by removing duplicate definitions.
+- Moved `scrm_get_company_by_name()` to `scrm-functions.php` where other company functions reside.
+- Created missing `SCRM\Gateways\Stripe` class for Stripe payment gateway integration.
+
+### Added
+- Stripe gateway class with transaction sync and webhook support.
+
 ## [1.1.9] - 2026-01-22
 
 ### Fixed
