@@ -5,7 +5,7 @@ Tags: crm, customer relationship management, invoicing, paypal, stripe, contacts
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -140,6 +140,11 @@ Definitely! We provide 50+ hooks and filters for customization. Check the Develo
 
 == Changelog ==
 
+= 1.1.1 =
+* Fixed settings page not showing PayPal Import and Tools tabs
+* Consolidated settings rendering to use SCRM_Admin_Settings class
+* Removed duplicate settings methods from SCRM_Admin class
+
 = 1.1.0 =
 * Added automatic transaction sync scheduling for PayPal and Stripe
 * Added "Sync Now" button for manual gateway synchronization
@@ -164,6 +169,9 @@ Definitely! We provide 50+ hooks and filters for customization. Check the Develo
 * Webhook support
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+Fix: Settings page now correctly shows all tabs including PayPal Import and Tools.
 
 = 1.1.0 =
 New features: PayPal Import tab for historical transactions, Email functionality, automatic gateway sync scheduling, and database Tools tab.
