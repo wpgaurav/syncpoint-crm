@@ -5,7 +5,7 @@ Tags: crm, customer relationship management, invoicing, paypal, stripe, contacts
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -139,6 +139,15 @@ Definitely! We provide 50+ hooks and filters for customization. Check the Develo
 6. CSV import wizard
 
 == Changelog ==
+
+= 1.1.5 =
+* Fixed PayPal NVP historical import getting stuck in 'Running' status
+* Fixed PayPal NVP sync logic to correctly paginate through transactions
+* Fixed sync log status updates to properly mark completion or failure in all scenarios
+* Improved error handling in gateway synchronization
+
+= 1.1.4 =
+* Bug fixes and performance improvements
 
 = 1.1.1 =
 * Fixed settings page not showing PayPal Import and Tools tabs

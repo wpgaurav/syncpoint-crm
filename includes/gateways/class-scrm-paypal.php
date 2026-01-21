@@ -482,7 +482,19 @@ class PayPal extends Gateway {
 		$contacts_added = 0;
 		$page           = 0;
 		$has_more       = true;
-		
+		$processed      = 0;
+
+		// Initialize progress transient.
+		set_transient( 'scrm_paypal_import_progress', array(
+			'status'         => 'running',
+			'page'           => 0,
+			'processed'      => 0,
+			'synced'         => 0,
+			'skipped'        => 0,
+			'contacts_added' => 0,
+			'message'        => __( 'Starting import...', 'syncpoint-crm' ),
+		), 600 );
+
 		// Convert date to PayPal format.
 		$start_datetime = date( 'Y-m-d', strtotime( $start_date ) ) . 'T00:00:00Z';
 		$end_datetime   = date( 'Y-m-d' ) . 'T23:59:59Z';
@@ -496,7 +508,7 @@ class PayPal extends Gateway {
 				'SIGNATURE' => $api_signature,
 				'STARTDATE' => $start_datetime,
 				'ENDDATE'   => $end_datetime,
-				'STATUS'    => 'Success',
+				'STATUS'    => 'All',
 			);
 			
 			$response = wp_remote_post( $nvp_url, array(
@@ -505,19 +517,64 @@ class PayPal extends Gateway {
 			) );
 			
 			if ( is_wp_error( $response ) ) {
+				$error_msg = $response->get_error_message();
+				// Update progress with error.
+				set_transient( 'scrm_paypal_import_progress', array(
+					'status'  => 'error',
+					'message' => $error_msg,
+				), 600 );
 				return $response;
 			}
 			
 			$body = wp_remote_retrieve_body( $response );
 			parse_str( $body, $result );
-			
+
+			// Log API response for debugging.
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'SyncPoint CRM PayPal NVP Response ACK: ' . ( $result['ACK'] ?? 'none' ) );
+				if ( isset( $result['L_ERRORCODE0'] ) ) {
+					error_log( 'SyncPoint CRM PayPal NVP Error: ' . ( $result['L_LONGMESSAGE0'] ?? $result['L_SHORTMESSAGE0'] ?? 'Unknown' ) );
+				}
+			}
+
 			if ( 'Success' !== ( $result['ACK'] ?? '' ) && 'SuccessWithWarning' !== ( $result['ACK'] ?? '' ) ) {
-				$error_msg = $result['L_LONGMESSAGE0'] ?? 'Unknown API error';
+				$error_msg = $result['L_LONGMESSAGE0'] ?? $result['L_SHORTMESSAGE0'] ?? 'Unknown API error';
+
+				// Update progress with error.
+				set_transient( 'scrm_paypal_import_progress', array(
+					'status'  => 'error',
+					'message' => $error_msg,
+				), 600 );
+
 				return new \WP_Error( 'nvp_error', $error_msg );
 			}
 			
 			// Parse transactions from NVP response.
 			$i = 0;
+			$page_count = 0;
+			// Count transactions in this page.
+			while ( isset( $result[ 'L_TRANSACTIONID' . $page_count ] ) ) {
+				$page_count++;
+			}
+
+			// Update progress with page info.
+			set_transient( 'scrm_paypal_import_progress', array(
+				'status'         => 'running',
+				'page'           => $page + 1,
+				'processed'      => $processed,
+				'synced'         => $synced,
+				'skipped'        => $skipped,
+				'contacts_added' => $contacts_added,
+				'message'        => sprintf(
+					/* translators: 1: page number, 2: transactions in page */
+					__( 'Processing page %1$d (%2$d transactions)...', 'syncpoint-crm' ),
+					$page + 1,
+					$page_count
+				),
+			), 600 );
+
+			$last_timestamp = '';
+
 			while ( isset( $result[ 'L_TRANSACTIONID' . $i ] ) ) {
 				$txn_id     = $result[ 'L_TRANSACTIONID' . $i ];
 				$email      = $result[ 'L_EMAIL' . $i ] ?? '';
@@ -528,10 +585,28 @@ class PayPal extends Gateway {
 				$type       = $result[ 'L_TYPE' . $i ] ?? '';
 				$timestamp  = $result[ 'L_TIMESTAMP' . $i ] ?? '';
 				
+				$last_timestamp = $timestamp;
 				$i++;
 				
+				// Skip if not completed/processed.
+				if ( 'Completed' !== $status && 'Processed' !== $status ) {
+					$skipped++;
+					continue;
+				}
+				
 				// Skip non-payment transactions.
-				if ( ! in_array( $type, array( 'Payment', 'Recurring Payment', 'Web Accept' ), true ) ) {
+				// Accept various PayPal payment types.
+				$valid_types = array(
+					'Payment',
+					'Recurring Payment',
+					'Web Accept',
+					'Express Checkout',
+					'Subscription Payment',
+					'Virtual Terminal',
+					'Mobile Payment',
+					'Donation',
+				);
+				if ( ! in_array( $type, $valid_types, true ) ) {
 					$skipped++;
 					continue;
 				}
@@ -625,10 +700,36 @@ class PayPal extends Gateway {
 				} else {
 					$skipped++;
 				}
+
+				$processed++;
+
+				// Update progress every 10 transactions.
+				if ( $processed % 10 === 0 ) {
+					set_transient( 'scrm_paypal_import_progress', array(
+						'status'         => 'running',
+						'page'           => $page + 1,
+						'processed'      => $processed,
+						'synced'         => $synced,
+						'skipped'        => $skipped,
+						'contacts_added' => $contacts_added,
+						'message'        => sprintf(
+							/* translators: 1: processed count, 2: synced count */
+							__( 'Processed %1$d transactions, imported %2$d...', 'syncpoint-crm' ),
+							$processed,
+							$synced
+						),
+					), 600 );
+				}
 			}
 			
 			// NVP API returns max 100 transactions. If we got 100, there might be more.
 			$has_more = ( $i >= 100 );
+			
+			// Update end_datetime for the next page to fetch older transactions.
+			if ( $has_more && $last_timestamp ) {
+				$end_datetime = $last_timestamp;
+			}
+
 			$page++;
 			
 			// Safety limit to prevent infinite loops.
@@ -642,9 +743,25 @@ class PayPal extends Gateway {
 			'skipped'        => $skipped,
 			'contacts_added' => $contacts_added,
 		);
-		
+
+		// Mark progress as complete.
+		set_transient( 'scrm_paypal_import_progress', array(
+			'status'         => 'completed',
+			'page'           => $page,
+			'processed'      => $processed,
+			'synced'         => $synced,
+			'skipped'        => $skipped,
+			'contacts_added' => $contacts_added,
+			'message'        => sprintf(
+				/* translators: 1: synced count, 2: contacts count */
+				__( 'Completed! Imported %1$d transactions, created %2$d contacts.', 'syncpoint-crm' ),
+				$synced,
+				$contacts_added
+			),
+		), 600 );
+
 		do_action( 'scrm_paypal_nvp_sync_completed', $result );
-		
+
 		return $result;
 	}
 

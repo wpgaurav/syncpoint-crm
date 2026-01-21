@@ -1,0 +1,6 @@
+name,email,phone,website,address,city,state,country,postal_code,industry,notes
+Acme Corp,contact@acme.com,+1-555-1000,https://acme.com,"123 Business Park",New York,NY,USA,10001,Technology,Enterprise customer
+Tech Solutions,info@techsolutions.com,+1-555-2000,https://techsolutions.io,"456 Innovation Way",San Francisco,CA,USA,94102,Software,Partner company
+Startup Inc,hello@startup.io,+1-555-3000,https://startup.io,"789 Venture Blvd",Austin,TX,USA,78701,SaaS,Early-stage startup
+Global Trading,sales@globaltrading.com,+1-555-4000,https://globaltrading.com,"321 Commerce St",Miami,FL,USA,33101,E-commerce,International operations
+Creative Agency,team@creativeagency.com,+1-555-5000,https://creativeagency.design,"654 Design District",Portland,OR,USA,97201,Marketing,Design partner

@@ -1,0 +1,6 @@
+email,first_name,last_name,phone,type,company_name,address,city,state,country,postal_code,currency,tags,notes
+john@example.com,John,Doe,+1-555-0101,customer,Acme Corp,"123 Main St",New York,NY,USA,10001,USD,"vip,newsletter",Regular customer since 2023
+jane@example.com,Jane,Smith,+1-555-0102,lead,,"456 Oak Ave",Los Angeles,CA,USA,90001,USD,newsletter,Interested in enterprise plan
+bob@example.com,Bob,Johnson,+1-555-0103,customer,Tech Solutions,"789 Pine Rd",Chicago,IL,USA,60601,USD,vip,High-value client
+alice@example.com,Alice,Williams,+1-555-0104,prospect,Startup Inc,"321 Elm St",Austin,TX,USA,78701,USD,,Met at conference
+mike@example.com,Mike,Brown,+1-555-0105,customer,,"654 Cedar Ln",Seattle,WA,USA,98101,EUR,newsletter,International customer

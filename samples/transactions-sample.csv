@@ -1,0 +1,8 @@
+contact_email,amount,type,gateway,currency,status,description,gateway_transaction_id
+john@example.com,299.00,payment,stripe,USD,completed,Annual subscription,ch_1234567890
+jane@example.com,49.00,payment,paypal,USD,completed,Monthly plan,PP-9876543210
+bob@example.com,1500.00,payment,stripe,USD,completed,Enterprise license,ch_0987654321
+john@example.com,29.00,payment,stripe,USD,completed,Add-on purchase,ch_1122334455
+alice@example.com,99.00,payment,paypal,USD,pending,Starter plan,PP-5544332211
+mike@example.com,199.00,payment,manual,EUR,completed,Consulting service,INV-2024-001
+jane@example.com,-49.00,refund,paypal,USD,completed,Refund for monthly plan,PP-REF-123456

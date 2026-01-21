@@ -19,7 +19,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0] - TBD
+## [1.1.5] - 2026-01-21
+
+### Fixed
+- PayPal NVP historical import getting stuck in 'Running' status.
+- PayPal NVP sync logic to correctly paginate through transactions by updating the end date.
+- Sync log status updates to properly mark completion/failure in error scenarios.
+- Improved error feedback in the PayPal import UI.
+- Corrected PayPal NVP search status parameter.
+
+## [1.1.4] - 2026-01-21
+
+### Fixed
+- General bug fixes and performance improvements.
+
+## [1.1.1] - 2026-01-14
+
+### Fixed
+- Settings page not showing PayPal Import and Tools tabs.
+- Consolidated settings rendering to use SCRM_Admin_Settings class.
+- Removed duplicate settings methods from SCRM_Admin class.
+
+## [1.1.0] - 2026-01-14
+
+### Added
+- Automatic transaction sync scheduling for PayPal and Stripe.
+- "Sync Now" button for manual gateway synchronization.
+- Sync history and status tracking.
+- Legacy NVP API support for historical PayPal transaction import.
+- Email functionality for sending to single or multiple contacts.
+- Email compose interface with contact search and merge tags.
+- Email log tracking.
+- Bulk "Send Email" action to contacts list.
+- Tools tab with database status, recreate tables, optimize, and export all data.
+
+## [1.0.0] - 2026-01-10
 
 ### Added
 - **Core Features**

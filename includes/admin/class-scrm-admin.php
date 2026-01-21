@@ -233,6 +233,12 @@ class SCRM_Admin {
 				SCRM_VERSION,
 				true
 			);
+
+			// Pass chart data.
+			wp_localize_script( 'scrm-charts', 'scrm_charts_data', array(
+				'revenue'  => SCRM_Dashboard::get_revenue_chart_data(),
+				'contacts' => SCRM_Dashboard::get_contacts_chart_data(),
+			) );
 		}
 
 		// Import wizard scripts.
@@ -2245,14 +2251,40 @@ class SCRM_Admin {
 			</div>
 			
 			<!-- Sample CSV Templates -->
-			<div style="margin-top: 30px;">
-				<h3><?php esc_html_e( 'Sample CSV Templates', 'syncpoint-crm' ); ?></h3>
+			<div style="margin-top: 30px; background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 4px;">
+				<h3 style="margin-top: 0;"><?php esc_html_e( 'Sample CSV Templates', 'syncpoint-crm' ); ?></h3>
 				<p><?php esc_html_e( 'Download sample templates to see the expected format:', 'syncpoint-crm' ); ?></p>
-				<ul>
-					<li><strong><?php esc_html_e( 'Contacts:', 'syncpoint-crm' ); ?></strong> email, first_name, last_name, phone, type, company</li>
-					<li><strong><?php esc_html_e( 'Companies:', 'syncpoint-crm' ); ?></strong> name, email, phone, website, address</li>
-					<li><strong><?php esc_html_e( 'Transactions:', 'syncpoint-crm' ); ?></strong> contact_email, amount, currency, type, description, date</li>
-				</ul>
+				<table class="widefat" style="max-width: 600px;">
+					<tbody>
+						<tr>
+							<td><strong><?php esc_html_e( 'Contacts', 'syncpoint-crm' ); ?></strong></td>
+							<td><code>email, first_name, last_name, phone, type, company_name, tags</code></td>
+							<td>
+								<a href="<?php echo esc_url( SCRM_PLUGIN_URL . 'samples/contacts-sample.csv' ); ?>" class="button button-small" download>
+									<?php esc_html_e( 'Download', 'syncpoint-crm' ); ?>
+								</a>
+							</td>
+						</tr>
+						<tr>
+							<td><strong><?php esc_html_e( 'Companies', 'syncpoint-crm' ); ?></strong></td>
+							<td><code>name, email, phone, website, address, industry</code></td>
+							<td>
+								<a href="<?php echo esc_url( SCRM_PLUGIN_URL . 'samples/companies-sample.csv' ); ?>" class="button button-small" download>
+									<?php esc_html_e( 'Download', 'syncpoint-crm' ); ?>
+								</a>
+							</td>
+						</tr>
+						<tr>
+							<td><strong><?php esc_html_e( 'Transactions', 'syncpoint-crm' ); ?></strong></td>
+							<td><code>contact_email, amount, type, gateway, currency, status</code></td>
+							<td>
+								<a href="<?php echo esc_url( SCRM_PLUGIN_URL . 'samples/transactions-sample.csv' ); ?>" class="button button-small" download>
+									<?php esc_html_e( 'Download', 'syncpoint-crm' ); ?>
+								</a>
+							</td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 		</div>
 		<?php

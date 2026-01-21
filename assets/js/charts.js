@@ -21,23 +21,20 @@
      */
     function initRevenueChart() {
         var canvas = document.getElementById('scrm-revenue-chart');
-        if (!canvas || typeof Chart === 'undefined') {
+        if (!canvas || typeof Chart === 'undefined' || typeof scrm_charts_data === 'undefined') {
             return;
         }
 
         var ctx = canvas.getContext('2d');
-
-        // Sample data - will be replaced with real data via AJAX.
-        var labels = getLast30Days();
-        var data = generateSampleData(30, 500, 3000);
+        var chartData = scrm_charts_data.revenue;
 
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: chartData.labels,
                 datasets: [{
-                    label: 'Revenue',
-                    data: data,
+                    label: chartData.datasets[0].label,
+                    data: chartData.datasets[0].data,
                     borderColor: '#3B82F6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 2,
@@ -93,23 +90,20 @@
      */
     function initContactsChart() {
         var canvas = document.getElementById('scrm-contacts-chart');
-        if (!canvas || typeof Chart === 'undefined') {
+        if (!canvas || typeof Chart === 'undefined' || typeof scrm_charts_data === 'undefined') {
             return;
         }
 
         var ctx = canvas.getContext('2d');
-
-        // Sample data.
-        var labels = getLast30Days();
-        var data = generateCumulativeData(30, 5, 15);
+        var chartData = scrm_charts_data.contacts;
 
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: chartData.labels,
                 datasets: [{
-                    label: 'Total Contacts',
-                    data: data,
+                    label: chartData.datasets[0].label,
+                    data: chartData.datasets[0].data,
                     borderColor: '#10B981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     borderWidth: 2,

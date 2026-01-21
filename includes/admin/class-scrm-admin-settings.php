@@ -442,6 +442,34 @@ class SCRM_Admin_Settings {
 
 		<script>
 		jQuery(document).ready(function($) {
+			var progressInterval = null;
+
+			function checkProgress() {
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: { action: 'scrm_check_import_progress' },
+					success: function(response) {
+						if (response.success && response.data) {
+							var data = response.data;
+							var $status = $('#scrm-paypal-import-status');
+
+							if (data.status === 'running') {
+								$status.html(
+									'<span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>' +
+									'<strong>' + data.message + '</strong><br>' +
+									'<small style="color: #666;">' +
+									'<?php echo esc_js( __( 'Synced:', 'syncpoint-crm' ) ); ?> ' + data.synced +
+									' | <?php echo esc_js( __( 'Skipped:', 'syncpoint-crm' ) ); ?> ' + data.skipped +
+									' | <?php echo esc_js( __( 'Contacts:', 'syncpoint-crm' ) ); ?> ' + data.contacts_added +
+									'</small>'
+								);
+							}
+						}
+					}
+				});
+			}
+
 			$('#scrm-paypal-import-historical').on('click', function() {
 				var $button = $(this);
 				var $status = $('#scrm-paypal-import-status');
@@ -451,7 +479,10 @@ class SCRM_Admin_Settings {
 				}
 
 				$button.prop('disabled', true).text('<?php echo esc_js( __( 'Importing...', 'syncpoint-crm' ) ); ?>');
-				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span> <?php echo esc_js( __( 'Importing transactions, please wait...', 'syncpoint-crm' ) ); ?>');
+				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span> <?php echo esc_js( __( 'Starting import...', 'syncpoint-crm' ) ); ?>');
+
+				// Start polling for progress.
+				progressInterval = setInterval(checkProgress, 2000);
 
 				$.ajax({
 					url: ajaxurl,
@@ -462,15 +493,17 @@ class SCRM_Admin_Settings {
 						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_sync_paypal_nvp' ) ); ?>'
 					},
 					success: function(response) {
+						clearInterval(progressInterval);
 						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
 						if (response.success) {
-							$status.html('<span style="color: green; font-weight: bold;">' + response.data.message + '</span>');
+							$status.html('<span style="color: green; font-weight: bold;">&#10004; ' + response.data.message + '</span>');
 							setTimeout(function() { location.reload(); }, 2000);
 						} else {
-							$status.html('<span style="color: red;">' + response.data.message + '</span>');
+							$status.html('<span style="color: red;">&#10008; ' + response.data.message + '</span>');
 						}
 					},
 					error: function() {
+						clearInterval(progressInterval);
 						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
 						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred or the request timed out.', 'syncpoint-crm' ) ); ?></span>');
 					}

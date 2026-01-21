@@ -42,6 +42,7 @@ class SCRM_AJAX {
 			'scrm_sync_paypal',
 			'scrm_sync_stripe',
 			'scrm_sync_paypal_nvp',
+			'scrm_check_import_progress',
 			'scrm_send_email',
 			'scrm_dashboard_stats',
 			'scrm_dashboard_chart_data',
@@ -495,6 +496,11 @@ class SCRM_AJAX {
 	 * Sync PayPal transactions using NVP API (historical import).
 	 */
 	public function handle_sync_paypal_nvp() {
+		// Increase execution time for large imports.
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 300 );
+		}
+
 		if ( ! check_ajax_referer( 'scrm_sync_paypal_nvp', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
 			return;
@@ -506,45 +512,84 @@ class SCRM_AJAX {
 		}
 
 		if ( scrm_is_sync_running( 'paypal' ) ) {
-			wp_send_json_error( array( 'message' => __( 'A sync is already in progress.', 'syncpoint-crm' ) ) );
+			wp_send_json_error( array( 'message' => __( 'A sync is already in progress. If stuck, wait 5 minutes and try again.', 'syncpoint-crm' ) ) );
 			return;
 		}
 
 		$log_id = scrm_start_sync_log( 'paypal', 'historical' );
 
-		$gateway = new SCRM\Gateways\PayPal();
+		try {
+			$gateway = new SCRM\Gateways\PayPal();
 
-		if ( ! $gateway->is_available() ) {
-			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'PayPal is not enabled.', 'syncpoint-crm' ) );
-			wp_send_json_error( array( 'message' => __( 'PayPal is not enabled.', 'syncpoint-crm' ) ) );
-			return;
-		}
+			if ( ! $gateway->is_available() ) {
+				scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'PayPal is not enabled.', 'syncpoint-crm' ) );
+				wp_send_json_error( array( 'message' => __( 'PayPal is not enabled.', 'syncpoint-crm' ) ) );
+				return;
+			}
 
-		$results = $gateway->sync_transactions_nvp();
+			$results = $gateway->sync_transactions_nvp();
 
-		if ( is_wp_error( $results ) ) {
-			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $results->get_error_message() );
-			wp_send_json_error( array( 'message' => $results->get_error_message() ) );
-			return;
-		}
+			if ( is_wp_error( $results ) ) {
+				scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $results->get_error_message() );
+				wp_send_json_error( array( 'message' => $results->get_error_message() ) );
+				return;
+			}
 
-		scrm_complete_sync_log(
-			$log_id,
-			'completed',
-			$results['synced'] ?? 0,
-			$results['skipped'] ?? 0,
-			$results['contacts_added'] ?? 0
-		);
-
-		wp_send_json_success( array(
-			'message' => sprintf(
-				/* translators: 1: transactions synced, 2: contacts created */
-				__( 'Imported %1$d historical transactions, created %2$d contacts.', 'syncpoint-crm' ),
+			scrm_complete_sync_log(
+				$log_id,
+				'completed',
 				$results['synced'] ?? 0,
+				$results['skipped'] ?? 0,
 				$results['contacts_added'] ?? 0
-			),
-			'results' => $results,
-		) );
+			);
+
+			wp_send_json_success( array(
+				'message' => sprintf(
+					/* translators: 1: transactions synced, 2: contacts created */
+					__( 'Imported %1$d historical transactions, created %2$d contacts.', 'syncpoint-crm' ),
+					$results['synced'] ?? 0,
+					$results['contacts_added'] ?? 0
+				),
+				'results' => $results,
+			) );
+
+		} catch ( \Exception $e ) {
+			set_transient( 'scrm_paypal_import_progress', array(
+				'status'  => 'error',
+				'message' => $e->getMessage(),
+			), 600 );
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $e->getMessage() );
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
+		} catch ( \Error $e ) {
+			set_transient( 'scrm_paypal_import_progress', array(
+				'status'  => 'error',
+				'message' => $e->getMessage(),
+			), 600 );
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $e->getMessage() );
+			wp_send_json_error( array( 'message' => 'PHP Error: ' . $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * Check PayPal import progress.
+	 */
+	public function handle_check_import_progress() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		$progress = get_transient( 'scrm_paypal_import_progress' );
+
+		if ( ! $progress ) {
+			wp_send_json_success( array(
+				'status'  => 'idle',
+				'message' => __( 'No import in progress.', 'syncpoint-crm' ),
+			) );
+			return;
+		}
+
+		wp_send_json_success( $progress );
 	}
 
 	/**
