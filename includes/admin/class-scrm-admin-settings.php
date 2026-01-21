@@ -37,14 +37,14 @@ class SCRM_Admin_Settings {
 			'webhooks'      => __( 'Webhooks', 'syncpoint-crm' ),
 			'tools'         => __( 'Tools', 'syncpoint-crm' ),
 		);
-
-		add_action( 'admin_init', array( $this, 'save_settings' ) );
 	}
 
 	/**
 	 * Render settings page.
 	 */
 	public function render() {
+		$saved = $this->save_settings();
+
 		$current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'general';
 
 		if ( ! isset( $this->tabs[ $current_tab ] ) ) {
@@ -54,6 +54,12 @@ class SCRM_Admin_Settings {
 		?>
 		<div class="wrap scrm-wrap">
 			<h1><?php esc_html_e( 'Settings', 'syncpoint-crm' ); ?></h1>
+
+			<?php if ( $saved ) : ?>
+				<div class="notice notice-success is-dismissible">
+					<p><?php esc_html_e( 'Settings saved.', 'syncpoint-crm' ); ?></p>
+				</div>
+			<?php endif; ?>
 
 			<?php $this->render_tabs( $current_tab ); ?>
 
@@ -249,75 +255,6 @@ class SCRM_Admin_Settings {
 			</tr>
 		</table>
 
-		<h2 class="title"><?php esc_html_e( 'Legacy NVP API (Historical Import)', 'syncpoint-crm' ); ?></h2>
-		<p class="description" style="margin-bottom: 15px;">
-			<?php esc_html_e( 'The NVP API allows importing historical transactions up to 3 years back. Get these credentials from PayPal Developer Dashboard > API Credentials.', 'syncpoint-crm' ); ?>
-		</p>
-
-		<table class="form-table">
-			<tr>
-				<th scope="row">
-					<label for="paypal_email"><?php esc_html_e( 'PayPal Email', 'syncpoint-crm' ); ?></label>
-				</th>
-				<td>
-					<input type="email" name="paypal[paypal_email]" id="paypal_email"
-						   value="<?php echo esc_attr( $settings['paypal_email'] ?? '' ); ?>"
-						   class="regular-text">
-					<p class="description"><?php esc_html_e( 'Your PayPal business account email.', 'syncpoint-crm' ); ?></p>
-				</td>
-			</tr>
-			<tr>
-				<th scope="row">
-					<label for="paypal_api_username"><?php esc_html_e( 'API Username', 'syncpoint-crm' ); ?></label>
-				</th>
-				<td>
-					<input type="text" name="paypal[api_username]" id="paypal_api_username"
-						   value="<?php echo esc_attr( $settings['api_username'] ?? '' ); ?>"
-						   class="regular-text">
-				</td>
-			</tr>
-			<tr>
-				<th scope="row">
-					<label for="paypal_api_password"><?php esc_html_e( 'API Password', 'syncpoint-crm' ); ?></label>
-				</th>
-				<td>
-					<input type="password" name="paypal[api_password]" id="paypal_api_password"
-						   value="<?php echo esc_attr( $settings['api_password'] ?? '' ); ?>"
-						   class="regular-text">
-				</td>
-			</tr>
-			<tr>
-				<th scope="row">
-					<label for="paypal_api_signature"><?php esc_html_e( 'API Signature', 'syncpoint-crm' ); ?></label>
-				</th>
-				<td>
-					<input type="text" name="paypal[api_signature]" id="paypal_api_signature"
-						   value="<?php echo esc_attr( $settings['api_signature'] ?? '' ); ?>"
-						   class="regular-text code">
-				</td>
-			</tr>
-			<tr>
-				<th scope="row">
-					<label for="paypal_first_txn_date"><?php esc_html_e( 'First Transaction Date', 'syncpoint-crm' ); ?></label>
-				</th>
-				<td>
-					<input type="date" name="paypal[first_txn_date]" id="paypal_first_txn_date"
-						   value="<?php echo esc_attr( $settings['first_txn_date'] ?? date( 'Y-m-d', strtotime( '-3 years' ) ) ); ?>">
-					<p class="description"><?php esc_html_e( 'Import transactions starting from this date. PayPal allows up to 3 years of history.', 'syncpoint-crm' ); ?></p>
-				</td>
-			</tr>
-			<tr>
-				<th scope="row"><?php esc_html_e( 'Import Historical', 'syncpoint-crm' ); ?></th>
-				<td>
-					<button type="button" id="scrm-paypal-import-historical" class="button button-secondary" <?php disabled( $is_running ); ?>>
-						<?php esc_html_e( 'Import Historical Transactions', 'syncpoint-crm' ); ?>
-					</button>
-					<span id="scrm-paypal-import-status" style="margin-left: 10px;"></span>
-					<p class="description"><?php esc_html_e( 'One-time import using the NVP API. This may take several minutes for large transaction histories.', 'syncpoint-crm' ); ?></p>
-				</td>
-			</tr>
-		</table>
-
 		<h2 class="title"><?php esc_html_e( 'Transaction Sync', 'syncpoint-crm' ); ?></h2>
 
 		<table class="form-table">
@@ -413,41 +350,6 @@ class SCRM_Admin_Settings {
 					error: function() {
 						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Sync Now', 'syncpoint-crm' ) ); ?>');
 						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred.', 'syncpoint-crm' ) ); ?></span>');
-					}
-				});
-			});
-
-			$('#scrm-paypal-import-historical').on('click', function() {
-				var $button = $(this);
-				var $status = $('#scrm-paypal-import-status');
-
-				if (!confirm('<?php echo esc_js( __( 'This will import all historical transactions from PayPal. This may take several minutes. Continue?', 'syncpoint-crm' ) ); ?>')) {
-					return;
-				}
-
-				$button.prop('disabled', true).text('<?php echo esc_js( __( 'Importing...', 'syncpoint-crm' ) ); ?>');
-				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span>');
-
-				$.ajax({
-					url: ajaxurl,
-					type: 'POST',
-					timeout: 300000,
-					data: {
-						action: 'scrm_sync_paypal_nvp',
-						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_sync_paypal_nvp' ) ); ?>'
-					},
-					success: function(response) {
-						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
-						if (response.success) {
-							$status.html('<span style="color: green;">' + response.data.message + '</span>');
-							setTimeout(function() { location.reload(); }, 2000);
-						} else {
-							$status.html('<span style="color: red;">' + response.data.message + '</span>');
-						}
-					},
-					error: function() {
-						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
-						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred or the request timed out.', 'syncpoint-crm' ) ); ?></span>');
 					}
 				});
 			});
@@ -1183,36 +1085,47 @@ class SCRM_Admin_Settings {
 
 	/**
 	 * Save settings.
+	 *
+	 * @return bool Whether settings were saved.
 	 */
-	public function save_settings() {
+	private function save_settings() {
 		if ( ! isset( $_POST['scrm_save_settings'] ) ) {
-			return;
+			return false;
 		}
 
 		if ( ! wp_verify_nonce( $_POST['_scrm_nonce'] ?? '', 'scrm_save_settings' ) ) {
-			return;
+			return false;
 		}
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
+			return false;
 		}
 
 		$tab = sanitize_text_field( $_POST['scrm_settings_tab'] ?? 'general' );
 
-		if ( ! isset( $_POST[ $tab ] ) || ! is_array( $_POST[ $tab ] ) ) {
-			return;
+		// PayPal Import tab saves to paypal settings.
+		$post_key = ( 'paypal_import' === $tab ) ? 'paypal' : $tab;
+		$save_key = ( 'paypal_import' === $tab ) ? 'paypal' : $tab;
+
+		if ( ! isset( $_POST[ $post_key ] ) || ! is_array( $_POST[ $post_key ] ) ) {
+			return false;
 		}
 
 		$settings = get_option( 'scrm_settings', array() );
 		$new_settings = array();
 
 		// Sanitize based on tab.
-		foreach ( $_POST[ $tab ] as $key => $value ) {
+		foreach ( $_POST[ $post_key ] as $key => $value ) {
 			if ( is_array( $value ) ) {
 				$new_settings[ $key ] = array_map( 'sanitize_text_field', $value );
 			} else {
 				$new_settings[ $key ] = sanitize_text_field( $value );
 			}
+		}
+
+		// PayPal Import merges with existing PayPal settings.
+		if ( 'paypal_import' === $tab ) {
+			$new_settings = array_merge( $settings['paypal'] ?? array(), $new_settings );
 		}
 
 		// Handle checkboxes (not submitted when unchecked).
@@ -1235,13 +1148,10 @@ class SCRM_Admin_Settings {
 			$new_settings['next_transaction_number'] = $old['next_transaction_number'] ?? 1;
 		}
 
-		$settings[ $tab ] = $new_settings;
+		$settings[ $save_key ] = $new_settings;
 
 		update_option( 'scrm_settings', $settings );
 
-		add_action( 'admin_notices', function() {
-			echo '<div class="notice notice-success is-dismissible"><p>' .
-				esc_html__( 'Settings saved.', 'syncpoint-crm' ) . '</p></div>';
-		} );
+		return true;
 	}
 }
