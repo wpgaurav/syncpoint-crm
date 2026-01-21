@@ -1,0 +1,174 @@
+=== Starter CRM ===
+Contributors: yourname
+Donate link: https://example.com/donate
+Tags: crm, customer relationship management, invoicing, paypal, stripe
+Requires at least: 6.0
+Tested up to: 6.4
+Requires PHP: 7.4
+Stable tag: 1.0.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+A lightweight, extensible WordPress CRM with PayPal & Stripe integration, invoicing, and powerful automation capabilities.
+
+== Description ==
+
+**Starter CRM** is a powerful yet lightweight customer relationship management system built specifically for WordPress. Perfect for freelancers, small agencies, and solopreneurs who need to manage customers, track transactions, and create invoices without the complexity of enterprise CRM solutions.
+
+= Key Features =
+
+**Contact & Company Management**
+* Create and manage contacts (customers, leads, prospects)
+* Organize contacts by company
+* Custom ID generation (CUST-001, LEAD-042, etc.)
+* Flexible tagging system with color coding
+* Custom fields for additional data
+* Contact-company linking
+* Activity logging for complete history
+
+**Transaction Tracking**
+* Record payments, refunds, subscriptions
+* Multi-currency support
+* Per-contact currency settings
+* Lifetime value calculation
+* Transaction history per contact
+
+**Payment Gateway Integration**
+* **PayPal** - OAuth 2.0 authentication, transaction sync, webhooks
+* **Stripe** - Customer sync, charge tracking, subscription support
+* Manual transaction entry
+* Webhook support for real-time updates
+
+**Invoicing**
+* Create professional invoices
+* Line items with quantities and prices
+* Tax and discount support
+* Multiple payment methods per invoice
+* PayPal & Stripe payment links
+* PDF generation
+* Email delivery
+* Public invoice view for clients
+
+**Data Import/Export**
+* CSV import with field mapping
+* ID matching for transaction import
+* Duplicate detection
+* Export contacts and transactions
+
+**Dashboard & Analytics**
+* Revenue overview with charts
+* Contact statistics
+* Period comparisons (7 days, 30 days, 90 days, year)
+* Recent activity feed
+
+**Developer Friendly**
+* 50+ action hooks
+* 40+ filters
+* REST API for all data
+* Webhook endpoints for integrations
+* Template override system
+* PSR-4 autoloading
+* Extensive documentation
+
+= Why Starter CRM? =
+
+* **Lightweight** - Only loads resources when needed
+* **Extensible** - Designed for customization
+* **WordPress Native** - Uses WP patterns and conventions
+* **Privacy Focused** - Your data stays on your server
+* **No Monthly Fees** - One-time purchase, no recurring costs
+
+= Use Cases =
+
+* **Freelancers** - Track clients and projects
+* **Agencies** - Manage client relationships
+* **Consultants** - Record payments and send invoices
+* **Service Providers** - Keep customer records organized
+* **Anyone** - Who needs a simple CRM without the bloat
+
+== Installation ==
+
+1. Upload the `starter-crm` folder to `/wp-content/plugins/`
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Go to CRM → Settings to configure your options
+4. Start adding contacts!
+
+= Minimum Requirements =
+
+* WordPress 6.0 or higher
+* PHP 7.4 or higher
+* MySQL 5.7 or MariaDB 10.3 or higher
+
+== Frequently Asked Questions ==
+
+= Can I import my existing contacts? =
+
+Yes! Starter CRM includes a CSV import wizard with field mapping. You can import contacts, companies, and transactions from any system that exports to CSV.
+
+= Does this work with WooCommerce? =
+
+WooCommerce integration is planned for a future release. Currently, you can use webhooks or the REST API to sync WooCommerce data.
+
+= Can I use this without PayPal or Stripe? =
+
+Absolutely! Payment gateway integration is optional. You can record transactions manually or use the webhook API to integrate with any payment system.
+
+= Is my data safe? =
+
+Yes. All data is stored in your WordPress database on your server. Sensitive API keys are encrypted. We follow WordPress security best practices.
+
+= Can I customize the invoice template? =
+
+Yes! Invoice templates can be overridden in your theme. Copy the template from `starter-crm/templates/invoices/` to `your-theme/starter-crm/invoices/` and customize.
+
+= Is there a REST API? =
+
+Yes! Starter CRM provides a comprehensive REST API for all data types. See the documentation for endpoints and authentication.
+
+= Can I extend the plugin? =
+
+Definitely! We provide 50+ hooks and filters for customization. Check the Developer Guide in the docs folder for examples.
+
+== Screenshots ==
+
+1. Dashboard with revenue overview and statistics
+2. Contact list with filtering and search
+3. Contact profile with transaction history
+4. Invoice builder with line items
+5. Settings page with gateway configuration
+6. CSV import wizard
+
+== Changelog ==
+
+= 1.0.0 =
+* Initial release
+* Contact and company management
+* Transaction tracking
+* PayPal integration
+* Stripe integration
+* Invoicing with PDF generation
+* CSV import
+* REST API
+* Webhook support
+
+== Upgrade Notice ==
+
+= 1.0.0 =
+Initial release of Starter CRM.
+
+== Developer Documentation ==
+
+Complete developer documentation is included in the `docs/` folder:
+
+* **IMPLEMENTATION-PLAN.md** - Architecture and database schema
+* **HOOKS-REFERENCE.md** - All available hooks and filters
+* **REST-API.md** - API endpoint documentation
+* **WEBHOOKS.md** - Webhook integration guide
+* **DEVELOPER-GUIDE.md** - Extension development
+* **CHANGELOG.md** - Version history
+
+== Credits ==
+
+* Built with love for the WordPress community
+* Chart.js for dashboard graphs
+* DOMPDF for PDF generation (optional)

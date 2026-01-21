@@ -1,0 +1,337 @@
+/**
+ * Starter CRM Admin Styles
+ *
+ * @package StarterCRM
+ * @since 1.0.0
+ */
+
+/* ==========================================================================
+   Variables
+   ========================================================================== */
+
+:root {
+    --scrm-primary: #3B82F6;
+    --scrm-primary-dark: #2563EB;
+    --scrm-success: #10B981;
+    --scrm-warning: #F59E0B;
+    --scrm-danger: #EF4444;
+    --scrm-info: #06B6D4;
+    --scrm-gray-50: #F9FAFB;
+    --scrm-gray-100: #F3F4F6;
+    --scrm-gray-200: #E5E7EB;
+    --scrm-gray-300: #D1D5DB;
+    --scrm-gray-400: #9CA3AF;
+    --scrm-gray-500: #6B7280;
+    --scrm-gray-600: #4B5563;
+    --scrm-gray-700: #374151;
+    --scrm-gray-800: #1F2937;
+    --scrm-gray-900: #111827;
+    --scrm-radius: 6px;
+    --scrm-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --scrm-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+.scrm-wrap {
+    margin: 20px 20px 20px 0;
+}
+
+.scrm-wrap h1 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+/* ==========================================================================
+   Dashboard
+   ========================================================================== */
+
+.scrm-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Stats Row */
+.scrm-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.scrm-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    padding: 20px;
+    border-radius: var(--scrm-radius);
+    box-shadow: var(--scrm-shadow);
+    border: 1px solid var(--scrm-gray-200);
+}
+
+.scrm-stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--scrm-primary);
+    color: #fff;
+    border-radius: var(--scrm-radius);
+    font-size: 24px;
+}
+
+.scrm-stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.scrm-stat-number {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--scrm-gray-900);
+    line-height: 1.2;
+}
+
+.scrm-stat-label {
+    font-size: 13px;
+    color: var(--scrm-gray-500);
+    margin-top: 2px;
+}
+
+/* Charts Row */
+.scrm-charts-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 16px;
+}
+
+.scrm-chart-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: var(--scrm-radius);
+    box-shadow: var(--scrm-shadow);
+    border: 1px solid var(--scrm-gray-200);
+}
+
+.scrm-chart-container h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: var(--scrm-gray-800);
+}
+
+.scrm-chart-container canvas {
+    max-height: 300px;
+}
+
+/* Widgets Row */
+.scrm-widgets-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.scrm-dashboard-widget {
+    background: #fff;
+    border-radius: var(--scrm-radius);
+    box-shadow: var(--scrm-shadow);
+    border: 1px solid var(--scrm-gray-200);
+}
+
+.scrm-widget__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--scrm-gray-200);
+}
+
+.scrm-widget__header h3 {
+    margin: 0;
+    font-size: 15px;
+    color: var(--scrm-gray-800);
+}
+
+.scrm-widget__content {
+    padding: 20px;
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+.scrm-table {
+    border-radius: var(--scrm-radius);
+    overflow: hidden;
+}
+
+.scrm-table th {
+    background: var(--scrm-gray-50);
+    font-weight: 600;
+}
+
+.scrm-table td a {
+    text-decoration: none;
+}
+
+.scrm-table td a:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Badges & Status
+   ========================================================================== */
+
+.scrm-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 9999px;
+    text-transform: capitalize;
+}
+
+.scrm-badge--customer {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563EB;
+}
+
+.scrm-badge--lead {
+    background: rgba(245, 158, 11, 0.1);
+    color: #D97706;
+}
+
+.scrm-badge--prospect {
+    background: rgba(139, 92, 246, 0.1);
+    color: #7C3AED;
+}
+
+.scrm-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.scrm-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.scrm-status--active::before {
+    background: var(--scrm-success);
+}
+
+.scrm-status--inactive::before {
+    background: var(--scrm-gray-400);
+}
+
+.scrm-status--archived::before {
+    background: var(--scrm-danger);
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+
+.scrm-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: #fff;
+    border-radius: var(--scrm-radius);
+    box-shadow: var(--scrm-shadow);
+    border: 1px solid var(--scrm-gray-200);
+    text-align: center;
+}
+
+.scrm-empty-state .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--scrm-gray-300);
+    margin-bottom: 16px;
+}
+
+.scrm-empty-state h2 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    color: var(--scrm-gray-800);
+}
+
+.scrm-empty-state p {
+    margin: 0 0 20px 0;
+    color: var(--scrm-gray-500);
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+.scrm-form .form-table th {
+    width: 180px;
+    padding-top: 20px;
+}
+
+.scrm-form .required {
+    color: var(--scrm-danger);
+}
+
+.scrm-form input[type="text"],
+.scrm-form input[type="email"],
+.scrm-form input[type="tel"],
+.scrm-form input[type="url"],
+.scrm-form input[type="number"],
+.scrm-form select,
+.scrm-form textarea {
+    border-radius: var(--scrm-radius);
+    border: 1px solid var(--scrm-gray-300);
+}
+
+.scrm-form input:focus,
+.scrm-form select:focus,
+.scrm-form textarea:focus {
+    border-color: var(--scrm-primary);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.scrm-wrap .button-primary {
+    background: var(--scrm-primary);
+    border-color: var(--scrm-primary);
+}
+
+.scrm-wrap .button-primary:hover,
+.scrm-wrap .button-primary:focus {
+    background: var(--scrm-primary-dark);
+    border-color: var(--scrm-primary-dark);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 782px) {
+    .scrm-stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .scrm-charts-row {
+        grid-template-columns: 1fr;
+    }
+
+    .scrm-chart-container canvas {
+        max-height: 200px;
+    }
+}
