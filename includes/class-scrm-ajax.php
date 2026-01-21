@@ -280,7 +280,11 @@ class SCRM_AJAX {
 		}
 
 		$temp_file = $temp_dir . '/' . wp_generate_uuid4() . '.csv';
-		move_uploaded_file( $file['tmp_name'], $temp_file );
+		$uploaded = move_uploaded_file( $file['tmp_name'], $temp_file );
+
+		if ( ! $uploaded ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to move uploaded file.', 'syncpoint-crm' ) ) );
+		}
 
 		// Parse preview.
 		$importer = new SCRM\Import\CSV_Importer( $temp_file );
@@ -357,28 +361,47 @@ class SCRM_AJAX {
 
 		$gateway_instance = null;
 
-		switch ( $gateway ) {
-			case 'paypal':
-				$gateway_instance = new SCRM\Gateways\PayPal();
-				break;
-			case 'stripe':
-				$gateway_instance = new SCRM\Gateways\Stripe();
-				break;
-			default:
-				wp_send_json_error( array( 'message' => __( 'Unknown gateway.', 'syncpoint-crm' ) ) );
+		try {
+			switch ( $gateway ) {
+				case 'paypal':
+					if ( ! class_exists( '\SCRM\Gateways\PayPal' ) ) {
+						throw new Exception( __( 'PayPal gateway class not found.', 'syncpoint-crm' ) );
+					}
+					$gateway_instance = new \SCRM\Gateways\PayPal();
+					break;
+
+				case 'stripe':
+					if ( ! class_exists( '\SCRM\Gateways\Stripe' ) ) {
+						throw new Exception( __( 'Stripe gateway class not found.', 'syncpoint-crm' ) );
+					}
+					$gateway_instance = new \SCRM\Gateways\Stripe();
+					break;
+
+				default:
+					throw new Exception( __( 'Unknown gateway.', 'syncpoint-crm' ) );
+			}
+
+			if ( ! $gateway_instance ) {
+				throw new Exception( __( 'Failed to instantiate gateway.', 'syncpoint-crm' ) );
+			}
+
+			if ( ! $gateway_instance->is_available() ) {
+				wp_send_json_error( array( 'message' => __( 'Gateway is not enabled.', 'syncpoint-crm' ) ) );
+				return;
+			}
+
+			$results = $gateway_instance->sync_transactions();
+
+			if ( is_wp_error( $results ) ) {
+				wp_send_json_error( array( 'message' => $results->get_error_message() ) );
+				return;
+			}
+
+			wp_send_json_success( $results );
+
+		} catch ( Exception $e ) {
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
-
-		if ( ! $gateway_instance->is_available() ) {
-			wp_send_json_error( array( 'message' => __( 'Gateway is not enabled.', 'syncpoint-crm' ) ) );
-		}
-
-		$results = $gateway_instance->sync_transactions();
-
-		if ( is_wp_error( $results ) ) {
-			wp_send_json_error( array( 'message' => $results->get_error_message() ) );
-		}
-
-		wp_send_json_success( $results );
 	}
 
 	/**
@@ -828,6 +851,12 @@ class SCRM_AJAX {
 			return;
 		}
 
+		// Check if ZipArchive is available.
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			wp_send_json_error( array( 'message' => __( 'ZipArchive extension is not available. Please contact your host.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
 		global $wpdb;
 
 		$upload_dir = wp_upload_dir();
@@ -840,13 +869,13 @@ class SCRM_AJAX {
 			file_put_contents( $export_dir . '/index.php', '<?php // Silence is golden.' );
 		}
 
-		$timestamp = date( 'Y-m-d-His' );
+		$timestamp    = gmdate( 'Y-m-d-His' );
 		$zip_filename = "scrm-export-{$timestamp}.zip";
-		$zip_path = $export_dir . '/' . $zip_filename;
+		$zip_path     = $export_dir . '/' . $zip_filename;
 
 		// Create ZIP file.
-		$zip = new ZipArchive();
-		if ( $zip->open( $zip_path, ZipArchive::CREATE ) !== true ) {
+		$zip = new \ZipArchive();
+		if ( $zip->open( $zip_path, \ZipArchive::CREATE ) !== true ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to create export file.', 'syncpoint-crm' ) ) );
 			return;
 		}
@@ -863,15 +892,17 @@ class SCRM_AJAX {
 			'scrm_email_log'     => 'email_log.csv',
 		);
 
+		$exported_tables = 0;
+
 		foreach ( $tables as $table => $filename ) {
 			$full_table = $wpdb->prefix . $table;
-			$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $full_table ) ) === $full_table;
+			$exists     = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $full_table ) ) === $full_table;
 
 			if ( ! $exists ) {
 				continue;
 			}
 
-			$rows = $wpdb->get_results( "SELECT * FROM {$full_table}", ARRAY_A );
+			$rows = $wpdb->get_results( "SELECT * FROM {$full_table}", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 			if ( empty( $rows ) ) {
 				continue;
@@ -890,14 +921,25 @@ class SCRM_AJAX {
 			fclose( $csv );
 
 			$zip->addFromString( $filename, $csv_content );
+			$exported_tables++;
 		}
 
 		$zip->close();
 
+		if ( 0 === $exported_tables ) {
+			unlink( $zip_path );
+			wp_send_json_error( array( 'message' => __( 'No data to export.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
 		$download_url = $upload_dir['baseurl'] . '/scrm-exports/' . $zip_filename;
 
 		wp_send_json_success( array(
-			'message'      => __( 'Export completed.', 'syncpoint-crm' ),
+			'message'      => sprintf(
+				/* translators: %d: number of tables exported */
+				__( 'Export completed. %d tables exported.', 'syncpoint-crm' ),
+				$exported_tables
+			),
 			'download_url' => $download_url,
 		) );
 	}

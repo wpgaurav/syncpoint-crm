@@ -1515,18 +1515,25 @@ class SCRM_Admin {
 								}
 								
 								searchTimeout = setTimeout(function() {
-									$.post(scrm_admin.ajax_url, {
+									$.post(scrm.ajax_url, {
 										action: 'scrm_search_contacts',
-										nonce: scrm_admin.nonce,
+										nonce: scrm.nonce,
 										query: query
 									}, function(response) {
 										if (response.success && response.data.contacts.length > 0) {
 											var html = '';
+											var existingIds = [];
+											$('input[name="contact_ids[]"]').each(function() {
+												existingIds.push(parseInt($(this).val()));
+											});
+
 											$.each(response.data.contacts, function(i, contact) {
-												html += '<div class="scrm-contact-option" data-id="' + contact.id + '" data-name="' + contact.name + '" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;">';
-												html += '<strong>' + contact.name + '</strong><br>';
-												html += '<small style="color: #666;">' + contact.email + '</small>';
-												html += '</div>';
+												if (existingIds.indexOf(contact.id) === -1) {
+													var name = contact.name || ((contact.first_name || '') + ' ' + (contact.last_name || '')).trim() || contact.email;
+													html += '<div class="scrm-suggestion-item" data-id="' + contact.id + '" data-name="' + name + '" data-email="' + contact.email + '">';
+													html += name + ' <small>(' + contact.email + ')</small>';
+													html += '</div>';
+												}
 											});
 											$('#contact_results').html(html).show();
 										} else {
@@ -2075,27 +2082,22 @@ class SCRM_Admin {
 							search: query
 						},
 						success: function(response) {
-							if (response.success && response.data.length > 0) {
+							if (response.success && response.data.contacts && response.data.contacts.length > 0) {
 								var html = '';
 								var existingIds = [];
 								$('input[name="contact_ids[]"]').each(function() {
 									existingIds.push(parseInt($(this).val()));
 								});
 
-								$.each(response.data, function(i, contact) {
+								$.each(response.data.contacts, function(i, contact) {
 									if (existingIds.indexOf(contact.id) === -1) {
-										var name = (contact.first_name + ' ' + contact.last_name).trim() || contact.email;
+										var name = contact.name || ((contact.first_name || '') + ' ' + (contact.last_name || '')).trim() || contact.email;
 										html += '<div class="scrm-suggestion-item" data-id="' + contact.id + '" data-name="' + name + '" data-email="' + contact.email + '">';
 										html += name + ' <small>(' + contact.email + ')</small>';
 										html += '</div>';
 									}
 								});
-
-								if (html) {
-									$('#scrm-contact-suggestions').html(html).show();
-								} else {
-									$('#scrm-contact-suggestions').hide();
-								}
+								$('#scrm-contact-suggestions').html(html).show();
 							} else {
 								$('#scrm-contact-suggestions').hide();
 							}

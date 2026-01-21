@@ -14,36 +14,66 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-// Check if we should preserve data.
-$settings = get_option( 'scrm_settings', array() );
-$preserve_data = isset( $settings['general']['preserve_data_on_uninstall'] ) && $settings['general']['preserve_data_on_uninstall'];
+global $wpdb;
 
-if ( $preserve_data ) {
-	// User chose to keep data, just exit.
-	return;
+/**
+ * Always clear pending actions (imports, sync flags, etc.).
+ */
+$wpdb->query(
+	"DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_scrm_%' OR option_name LIKE '_transient_timeout_scrm_%'"
+);
+
+/**
+ * Remove temp import files.
+ */
+$upload_dir = wp_upload_dir();
+$temp_dir   = trailingslashit( $upload_dir['basedir'] ) . 'starter-crm/temp';
+
+if ( is_dir( $temp_dir ) ) {
+	$iterator = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator( $temp_dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+		RecursiveIteratorIterator::CHILD_FIRST
+	);
+
+	foreach ( $iterator as $file ) {
+		if ( $file->isDir() ) {
+			@rmdir( $file->getRealPath() );
+		} else {
+			@unlink( $file->getRealPath() );
+		}
+	}
+	@rmdir( $temp_dir );
 }
 
-global $wpdb;
+// Check if we should delete data.
+$settings    = get_option( 'scrm_settings', array() );
+$delete_data = ! empty( $settings['general']['delete_data_on_uninstall'] );
+$delete_data = apply_filters( 'scrm_delete_data_on_uninstall', $delete_data, $settings );
+
+if ( ! $delete_data ) {
+	return;
+}
 
 /**
  * Remove all database tables.
  */
 $tables = array(
-	$wpdb->prefix . 'scrm_contacts',
-	$wpdb->prefix . 'scrm_companies',
-	$wpdb->prefix . 'scrm_transactions',
-	$wpdb->prefix . 'scrm_tags',
-	$wpdb->prefix . 'scrm_tag_relationships',
-	$wpdb->prefix . 'scrm_invoices',
-	$wpdb->prefix . 'scrm_invoice_items',
-	$wpdb->prefix . 'scrm_activity_log',
-	$wpdb->prefix . 'scrm_webhook_log',
-	$wpdb->prefix . 'scrm_sync_log',
-	$wpdb->prefix . 'scrm_email_log',
+	'scrm_contacts',
+	'scrm_companies',
+	'scrm_transactions',
+	'scrm_invoices',
+	'scrm_invoice_items',
+	'scrm_tags',
+	'scrm_tag_relationships',
+	'scrm_activity_log',
+	'scrm_webhook_log',
+	'scrm_sync_log',
+	'scrm_email_log',
 );
 
 foreach ( $tables as $table ) {
-	$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$full_table = $wpdb->prefix . $table;
+	$wpdb->query( "DROP TABLE IF EXISTS {$full_table}" );
 }
 
 /**
@@ -58,15 +88,6 @@ $options = array(
 foreach ( $options as $option ) {
 	delete_option( $option );
 }
-
-/**
- * Remove all transients.
- */
-$wpdb->query(
-	"DELETE FROM {$wpdb->options}
-	WHERE option_name LIKE '_transient_scrm_%'
-	OR option_name LIKE '_transient_timeout_scrm_%'"
-);
 
 /**
  * Remove capabilities from all roles.

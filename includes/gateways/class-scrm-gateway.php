@@ -2,7 +2,7 @@
 /**
  * Abstract Payment Gateway
  *
- * @package StarterCRM
+ * @package SyncPointCRM
  * @since 1.0.0
  */
 
@@ -11,9 +11,9 @@ namespace SCRM\Gateways;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Class Gateway
+ * Abstract Class Gateway
  *
- * Abstract base class for payment gateways.
+ * Base class for all payment gateways.
  *
  * @since 1.0.0
  */
@@ -41,128 +41,68 @@ abstract class Gateway {
 	public $description = '';
 
 	/**
-	 * Whether gateway is enabled.
+	 * Get gateway credentials/settings.
 	 *
-	 * @var bool
+	 * @return array
 	 */
-	public $enabled = false;
-
-	/**
-	 * Gateway mode (live/test/sandbox).
-	 *
-	 * @var string
-	 */
-	public $mode = 'test';
-
-	/**
-	 * Constructor.
-	 */
-	public function __construct() {
-		$this->init_settings();
+	public function get_credentials() {
+		return scrm_get_settings( $this->id );
 	}
 
 	/**
-	 * Initialize settings.
-	 */
-	protected function init_settings() {
-		$settings = scrm_get_settings( $this->id );
-
-		$this->enabled = ! empty( $settings['enabled'] );
-		$this->mode    = $settings['mode'] ?? 'test';
-	}
-
-	/**
-	 * Check if gateway is available.
+	 * Check if gateway is in test mode.
 	 *
-	 * @return bool True if available.
-	 */
-	public function is_available() {
-		return $this->enabled;
-	}
-
-	/**
-	 * Check if in test/sandbox mode.
-	 *
-	 * @return bool True if in test mode.
+	 * @return bool
 	 */
 	public function is_test_mode() {
-		return in_array( $this->mode, array( 'test', 'sandbox' ), true );
+		$credentials = $this->get_credentials();
+		$mode        = $credentials['mode'] ?? 'sandbox';
+		return in_array( $mode, array( 'sandbox', 'test' ), true );
 	}
 
 	/**
-	 * Get gateway settings fields.
+	 * Get settings fields.
 	 *
-	 * @return array Settings fields.
+	 * @return array
 	 */
 	abstract public function get_settings_fields();
 
 	/**
-	 * Sync transactions from gateway.
+	 * Check if gateway is available.
 	 *
-	 * @param array $args Sync arguments.
-	 * @return array|\WP_Error Sync results or error.
+	 * @return bool
 	 */
-	abstract public function sync_transactions( $args = array() );
+	abstract public function is_available();
 
 	/**
-	 * Create payment link for invoice.
+	 * Sync transactions.
 	 *
-	 * @param \SCRM\Core\Invoice $invoice Invoice object.
-	 * @return string|\WP_Error Payment link or error.
+	 * @param array $args Arguments.
+	 * @return array|\WP_Error
 	 */
-	abstract public function create_payment_link( $invoice );
+	abstract public function sync_transactions( $args = array() );
 
 	/**
 	 * Process webhook.
 	 *
 	 * @param array $payload Webhook payload.
-	 * @return bool|\WP_Error True on success or error.
+	 * @return bool|\WP_Error
 	 */
 	abstract public function process_webhook( $payload );
 
 	/**
-	 * Verify webhook signature.
-	 *
-	 * @param string $payload   Raw payload.
-	 * @param string $signature Signature header.
-	 * @return bool True if valid.
-	 */
-	abstract public function verify_webhook_signature( $payload, $signature );
-
-	/**
-	 * Get API credentials.
-	 *
-	 * @return array API credentials.
-	 */
-	protected function get_credentials() {
-		return scrm_get_settings( $this->id );
-	}
-
-	/**
-	 * Make API request.
-	 *
-	 * @param string $endpoint API endpoint.
-	 * @param array  $args     Request arguments.
-	 * @return array|\WP_Error Response or error.
-	 */
-	protected function api_request( $endpoint, $args = array() ) {
-		// Override in child classes.
-		return new \WP_Error( 'not_implemented', __( 'API request not implemented.', 'syncpoint-crm' ) );
-	}
-
-	/**
-	 * Log gateway event.
+	 * Log gateway activity.
 	 *
 	 * @param string $message Log message.
-	 * @param array  $data    Additional data.
+	 * @param array  $context Additional context.
 	 */
-	protected function log( $message, $data = array() ) {
+	protected function log( $message, $context = array() ) {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log( sprintf(
-				'[Starter CRM - %s] %s: %s',
+				'[SCRM %s] %s: %s',
 				strtoupper( $this->id ),
 				$message,
-				wp_json_encode( $data )
+				wp_json_encode( $context )
 			) );
 		}
 	}

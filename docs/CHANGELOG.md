@@ -19,7 +19,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.1.7] - 2026-01-21
+## [1.1.9] - 2026-01-22
+
+### Fixed
+- Fixed "Class SCRM\Gateways\PayPal not found" error by creating missing PayPal gateway class.
+- Fixed "Class SCRM\Gateways\Gateway not found" error by creating base Gateway abstract class.
+- Fixed "Class SCRM\Import\CSV_Importer not found" error by creating CSV importer class.
+- Fixed autoloader to correctly map namespaced classes to file paths.
+- Fixed CSV import functionality for contacts, companies, and transactions.
+- Fixed data export with ZipArchive availability check.
+- Added missing `scrm_get_company_by_name()` helper function.
+- Added missing `scrm_update_company()` helper function.
+- Fixed `scrm_cache_delete_group()` SQL query.
+
+### Added
+- Manual payment gateway class for offline transactions.
+
+## [1.1.8] - 2026-01-21
 
 ### Added
 - Genuine data sources for dashboard revenue and contact charts.

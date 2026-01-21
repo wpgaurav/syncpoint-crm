@@ -3,7 +3,7 @@
  * Plugin Name: SyncPoint CRM
  * Plugin URI: https://gatilab.com/syncpoint-crm
  * Description: A lightweight, extensible WordPress CRM with PayPal & Stripe sync, invoicing, contact management, and powerful automation capabilities.
- * Version: 1.1.7
+ * Version: 1.1.9
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Gatilab
@@ -14,13 +14,13 @@
  * Domain Path: /languages
  *
  * @package SyncPointCRM
- * @version 1.1.7
+ * @version 1.1.9
  */
 
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants.
-define( 'SCRM_VERSION', '1.1.7' );
+define( 'SCRM_VERSION', '1.1.9' );
 define( 'SCRM_PLUGIN_FILE', __FILE__ );
 define( 'SCRM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SCRM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -193,39 +193,50 @@ final class SyncPoint_CRM {
 	 */
 	public function autoloader( $class_name ) {
 		// Only load SCRM classes.
-		if ( 0 !== strpos( $class_name, 'SCRM_' ) && 0 !== strpos( $class_name, 'SCRM\\' ) ) {
+		if ( 0 !== strpos( $class_name, 'SCRM\\' ) && 0 !== strpos( $class_name, 'SCRM_' ) ) {
 			return;
 		}
 
-		// Convert class name to file path.
-		$class_file = str_replace( array( 'SCRM_', 'SCRM\\', '_' ), array( '', '', '-' ), $class_name );
-		$class_file = 'class-' . strtolower( $class_file ) . '.php';
+		// Handle namespaced classes (SCRM\Namespace\ClassName).
+		if ( 0 === strpos( $class_name, 'SCRM\\' ) ) {
+			$relative_class = substr( $class_name, 5 ); // Remove 'SCRM\'.
+			$parts          = explode( '\\', $relative_class );
 
-		// Map namespaces to directories.
-		$namespace_map = array(
-			'Admin\\'    => 'admin/',
-			'Core\\'     => 'core/',
-			'Gateways\\' => 'gateways/',
-			'API\\'      => 'api/',
-			'Import\\'   => 'import/',
-			'Export\\'   => 'export/',
-			'Utils\\'    => 'utils/',
-		);
+			// Map namespaces to directories.
+			$namespace_map = array(
+				'Admin'    => 'admin',
+				'Core'     => 'core',
+				'Gateways' => 'gateways',
+				'API'      => 'api',
+				'Import'   => 'import',
+				'Export'   => 'export',
+				'Utils'    => 'utils',
+			);
 
-		$file_path = SCRM_PLUGIN_DIR . 'includes/';
+			$directory = '';
+			if ( isset( $parts[0] ) && isset( $namespace_map[ $parts[0] ] ) ) {
+				$directory = $namespace_map[ $parts[0] ] . '/';
+				array_shift( $parts );
+			}
 
-		foreach ( $namespace_map as $namespace => $directory ) {
-			if ( strpos( $class_name, 'SCRM\\' . $namespace ) === 0 ) {
-				$file_path .= $directory;
-				$class_file = str_replace( strtolower( str_replace( '\\', '-', $namespace ) ), '', $class_file );
-				break;
+			// Convert class name to file name.
+			$class_file = 'class-scrm-' . strtolower( str_replace( '_', '-', implode( '-', $parts ) ) ) . '.php';
+			$file_path  = SCRM_PLUGIN_DIR . 'includes/' . $directory . $class_file;
+
+			if ( file_exists( $file_path ) ) {
+				require_once $file_path;
+				return;
 			}
 		}
 
-		$file_path .= $class_file;
+		// Handle non-namespaced classes (SCRM_ClassName).
+		if ( 0 === strpos( $class_name, 'SCRM_' ) ) {
+			$class_file = 'class-' . strtolower( str_replace( '_', '-', $class_name ) ) . '.php';
+			$file_path  = SCRM_PLUGIN_DIR . 'includes/' . $class_file;
 
-		if ( file_exists( $file_path ) ) {
-			require_once $file_path;
+			if ( file_exists( $file_path ) ) {
+				require_once $file_path;
+			}
 		}
 	}
 

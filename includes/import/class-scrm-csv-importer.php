@@ -2,7 +2,7 @@
 /**
  * CSV Importer
  *
- * @package StarterCRM
+ * @package SyncPointCRM
  * @since 1.0.0
  */
 
@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class CSV_Importer
  *
- * Handles CSV file imports.
+ * Handles CSV file parsing and data import.
  *
  * @since 1.0.0
  */
@@ -24,14 +24,7 @@ class CSV_Importer {
 	 *
 	 * @var string
 	 */
-	private $file_path = '';
-
-	/**
-	 * Field mapping.
-	 *
-	 * @var array
-	 */
-	private $mapping = array();
+	private $file_path;
 
 	/**
 	 * Import type.
@@ -41,30 +34,18 @@ class CSV_Importer {
 	private $import_type = 'contacts';
 
 	/**
-	 * Delimiter.
+	 * Field mapping.
 	 *
-	 * @var string
+	 * @var array
 	 */
-	private $delimiter = ',';
+	private $mapping = array();
 
 	/**
-	 * Headers.
+	 * CSV headers.
 	 *
 	 * @var array
 	 */
 	private $headers = array();
-
-	/**
-	 * Results.
-	 *
-	 * @var array
-	 */
-	private $results = array(
-		'imported' => 0,
-		'updated'  => 0,
-		'skipped'  => 0,
-		'errors'   => array(),
-	);
 
 	/**
 	 * Constructor.
@@ -76,58 +57,54 @@ class CSV_Importer {
 	}
 
 	/**
-	 * Set field mapping.
-	 *
-	 * @param array $mapping Column index => field name.
-	 */
-	public function set_mapping( $mapping ) {
-		$this->mapping = $mapping;
-	}
-
-	/**
 	 * Set import type.
 	 *
-	 * @param string $type Import type (contacts, companies, transactions).
+	 * @param string $type Import type.
 	 */
 	public function set_import_type( $type ) {
 		$this->import_type = $type;
 	}
 
 	/**
-	 * Set delimiter.
+	 * Set field mapping.
 	 *
-	 * @param string $delimiter CSV delimiter.
+	 * @param array $mapping Column to field mapping.
 	 */
-	public function set_delimiter( $delimiter ) {
-		$this->delimiter = $delimiter;
+	public function set_mapping( $mapping ) {
+		$this->mapping = $mapping;
 	}
 
 	/**
-	 * Get file headers.
+	 * Get CSV headers.
 	 *
-	 * @return array|WP_Error Headers or error.
+	 * @return array|\WP_Error
 	 */
 	public function get_headers() {
 		if ( ! file_exists( $this->file_path ) ) {
-			return new \WP_Error( 'file_not_found', __( 'File not found.', 'syncpoint-crm' ) );
+			return new \WP_Error( 'file_not_found', __( 'CSV file not found.', 'syncpoint-crm' ) );
 		}
 
 		$handle = fopen( $this->file_path, 'r' );
 		if ( ! $handle ) {
-			return new \WP_Error( 'cannot_open', __( 'Cannot open file.', 'syncpoint-crm' ) );
+			return new \WP_Error( 'file_open_error', __( 'Could not open CSV file.', 'syncpoint-crm' ) );
 		}
 
-		$this->headers = fgetcsv( $handle, 0, $this->delimiter );
+		$headers = fgetcsv( $handle );
 		fclose( $handle );
 
-		return $this->headers;
+		if ( ! $headers ) {
+			return new \WP_Error( 'empty_file', __( 'CSV file is empty.', 'syncpoint-crm' ) );
+		}
+
+		$this->headers = $headers;
+		return $headers;
 	}
 
 	/**
 	 * Get preview rows.
 	 *
-	 * @param int $count Number of rows to preview.
-	 * @return array Preview rows.
+	 * @param int $count Number of rows.
+	 * @return array
 	 */
 	public function get_preview( $count = 5 ) {
 		if ( ! file_exists( $this->file_path ) ) {
@@ -139,82 +116,94 @@ class CSV_Importer {
 			return array();
 		}
 
-		// Skip header.
-		fgetcsv( $handle, 0, $this->delimiter );
-
 		$rows = array();
-		$i = 0;
+		$i    = 0;
 
-		while ( ( $row = fgetcsv( $handle, 0, $this->delimiter ) ) !== false && $i < $count ) {
+		// Skip header.
+		fgetcsv( $handle );
+
+		while ( ( $row = fgetcsv( $handle ) ) !== false && $i < $count ) {
 			$rows[] = $row;
 			$i++;
 		}
 
 		fclose( $handle );
-
 		return $rows;
 	}
 
 	/**
-	 * Run import.
+	 * Run the import.
 	 *
 	 * @param array $options Import options.
-	 * @return array Import results.
+	 * @return array
 	 */
 	public function run( $options = array() ) {
 		$defaults = array(
 			'skip_duplicates' => true,
 			'update_existing' => false,
-			'batch_size'      => 100,
 		);
 
 		$options = wp_parse_args( $options, $defaults );
 
 		if ( ! file_exists( $this->file_path ) ) {
-			$this->results['errors'][] = __( 'File not found.', 'syncpoint-crm' );
-			return $this->results;
+			return array(
+				'success' => false,
+				'message' => __( 'CSV file not found.', 'syncpoint-crm' ),
+			);
 		}
 
 		$handle = fopen( $this->file_path, 'r' );
 		if ( ! $handle ) {
-			$this->results['errors'][] = __( 'Cannot open file.', 'syncpoint-crm' );
-			return $this->results;
+			return array(
+				'success' => false,
+				'message' => __( 'Could not open CSV file.', 'syncpoint-crm' ),
+			);
 		}
 
-		// Read and skip header.
-		$this->headers = fgetcsv( $handle, 0, $this->delimiter );
+		// Skip header row.
+		$this->headers = fgetcsv( $handle );
 
-		$row_number = 1;
+		$stats = array(
+			'total'   => 0,
+			'created' => 0,
+			'updated' => 0,
+			'skipped' => 0,
+			'errors'  => 0,
+		);
 
-		while ( ( $row = fgetcsv( $handle, 0, $this->delimiter ) ) !== false ) {
-			$row_number++;
+		while ( ( $row = fgetcsv( $handle ) ) !== false ) {
+			$stats['total']++;
 
-			$result = $this->import_row( $row, $options, $row_number );
+			$result = $this->process_row( $row, $options );
 
-			if ( 'imported' === $result ) {
-				$this->results['imported']++;
+			if ( is_wp_error( $result ) ) {
+				$stats['errors']++;
+			} elseif ( 'created' === $result ) {
+				$stats['created']++;
 			} elseif ( 'updated' === $result ) {
-				$this->results['updated']++;
-			} elseif ( 'skipped' === $result ) {
-				$this->results['skipped']++;
+				$stats['updated']++;
+			} else {
+				$stats['skipped']++;
 			}
 		}
 
 		fclose( $handle );
 
-		return $this->results;
+		return array(
+			'success' => true,
+			'stats'   => $stats,
+		);
 	}
 
 	/**
-	 * Import a single row.
+	 * Process a single row.
 	 *
-	 * @param array $row        Row data.
-	 * @param array $options    Import options.
-	 * @param int   $row_number Row number for error reporting.
-	 * @return string Result (imported, updated, skipped, error).
+	 * @param array $row     CSV row data.
+	 * @param array $options Import options.
+	 * @return string|\WP_Error
 	 */
-	private function import_row( $row, $options, $row_number ) {
-		$data = $this->map_row( $row );
+	private function process_row( $row, $options ) {
+		$data = $this->map_row_to_data( $row );
 
 		if ( empty( $data ) ) {
 			return 'skipped';
@@ -222,14 +211,11 @@ class CSV_Importer {
 
 		switch ( $this->import_type ) {
 			case 'contacts':
-				return $this->import_contact( $data, $options, $row_number );
-
+				return $this->import_contact( $data, $options );
 			case 'companies':
-				return $this->import_company( $data, $options, $row_number );
-
+				return $this->import_company( $data, $options );
 			case 'transactions':
-				return $this->import_transaction( $data, $options, $row_number );
-
+				return $this->import_transaction( $data, $options );
 			default:
 				return 'skipped';
 		}
@@ -238,23 +224,20 @@ class CSV_Importer {
 	/**
 	 * Map row data using field mapping.
 	 *
-	 * @param array $row Raw row data.
-	 * @return array Mapped data.
+	 * @param array $row CSV row.
+	 * @return array
 	 */
-	private function map_row( $row ) {
+	private function map_row_to_data( $row ) {
 		$data = array();
 
 		foreach ( $this->mapping as $column_index => $field_name ) {
-			if ( empty( $field_name ) ) {
+			if ( empty( $field_name ) || ! isset( $row[ $column_index ] ) ) {
 				continue;
 			}
 
-			$value = isset( $row[ $column_index ] ) ? trim( $row[ $column_index ] ) : '';
+			$value = trim( $row[ $column_index ] );
 
-			// Handle special fields.
-			if ( 'tags' === $field_name && ! empty( $value ) ) {
-				$data['tags'] = array_map( 'trim', explode( ',', $value ) );
-			} else {
+			if ( '' !== $value ) {
 				$data[ $field_name ] = $value;
 			}
 		}
@@ -265,263 +248,187 @@ class CSV_Importer {
 	/**
 	 * Import a contact.
 	 *
-	 * @param array $data       Contact data.
-	 * @param array $options    Import options.
-	 * @param int   $row_number Row number.
-	 * @return string Result.
+	 * @param array $data    Contact data.
+	 * @param array $options Import options.
+	 * @return string|\WP_Error
 	 */
-	private function import_contact( $data, $options, $row_number ) {
-		// Email is required.
+	private function import_contact( $data, $options ) {
 		if ( empty( $data['email'] ) ) {
-			$this->results['errors'][] = sprintf(
-				/* translators: %d: row number */
-				__( 'Row %d: Missing email address.', 'syncpoint-crm' ),
-				$row_number
-			);
-			return 'error';
+			return new \WP_Error( 'missing_email', __( 'Email is required.', 'syncpoint-crm' ) );
 		}
 
-		// Validate email.
-		if ( ! is_email( $data['email'] ) ) {
-			$this->results['errors'][] = sprintf(
-				/* translators: %1$d: row number, %2$s: email */
-				__( 'Row %1$d: Invalid email "%2$s".', 'syncpoint-crm' ),
-				$row_number,
-				$data['email']
-			);
-			return 'error';
-		}
-
-		// Check for existing contact.
-		$existing = scrm_get_contact_by_email( $data['email'] );
+		$email    = sanitize_email( $data['email'] );
+		$existing = scrm_get_contact_by_email( $email );
 
 		if ( $existing ) {
-			if ( $options['update_existing'] ) {
-				$result = scrm_update_contact( $existing->id, $data );
-
-				if ( is_wp_error( $result ) ) {
-					$this->results['errors'][] = sprintf(
-						/* translators: %1$d: row number, %2$s: error */
-						__( 'Row %1$d: %2$s', 'syncpoint-crm' ),
-						$row_number,
-						$result->get_error_message()
-					);
-					return 'error';
-				}
-
-				return 'updated';
-			}
-
-			if ( $options['skip_duplicates'] ) {
+			if ( $options['skip_duplicates'] && ! $options['update_existing'] ) {
 				return 'skipped';
 			}
-		}
 
-		// Set defaults.
-		if ( empty( $data['type'] ) ) {
-			$data['type'] = 'customer';
-		}
+			if ( $options['update_existing'] ) {
+				$update_data = $this->sanitize_contact_data( $data );
+				unset( $update_data['email'] );
 
-		if ( empty( $data['status'] ) ) {
-			$data['status'] = 'active';
-		}
-
-		$data['source'] = 'import';
-
-		// Handle company creation.
-		if ( ! empty( $data['company_name'] ) ) {
-			$company_id = $this->find_or_create_company( $data['company_name'] );
-			if ( $company_id ) {
-				$data['company_id'] = $company_id;
+				$result = scrm_update_contact( $existing->id, $update_data );
+				return is_wp_error( $result ) ? $result : 'updated';
 			}
-			unset( $data['company_name'] );
+
+			return 'skipped';
 		}
 
-		$result = scrm_create_contact( $data );
+		$contact_data = $this->sanitize_contact_data( $data );
+		$contact_id   = scrm_create_contact( $contact_data );
 
-		if ( is_wp_error( $result ) ) {
-			$this->results['errors'][] = sprintf(
-				/* translators: %1$d: row number, %2$s: error */
-				__( 'Row %1$d: %2$s', 'syncpoint-crm' ),
-				$row_number,
-				$result->get_error_message()
-			);
-			return 'error';
+		return is_wp_error( $contact_id ) ? $contact_id : 'created';
+	}
+
+	/**
+	 * Sanitize contact data.
+	 *
+	 * @param array $data Raw data.
+	 * @return array
+	 */
+	private function sanitize_contact_data( $data ) {
+		$sanitized = array();
+
+		$text_fields = array( 'first_name', 'last_name', 'phone', 'type', 'status', 'source', 'city', 'state', 'postal_code', 'country' );
+
+		foreach ( $text_fields as $field ) {
+			if ( isset( $data[ $field ] ) ) {
+				$sanitized[ $field ] = sanitize_text_field( $data[ $field ] );
+			}
 		}
 
-		return 'imported';
+		if ( isset( $data['email'] ) ) {
+			$sanitized['email'] = sanitize_email( $data['email'] );
+		}
+
+		if ( empty( $sanitized['type'] ) ) {
+			$sanitized['type'] = 'customer';
+		}
+
+		if ( empty( $sanitized['status'] ) ) {
+			$sanitized['status'] = 'active';
+		}
+
+		if ( empty( $sanitized['source'] ) ) {
+			$sanitized['source'] = 'csv_import';
+		}
+
+		return $sanitized;
 	}
 
 	/**
 	 * Import a company.
 	 *
-	 * @param array $data       Company data.
-	 * @param array $options    Import options.
-	 * @param int   $row_number Row number.
-	 * @return string Result.
+	 * @param array $data    Company data.
+	 * @param array $options Import options.
+	 * @return string|\WP_Error
 	 */
-	private function import_company( $data, $options, $row_number ) {
+	private function import_company( $data, $options ) {
 		if ( empty( $data['name'] ) ) {
-			$this->results['errors'][] = sprintf(
-				/* translators: %d: row number */
-				__( 'Row %d: Missing company name.', 'syncpoint-crm' ),
-				$row_number
-			);
-			return 'error';
+			return new \WP_Error( 'missing_name', __( 'Company name is required.', 'syncpoint-crm' ) );
 		}
 
-		// Check for existing by name.
+		$name = sanitize_text_field( $data['name'] );
+
 		global $wpdb;
 		$existing = $wpdb->get_row( $wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}scrm_companies WHERE name = %s",
-			$data['name']
+			$name
 		) );
 
 		if ( $existing ) {
-			if ( $options['update_existing'] ) {
-				$result = scrm_update_company( $existing->id, $data );
+			if ( $options['skip_duplicates'] && ! $options['update_existing'] ) {
+				return 'skipped';
+			}
 
-				if ( is_wp_error( $result ) ) {
-					$this->results['errors'][] = sprintf(
-						/* translators: %1$d: row number, %2$s: error */
-						__( 'Row %1$d: %2$s', 'syncpoint-crm' ),
-						$row_number,
-						$result->get_error_message()
-					);
-					return 'error';
-				}
+			if ( $options['update_existing'] ) {
+				$update_data = $this->sanitize_company_data( $data );
+				unset( $update_data['name'] );
+
+				$wpdb->update(
+					$wpdb->prefix . 'scrm_companies',
+					$update_data,
+					array( 'id' => $existing->id )
+				);
 
 				return 'updated';
 			}
 
-			if ( $options['skip_duplicates'] ) {
-				return 'skipped';
+			return 'skipped';
+		}
+
+		$company_data = $this->sanitize_company_data( $data );
+		$result       = scrm_create_company( $company_data );
+
+		return is_wp_error( $result ) ? $result : 'created';
+	}
+
+	/**
+	 * Sanitize company data.
+	 *
+	 * @param array $data Raw data.
+	 * @return array
+	 */
+	private function sanitize_company_data( $data ) {
+		$sanitized = array();
+
+		$text_fields = array( 'name', 'phone', 'city', 'state', 'postal_code', 'country', 'industry' );
+
+		foreach ( $text_fields as $field ) {
+			if ( isset( $data[ $field ] ) ) {
+				$sanitized[ $field ] = sanitize_text_field( $data[ $field ] );
 			}
 		}
 
-		$result = scrm_create_company( $data );
-
-		if ( is_wp_error( $result ) ) {
-			$this->results['errors'][] = sprintf(
-				/* translators: %1$d: row number, %2$s: error */
-				__( 'Row %1$d: %2$s', 'syncpoint-crm' ),
-				$row_number,
-				$result->get_error_message()
-			);
-			return 'error';
+		if ( isset( $data['email'] ) ) {
+			$sanitized['email'] = sanitize_email( $data['email'] );
 		}
 
-		return 'imported';
+		if ( isset( $data['website'] ) ) {
+			$sanitized['website'] = esc_url_raw( $data['website'] );
+		}
+
+		return $sanitized;
 	}
 
 	/**
 	 * Import a transaction.
 	 *
-	 * @param array $data       Transaction data.
-	 * @param array $options    Import options.
-	 * @param int   $row_number Row number.
-	 * @return string Result.
+	 * @param array $data    Transaction data.
+	 * @param array $options Import options.
+	 * @return string|\WP_Error
 	 */
-	private function import_transaction( $data, $options, $row_number ) {
-		// Contact identifier required.
+	private function import_transaction( $data, $options ) {
 		if ( empty( $data['contact_email'] ) && empty( $data['contact_id'] ) ) {
-			$this->results['errors'][] = sprintf(
-				/* translators: %d: row number */
-				__( 'Row %d: Missing contact identifier.', 'syncpoint-crm' ),
-				$row_number
-			);
-			return 'error';
+			return new \WP_Error( 'missing_contact', __( 'Contact email or ID is required.', 'syncpoint-crm' ) );
 		}
 
-		// Find contact.
 		$contact = null;
+
 		if ( ! empty( $data['contact_email'] ) ) {
-			$contact = scrm_get_contact_by_email( $data['contact_email'] );
+			$contact = scrm_get_contact_by_email( sanitize_email( $data['contact_email'] ) );
 		} elseif ( ! empty( $data['contact_id'] ) ) {
-			$contact = scrm_get_contact( $data['contact_id'] );
+			$contact = scrm_get_contact( absint( $data['contact_id'] ) );
 		}
 
 		if ( ! $contact ) {
-			$this->results['errors'][] = sprintf(
-				/* translators: %d: row number */
-				__( 'Row %d: Contact not found.', 'syncpoint-crm' ),
-				$row_number
-			);
-			return 'error';
-		}
-
-		// Amount required.
-		if ( empty( $data['amount'] ) ) {
-			$this->results['errors'][] = sprintf(
-				/* translators: %d: row number */
-				__( 'Row %d: Missing amount.', 'syncpoint-crm' ),
-				$row_number
-			);
-			return 'error';
+			return new \WP_Error( 'contact_not_found', __( 'Contact not found.', 'syncpoint-crm' ) );
 		}
 
 		$txn_data = array(
 			'contact_id'  => $contact->id,
-			'amount'      => floatval( $data['amount'] ),
-			'type'        => $data['type'] ?? 'payment',
-			'gateway'     => $data['gateway'] ?? 'import',
-			'currency'    => $data['currency'] ?? $contact->currency,
-			'status'      => $data['status'] ?? 'completed',
-			'description' => $data['description'] ?? '',
+			'type'        => sanitize_text_field( $data['type'] ?? 'payment' ),
+			'gateway'     => sanitize_text_field( $data['gateway'] ?? 'import' ),
+			'amount'      => floatval( $data['amount'] ?? 0 ),
+			'currency'    => sanitize_text_field( $data['currency'] ?? scrm_get_default_currency() ),
+			'status'      => sanitize_text_field( $data['status'] ?? 'completed' ),
+			'description' => sanitize_text_field( $data['description'] ?? '' ),
 		);
-
-		if ( ! empty( $data['gateway_transaction_id'] ) ) {
-			$txn_data['gateway_transaction_id'] = $data['gateway_transaction_id'];
-		}
 
 		$result = scrm_create_transaction( $txn_data );
 
-		if ( is_wp_error( $result ) ) {
-			$this->results['errors'][] = sprintf(
-				/* translators: %1$d: row number, %2$s: error */
-				__( 'Row %1$d: %2$s', 'syncpoint-crm' ),
-				$row_number,
-				$result->get_error_message()
-			);
-			return 'error';
-		}
-
-		return 'imported';
-	}
-
-	/**
-	 * Find or create a company by name.
-	 *
-	 * @param string $name Company name.
-	 * @return int|null Company ID or null.
-	 */
-	private function find_or_create_company( $name ) {
-		global $wpdb;
-
-		$existing = $wpdb->get_var( $wpdb->prepare(
-			"SELECT id FROM {$wpdb->prefix}scrm_companies WHERE name = %s",
-			$name
-		) );
-
-		if ( $existing ) {
-			return (int) $existing;
-		}
-
-		$result = scrm_create_company( array( 'name' => $name ) );
-
-		if ( is_wp_error( $result ) ) {
-			return null;
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Get results.
-	 *
-	 * @return array Import results.
-	 */
-	public function get_results() {
-		return $this->results;
+		return is_wp_error( $result ) ? $result : 'created';
 	}
 }
