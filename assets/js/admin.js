@@ -97,11 +97,16 @@
             var $button = $(this);
             var logId = $button.data('id');
 
+            if (!logId) {
+                alert('Invalid sync log ID.');
+                return;
+            }
+
             if (!confirm(scrm.i18n.confirm_cancel || 'Are you sure you want to cancel this sync?')) {
                 return;
             }
 
-            $button.prop('disabled', true).text('...');
+            $button.prop('disabled', true).text('Cancelling...');
 
             $.ajax({
                 url: scrm.ajax_url,
@@ -113,14 +118,18 @@
                 },
                 success: function (response) {
                     if (response.success) {
-                        location.reload();
+                        SCRMAdmin.notify(response.data.message || 'Sync cancelled.', 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1000);
                     } else {
                         alert(response.data.message || scrm.i18n.error);
                         $button.prop('disabled', false).text('Cancel');
                     }
                 },
-                error: function () {
-                    alert(scrm.i18n.error);
+                error: function (xhr, status, error) {
+                    console.error('Cancel sync error:', error);
+                    alert(scrm.i18n.error || 'An error occurred.');
                     $button.prop('disabled', false).text('Cancel');
                 }
             });

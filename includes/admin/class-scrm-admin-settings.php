@@ -551,7 +551,7 @@ class SCRM_Admin_Settings {
 								<?php echo esc_html( ucfirst( $log->status ) ); ?>
 							</span>
 							<?php if ( 'running' === $log->status ) : ?>
-								<button type="button" class="button button-link scrm-cancel-sync" data-id="<?php echo absint( $log->id ); ?>" style="color: #d63638; text-decoration: none;">
+								<button type="button" class="button button-link scrm-cancel-sync" data-id="<?php echo absint( $log->id ); ?>" style="color: #d63638; text-decoration: none; margin-left: 5px;">
 									<?php esc_html_e( 'Cancel', 'syncpoint-crm' ); ?>
 								</button>
 							<?php endif; ?>
@@ -566,6 +566,45 @@ class SCRM_Admin_Settings {
 				<?php endforeach; ?>
 			</tbody>
 		</table>
+
+		<script>
+		jQuery(document).ready(function($) {
+			$('.scrm-cancel-sync').on('click', function(e) {
+				e.preventDefault();
+				
+				var $button = $(this);
+				var logId = $button.data('id');
+				
+				if (!confirm('<?php echo esc_js( __( 'Are you sure you want to cancel this sync?', 'syncpoint-crm' ) ); ?>')) {
+					return;
+				}
+				
+				$button.prop('disabled', true).text('<?php echo esc_js( __( 'Cancelling...', 'syncpoint-crm' ) ); ?>');
+				
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'scrm_cancel_sync',
+						log_id: logId,
+						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_admin_nonce' ) ); ?>'
+					},
+					success: function(response) {
+						if (response.success) {
+							location.reload();
+						} else {
+							alert(response.data.message || '<?php echo esc_js( __( 'Failed to cancel sync.', 'syncpoint-crm' ) ); ?>');
+							$button.prop('disabled', false).text('<?php echo esc_js( __( 'Cancel', 'syncpoint-crm' ) ); ?>');
+						}
+					},
+					error: function() {
+						alert('<?php echo esc_js( __( 'An error occurred.', 'syncpoint-crm' ) ); ?>');
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Cancel', 'syncpoint-crm' ) ); ?>');
+					}
+				});
+			});
+		});
+		</script>
 		<?php
 	}
 

@@ -209,11 +209,11 @@ class SCRM_Admin {
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce'    => wp_create_nonce( 'scrm_admin_nonce' ),
 			'i18n'     => array(
-				'confirm_delete' => __( 'Are you sure you want to delete this item?', 'syncpoint-crm' ),
-				'confirm_cancel' => __( 'Are you sure you want to cancel this sync?', 'syncpoint-crm' ),
 				'saving'         => __( 'Saving...', 'syncpoint-crm' ),
 				'saved'          => __( 'Saved!', 'syncpoint-crm' ),
 				'error'          => __( 'An error occurred. Please try again.', 'syncpoint-crm' ),
+				'confirm_delete' => __( 'Are you sure you want to delete this item?', 'syncpoint-crm' ),
+				'confirm_cancel' => __( 'Are you sure you want to cancel this sync?', 'syncpoint-crm' ),
 			),
 		) );
 

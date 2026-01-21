@@ -61,10 +61,13 @@ class SCRM_AJAX {
 	 * Verify nonce and capability.
 	 *
 	 * @param string $action Nonce action.
+	 * @param string $nonce_field Nonce field name.
 	 * @return bool True if valid.
 	 */
-	private function verify_request( $action = 'scrm_ajax_nonce' ) {
-		if ( ! check_ajax_referer( $action, 'nonce', false ) ) {
+	private function verify_request( $action = 'scrm_admin_nonce', $nonce_field = 'nonce' ) {
+		$nonce = isset( $_POST[ $nonce_field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $nonce_field ] ) ) : '';
+		
+		if ( ! wp_verify_nonce( $nonce, $action ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
 			return false;
 		}
@@ -598,12 +601,27 @@ class SCRM_AJAX {
 	 * Cancel running sync.
 	 */
 	public function handle_cancel_sync() {
-		$this->verify_request();
+		// Use the same nonce action as the admin scripts
+		if ( ! wp_verify_nonce( $_POST['nonce'] ?? '', 'scrm_admin_nonce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'syncpoint-crm' ) ) );
+			return;
+		}
 
 		$log_id = isset( $_POST['log_id'] ) ? absint( $_POST['log_id'] ) : 0;
 		if ( ! $log_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid log ID.', 'syncpoint-crm' ) ) );
+			return;
 		}
+
+		// Also clear any running transient flags
+		delete_transient( 'scrm_paypal_sync_running' );
+		delete_transient( 'scrm_stripe_sync_running' );
+		delete_transient( 'scrm_paypal_import_progress' );
 
 		$result = scrm_complete_sync_log( $log_id, 'cancelled', 0, 0, 0, __( 'Cancelled by user.', 'syncpoint-crm' ) );
 

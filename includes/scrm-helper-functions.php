@@ -970,7 +970,7 @@ function scrm_start_sync_log( $gateway, $sync_type = 'manual' ) {
  *
  * @since 1.0.0
  * @param int    $log_id           Sync log ID.
- * @param string $status           Status (completed, failed).
+ * @param string $status           Status (completed, failed, cancelled).
  * @param int    $synced           Transactions synced.
  * @param int    $skipped          Transactions skipped.
  * @param int    $contacts_created Contacts created.
@@ -981,18 +981,47 @@ function scrm_complete_sync_log( $log_id, $status, $synced = 0, $skipped = 0, $c
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_sync_log';
 
-	return (bool) $wpdb->update(
+	$result = $wpdb->update(
 		$table,
 		array(
 			'status'               => sanitize_text_field( $status ),
 			'transactions_synced'  => absint( $synced ),
 			'transactions_skipped' => absint( $skipped ),
 			'contacts_created'     => absint( $contacts_created ),
-			'error_message'        => sanitize_textarea_field( $error_message ),
+			'error_message'        => sanitize_text_field( $error_message ),
 			'completed_at'         => current_time( 'mysql' ),
 		),
-		array( 'id' => absint( $log_id ) )
+		array( 'id' => absint( $log_id ) ),
+		array( '%s', '%d', '%d', '%d', '%s', '%s' ),
+		array( '%d' )
 	);
+
+	// Clear running transients when sync completes
+	delete_transient( 'scrm_paypal_sync_running' );
+	delete_transient( 'scrm_stripe_sync_running' );
+
+	return false !== $result;
+}
+
+/**
+ * Check if a sync is currently running.
+ *
+ * @since 1.0.0
+ * @param string $gateway Gateway name.
+ * @return bool True if sync is running.
+ */
+function scrm_is_sync_running( $gateway ) {
+	global $wpdb;
+	$table = $wpdb->prefix . 'scrm_sync_log';
+
+	// Check for running status in database
+	$running = $wpdb->get_var( $wpdb->prepare(
+		"SELECT id FROM {$table} WHERE gateway = %s AND status = 'running' AND started_at > %s LIMIT 1",
+		$gateway,
+		date( 'Y-m-d H:i:s', strtotime( '-30 minutes' ) ) // Consider stale after 30 minutes
+	) );
+
+	return ! empty( $running );
 }
 
 /**
@@ -1001,7 +1030,7 @@ function scrm_complete_sync_log( $log_id, $status, $synced = 0, $skipped = 0, $c
  * @since 1.0.0
  * @param string $gateway Gateway name.
  * @param int    $limit   Number of logs to return.
- * @return array Array of sync log entries.
+ * @return array Array of sync log objects.
  */
 function scrm_get_sync_logs( $gateway, $limit = 10 ) {
 	global $wpdb;
@@ -1015,11 +1044,11 @@ function scrm_get_sync_logs( $gateway, $limit = 10 ) {
 }
 
 /**
- * Get last successful sync for a gateway.
+ * Get last completed sync for a gateway.
  *
  * @since 1.0.0
  * @param string $gateway Gateway name.
- * @return object|null Sync log entry or null.
+ * @return object|null Sync log object or null.
  */
 function scrm_get_last_sync( $gateway ) {
 	global $wpdb;
@@ -1029,25 +1058,6 @@ function scrm_get_last_sync( $gateway ) {
 		"SELECT * FROM {$table} WHERE gateway = %s AND status = 'completed' ORDER BY completed_at DESC LIMIT 1",
 		$gateway
 	) );
-}
-
-/**
- * Check if a sync is currently running for a gateway.
- *
- * @since 1.0.0
- * @param string $gateway Gateway name.
- * @return bool True if sync is running.
- */
-function scrm_is_sync_running( $gateway ) {
-	global $wpdb;
-	$table = $wpdb->prefix . 'scrm_sync_log';
-
-	$running = $wpdb->get_var( $wpdb->prepare(
-		"SELECT id FROM {$table} WHERE gateway = %s AND status = 'running' LIMIT 1",
-		$gateway
-	) );
-
-	return (bool) $running;
 }
 
 /**
