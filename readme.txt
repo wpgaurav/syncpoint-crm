@@ -5,7 +5,7 @@ Tags: crm, customer relationship management, invoicing, paypal, stripe, contacts
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.1.7
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -139,6 +139,17 @@ Definitely! We provide 50+ hooks and filters for customization. Check the Develo
 6. CSV import wizard
 
 == Changelog ==
+
+= 1.2.1 =
+* Fixed syntax errors in scrm-functions.php (stray spaces in array keys)
+* Fixed Stripe gateway missing is_available() method implementation
+* Code cleanup and stability improvements
+
+= 1.2.0 =
+* Fixed critical error: "Cannot redeclare function scrm_update_company()"
+* Fixed critical error: "Cannot redeclare function scrm_get_company_by_name()"
+* Fixed critical error: "Cannot redeclare function scrm_cache_delete_group()"
+* Added Stripe gateway class with transaction sync and webhook support
 
 = 1.1.7 =
 * Added genuine data sources for dashboard charts

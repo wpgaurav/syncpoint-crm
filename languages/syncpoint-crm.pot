@@ -1,21 +1,21 @@
-# Copyright (C) starter-crm
+# Copyright (C) SyncPoint CRM
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Starter CRM 1.0.0\n"
-"Report-Msgid-Bugs-To: https://example.com/starter-crm\n"
+"Project-Id-Version: SyncPoint CRM 1.2.1\n"
+"Report-Msgid-Bugs-To: https://gatilab.com/syncpoint-crm\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-01-21T00:00:00+00:00\n"
+"POT-Creation-Date: 2026-01-22T00:00:00+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: Starter CRM\n"
-"X-Domain: starter-crm\n"
+"X-Generator: SyncPoint CRM\n"
+"X-Domain: syncpoint-crm\n"
 
 #. Plugin Name of the plugin
-msgid "Starter CRM"
+msgid "SyncPoint CRM"
 msgstr ""
 
 #. Description of the plugin

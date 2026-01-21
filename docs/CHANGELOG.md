@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.1] - 2026-01-22
+
+### Fixed
+- Fixed syntax errors in `scrm-functions.php` with stray spaces in array keys causing parse errors.
+- Fixed Stripe gateway class missing `is_available()` method implementation.
+- Code cleanup and stability improvements.
+
 ## [1.2.0] - 2026-01-22
 
 ### Fixed
