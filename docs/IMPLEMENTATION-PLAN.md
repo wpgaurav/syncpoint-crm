@@ -1,4 +1,4 @@
-# Starter CRM - Implementation Plan
+# SyncPoint CRM - Implementation Plan
 
 **Version**: 1.0.0  
 **Status**: Planning Phase  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Starter CRM is a lightweight, extensible WordPress CRM plugin designed for freelancers, small agencies, and solopreneurs. It focuses on customer relationship management with integrated payment gateway support (PayPal, Stripe), transaction tracking, and simple invoicing.
+SyncPoint CRM is a lightweight, extensible WordPress CRM plugin designed for freelancers, small agencies, and solopreneurs. It focuses on customer relationship management with integrated payment gateway support (PayPal, Stripe), transaction tracking, and simple invoicing.
 
 ### Core Philosophy
 
@@ -172,8 +172,8 @@ Starter CRM is a lightweight, extensible WordPress CRM plugin designed for freel
 ## File Structure
 
 ```
-starter-crm/
-├── starter-crm.php                 # Main plugin file
+syncpoint-crm/
+├── syncpoint-crm.php                 # Main plugin file
 ├── uninstall.php                   # Clean uninstall
 ├── readme.txt                      # WordPress.org readme
 │
@@ -264,7 +264,7 @@ starter-crm/
 │       └── settings.php
 │
 ├── languages/
-│   └── starter-crm.pot              # Translation template
+│   └── syncpoint-crm.pot              # Translation template
 │
 └── docs/
     ├── IMPLEMENTATION-PLAN.md       # This file
@@ -285,7 +285,7 @@ starter-crm/
 
 | Task | File(s) | Complexity |
 |------|---------|------------|
-| Main plugin file with PSR-4 autoloading | `starter-crm.php` | Medium |
+| Main plugin file with PSR-4 autoloading | `syncpoint-crm.php` | Medium |
 | Plugin activation/deactivation handlers | `class-scrm-activator.php`, `class-scrm-deactivator.php` | Medium |
 | Database table creation | `class-scrm-activator.php` | High |
 | Admin menu structure | `class-scrm-admin-menu.php` | Low |
@@ -589,7 +589,7 @@ apply_filters( 'scrm_webhook_payload_mapping', $mapping, $source );
 | Activity logging | `class-scrm-activity.php` | Medium |
 | Export functionality | `class-scrm-csv-exporter.php` | Medium |
 | Uninstall cleanup | `uninstall.php` | Low |
-| Translation file | `languages/starter-crm.pot` | Low |
+| Translation file | `languages/syncpoint-crm.pot` | Low |
 | Complete documentation | `docs/` | Medium |
 
 ---
@@ -627,7 +627,7 @@ class SCRM_Admin {
 
     private function is_scrm_page( $hook ) {
         $scrm_pages = array(
-            'toplevel_page_starter-crm',
+            'toplevel_page_syncpoint-crm',
             'crm_page_scrm-contacts',
             'crm_page_scrm-companies',
             'crm_page_scrm-transactions',

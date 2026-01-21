@@ -170,6 +170,9 @@ class SCRM_Admin_Settings {
 	 */
 	private function render_paypal_settings() {
 		$settings = scrm_get_settings( 'paypal' );
+		$last_sync = scrm_get_last_sync( 'paypal' );
+		$next_sync = scrm_get_next_sync_time( 'paypal' );
+		$is_running = scrm_is_sync_running( 'paypal' );
 		?>
 		<table class="form-table">
 			<tr>
@@ -237,6 +240,157 @@ class SCRM_Admin_Settings {
 				</td>
 			</tr>
 		</table>
+
+		<h2 class="title"><?php esc_html_e( 'Transaction Sync', 'syncpoint-crm' ); ?></h2>
+
+		<table class="form-table">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Auto Sync', 'syncpoint-crm' ); ?></th>
+				<td>
+					<label>
+						<input type="checkbox" name="paypal[auto_sync]" value="1"
+							<?php checked( ! empty( $settings['auto_sync'] ) ); ?>>
+						<?php esc_html_e( 'Enable automatic transaction sync', 'syncpoint-crm' ); ?>
+					</label>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_sync_frequency"><?php esc_html_e( 'Sync Frequency', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<select name="paypal[sync_frequency]" id="paypal_sync_frequency">
+						<option value="hourly" <?php selected( $settings['sync_frequency'] ?? 'daily', 'hourly' ); ?>>
+							<?php esc_html_e( 'Hourly', 'syncpoint-crm' ); ?>
+						</option>
+						<option value="twicedaily" <?php selected( $settings['sync_frequency'] ?? 'daily', 'twicedaily' ); ?>>
+							<?php esc_html_e( 'Twice Daily', 'syncpoint-crm' ); ?>
+						</option>
+						<option value="daily" <?php selected( $settings['sync_frequency'] ?? 'daily', 'daily' ); ?>>
+							<?php esc_html_e( 'Daily', 'syncpoint-crm' ); ?>
+						</option>
+					</select>
+					<?php if ( $next_sync ) : ?>
+						<p class="description">
+							<?php
+							printf(
+								/* translators: %s: next sync time */
+								esc_html__( 'Next scheduled sync: %s', 'syncpoint-crm' ),
+								esc_html( scrm_format_datetime( date( 'Y-m-d H:i:s', $next_sync ) ) )
+							);
+							?>
+						</p>
+					<?php endif; ?>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Manual Sync', 'syncpoint-crm' ); ?></th>
+				<td>
+					<button type="button" id="scrm-paypal-sync-now" class="button button-secondary" <?php disabled( $is_running ); ?>>
+						<?php $is_running ? esc_html_e( 'Sync in Progress...', 'syncpoint-crm' ) : esc_html_e( 'Sync Now', 'syncpoint-crm' ); ?>
+					</button>
+					<span id="scrm-paypal-sync-status" style="margin-left: 10px;"></span>
+					<?php if ( $last_sync ) : ?>
+						<p class="description">
+							<?php
+							printf(
+								/* translators: 1: last sync time, 2: transactions synced */
+								esc_html__( 'Last sync: %1$s (%2$d transactions synced)', 'syncpoint-crm' ),
+								esc_html( scrm_format_datetime( $last_sync->completed_at ) ),
+								absint( $last_sync->transactions_synced )
+							);
+							?>
+						</p>
+					<?php endif; ?>
+				</td>
+			</tr>
+		</table>
+
+		<?php $this->render_sync_history( 'paypal' ); ?>
+
+		<script>
+		jQuery(document).ready(function($) {
+			$('#scrm-paypal-sync-now').on('click', function() {
+				var $button = $(this);
+				var $status = $('#scrm-paypal-sync-status');
+
+				$button.prop('disabled', true).text('<?php echo esc_js( __( 'Syncing...', 'syncpoint-crm' ) ); ?>');
+				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'scrm_sync_paypal',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_sync_paypal' ) ); ?>'
+					},
+					success: function(response) {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Sync Now', 'syncpoint-crm' ) ); ?>');
+						if (response.success) {
+							$status.html('<span style="color: green;">' + response.data.message + '</span>');
+							setTimeout(function() { location.reload(); }, 2000);
+						} else {
+							$status.html('<span style="color: red;">' + response.data.message + '</span>');
+						}
+					},
+					error: function() {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Sync Now', 'syncpoint-crm' ) ); ?>');
+						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred.', 'syncpoint-crm' ) ); ?></span>');
+					}
+				});
+			});
+		});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render sync history table.
+	 *
+	 * @param string $gateway Gateway name.
+	 */
+	private function render_sync_history( $gateway ) {
+		$logs = scrm_get_sync_logs( $gateway, 5 );
+
+		if ( empty( $logs ) ) {
+			return;
+		}
+		?>
+		<h3><?php esc_html_e( 'Sync History', 'syncpoint-crm' ); ?></h3>
+		<table class="wp-list-table widefat fixed striped" style="max-width: 800px;">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Date', 'syncpoint-crm' ); ?></th>
+					<th><?php esc_html_e( 'Type', 'syncpoint-crm' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'syncpoint-crm' ); ?></th>
+					<th><?php esc_html_e( 'Synced', 'syncpoint-crm' ); ?></th>
+					<th><?php esc_html_e( 'Skipped', 'syncpoint-crm' ); ?></th>
+					<th><?php esc_html_e( 'Contacts', 'syncpoint-crm' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $logs as $log ) : ?>
+					<tr>
+						<td><?php echo esc_html( scrm_format_datetime( $log->started_at ) ); ?></td>
+						<td><?php echo esc_html( ucfirst( $log->sync_type ) ); ?></td>
+						<td>
+							<?php
+							$status_class = 'completed' === $log->status ? 'success' : ( 'running' === $log->status ? 'warning' : 'error' );
+							?>
+							<span class="scrm-status scrm-status--<?php echo esc_attr( $status_class ); ?>">
+								<?php echo esc_html( ucfirst( $log->status ) ); ?>
+							</span>
+							<?php if ( ! empty( $log->error_message ) ) : ?>
+								<br><small style="color: red;"><?php echo esc_html( $log->error_message ); ?></small>
+							<?php endif; ?>
+						</td>
+						<td><?php echo absint( $log->transactions_synced ); ?></td>
+						<td><?php echo absint( $log->transactions_skipped ); ?></td>
+						<td><?php echo absint( $log->contacts_created ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
 		<?php
 	}
 
@@ -245,6 +399,9 @@ class SCRM_Admin_Settings {
 	 */
 	private function render_stripe_settings() {
 		$settings = scrm_get_settings( 'stripe' );
+		$last_sync = scrm_get_last_sync( 'stripe' );
+		$next_sync = scrm_get_next_sync_time( 'stripe' );
+		$is_running = scrm_is_sync_running( 'stripe' );
 		?>
 		<table class="form-table">
 			<tr>
@@ -347,6 +504,107 @@ class SCRM_Admin_Settings {
 				</td>
 			</tr>
 		</table>
+
+		<h2 class="title"><?php esc_html_e( 'Transaction Sync', 'syncpoint-crm' ); ?></h2>
+
+		<table class="form-table">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Auto Sync', 'syncpoint-crm' ); ?></th>
+				<td>
+					<label>
+						<input type="checkbox" name="stripe[auto_sync]" value="1"
+							<?php checked( ! empty( $settings['auto_sync'] ) ); ?>>
+						<?php esc_html_e( 'Enable automatic transaction sync', 'syncpoint-crm' ); ?>
+					</label>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="stripe_sync_frequency"><?php esc_html_e( 'Sync Frequency', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<select name="stripe[sync_frequency]" id="stripe_sync_frequency">
+						<option value="hourly" <?php selected( $settings['sync_frequency'] ?? 'daily', 'hourly' ); ?>>
+							<?php esc_html_e( 'Hourly', 'syncpoint-crm' ); ?>
+						</option>
+						<option value="twicedaily" <?php selected( $settings['sync_frequency'] ?? 'daily', 'twicedaily' ); ?>>
+							<?php esc_html_e( 'Twice Daily', 'syncpoint-crm' ); ?>
+						</option>
+						<option value="daily" <?php selected( $settings['sync_frequency'] ?? 'daily', 'daily' ); ?>>
+							<?php esc_html_e( 'Daily', 'syncpoint-crm' ); ?>
+						</option>
+					</select>
+					<?php if ( $next_sync ) : ?>
+						<p class="description">
+							<?php
+							printf(
+								/* translators: %s: next sync time */
+								esc_html__( 'Next scheduled sync: %s', 'syncpoint-crm' ),
+								esc_html( scrm_format_datetime( date( 'Y-m-d H:i:s', $next_sync ) ) )
+							);
+							?>
+						</p>
+					<?php endif; ?>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Manual Sync', 'syncpoint-crm' ); ?></th>
+				<td>
+					<button type="button" id="scrm-stripe-sync-now" class="button button-secondary" <?php disabled( $is_running ); ?>>
+						<?php $is_running ? esc_html_e( 'Sync in Progress...', 'syncpoint-crm' ) : esc_html_e( 'Sync Now', 'syncpoint-crm' ); ?>
+					</button>
+					<span id="scrm-stripe-sync-status" style="margin-left: 10px;"></span>
+					<?php if ( $last_sync ) : ?>
+						<p class="description">
+							<?php
+							printf(
+								/* translators: 1: last sync time, 2: transactions synced */
+								esc_html__( 'Last sync: %1$s (%2$d transactions synced)', 'syncpoint-crm' ),
+								esc_html( scrm_format_datetime( $last_sync->completed_at ) ),
+								absint( $last_sync->transactions_synced )
+							);
+							?>
+						</p>
+					<?php endif; ?>
+				</td>
+			</tr>
+		</table>
+
+		<?php $this->render_sync_history( 'stripe' ); ?>
+
+		<script>
+		jQuery(document).ready(function($) {
+			$('#scrm-stripe-sync-now').on('click', function() {
+				var $button = $(this);
+				var $status = $('#scrm-stripe-sync-status');
+
+				$button.prop('disabled', true).text('<?php echo esc_js( __( 'Syncing...', 'syncpoint-crm' ) ); ?>');
+				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'scrm_sync_stripe',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'scrm_sync_stripe' ) ); ?>'
+					},
+					success: function(response) {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Sync Now', 'syncpoint-crm' ) ); ?>');
+						if (response.success) {
+							$status.html('<span style="color: green;">' + response.data.message + '</span>');
+							setTimeout(function() { location.reload(); }, 2000);
+						} else {
+							$status.html('<span style="color: red;">' + response.data.message + '</span>');
+						}
+					},
+					error: function() {
+						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Sync Now', 'syncpoint-crm' ) ); ?>');
+						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred.', 'syncpoint-crm' ) ); ?></span>');
+					}
+				});
+			});
+		});
+		</script>
 		<?php
 	}
 

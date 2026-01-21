@@ -1,4 +1,4 @@
-# Starter CRM - REST API Documentation
+# SyncPoint CRM - REST API Documentation
 
 **Version**: 1.0.0  
 **Base URL**: `https://yoursite.com/wp-json/scrm/v1/`  
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Starter CRM provides a comprehensive REST API for integrating with external applications, building custom frontends, or automating workflows.
+SyncPoint CRM provides a comprehensive REST API for integrating with external applications, building custom frontends, or automating workflows.
 
 ### Authentication
 
@@ -1265,7 +1265,7 @@ $response = wp_remote_post(
 import requests
 from requests.auth import HTTPBasicAuth
 
-class StarterCRM:
+class SyncPointCRM:
     def __init__(self, base_url, username, password):
         self.base_url = f"{base_url}/wp-json/scrm/v1"
         self.auth = HTTPBasicAuth(username, password)
@@ -1287,6 +1287,6 @@ class StarterCRM:
         return response.json()
 
 # Usage
-crm = StarterCRM('https://yoursite.com', 'username', 'app-password')
+crm = SyncPointCRM('https://yoursite.com', 'username', 'app-password')
 contacts = crm.get_contacts(type='customer', per_page=50)
 ```

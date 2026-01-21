@@ -1,9 +1,9 @@
-# Starter CRM - Hooks & Filters Reference
+# SyncPoint CRM - Hooks & Filters Reference
 
 **Version**: 1.0.0  
 **Last Updated**: 2026-01-21
 
-This document lists all action hooks and filters available in Starter CRM for developers to extend functionality.
+This document lists all action hooks and filters available in SyncPoint CRM for developers to extend functionality.
 
 ---
 
@@ -1051,7 +1051,7 @@ apply_filters( 'scrm_webhook_payload_mapping', array $mapping, string $source );
 ### Actions
 
 #### `scrm_init`
-Fired after Starter CRM is fully initialized.
+Fired after SyncPoint CRM is fully initialized.
 
 ```php
 do_action( 'scrm_init' );

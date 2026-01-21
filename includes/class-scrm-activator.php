@@ -283,6 +283,26 @@ class SCRM_Activator {
 			KEY created_at (created_at)
 		) {$charset_collate};";
 		dbDelta( $sql );
+
+		// Gateway sync log table.
+		$table_name = $wpdb->prefix . 'scrm_sync_log';
+		$sql = "CREATE TABLE {$table_name} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			gateway varchar(50) NOT NULL,
+			sync_type varchar(20) NOT NULL DEFAULT 'manual',
+			status varchar(20) NOT NULL DEFAULT 'running',
+			transactions_synced int(11) DEFAULT 0,
+			transactions_skipped int(11) DEFAULT 0,
+			contacts_created int(11) DEFAULT 0,
+			error_message text DEFAULT NULL,
+			started_at datetime NOT NULL,
+			completed_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY gateway (gateway),
+			KEY status (status),
+			KEY started_at (started_at)
+		) {$charset_collate};";
+		dbDelta( $sql );
 	}
 
 	/**
@@ -309,11 +329,13 @@ class SCRM_Activator {
 				'next_transaction_number' => 1,
 			),
 			'paypal'   => array(
-				'enabled'       => false,
-				'mode'          => 'sandbox',
-				'client_id'     => '',
-				'client_secret' => '',
-				'webhook_id'    => '',
+				'enabled'        => false,
+				'mode'           => 'sandbox',
+				'client_id'      => '',
+				'client_secret'  => '',
+				'webhook_id'     => '',
+				'auto_sync'      => true,
+				'sync_frequency' => 'daily',
 			),
 			'stripe'   => array(
 				'enabled'          => false,
@@ -323,6 +345,8 @@ class SCRM_Activator {
 				'live_publishable' => '',
 				'live_secret'      => '',
 				'webhook_secret'   => '',
+				'auto_sync'        => true,
+				'sync_frequency'   => 'daily',
 			),
 			'invoices' => array(
 				'company_name'    => get_bloginfo( 'name' ),
@@ -385,6 +409,16 @@ class SCRM_Activator {
 		// Cleanup old webhook logs weekly.
 		if ( ! wp_next_scheduled( 'scrm_cleanup_webhook_logs' ) ) {
 			wp_schedule_event( time(), 'weekly', 'scrm_cleanup_webhook_logs' );
+		}
+
+		// PayPal transaction sync (default: daily, configurable in settings).
+		if ( ! wp_next_scheduled( 'scrm_paypal_sync' ) ) {
+			wp_schedule_event( time(), 'daily', 'scrm_paypal_sync' );
+		}
+
+		// Stripe transaction sync.
+		if ( ! wp_next_scheduled( 'scrm_stripe_sync' ) ) {
+			wp_schedule_event( time(), 'daily', 'scrm_stripe_sync' );
 		}
 	}
 }

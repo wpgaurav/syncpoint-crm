@@ -262,6 +262,128 @@ class Stripe extends Gateway {
 	}
 
 	/**
+	 * Sync customers from Stripe.
+	 *
+	 * @param array $args Sync arguments.
+	 * @return array|\WP_Error Sync results or error.
+	 */
+	public function sync_customers( $args = array() ) {
+		$defaults = array(
+			'limit' => 100,
+		);
+
+		$args        = wp_parse_args( $args, $defaults );
+		$credentials = $this->get_credentials();
+
+		$skip_update     = ! empty( $credentials['skip_contact_update'] );
+		$custom_tags     = ! empty( $credentials['custom_tags'] ) ? array_map( 'trim', explode( ',', $credentials['custom_tags'] ) ) : array();
+
+		// Get customers.
+		$endpoint = '/customers?' . http_build_query( array(
+			'limit' => $args['limit'],
+		) );
+
+		$response = $this->api_request( $endpoint );
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$customers       = $response['data'] ?? array();
+		$imported        = 0;
+		$updated         = 0;
+		$skipped         = 0;
+
+		foreach ( $customers as $customer ) {
+			$email = $customer['email'] ?? '';
+
+			if ( empty( $email ) ) {
+				$skipped++;
+				continue;
+			}
+
+			$existing = scrm_get_contact_by_email( $email );
+
+			if ( $existing ) {
+				if ( $skip_update ) {
+					$skipped++;
+					continue;
+				}
+
+				// Update existing contact.
+				scrm_update_contact( $existing->id, array(
+					'first_name' => $customer['name'] ? explode( ' ', $customer['name'] )[0] : $existing->first_name,
+					'last_name'  => $customer['name'] && count( explode( ' ', $customer['name'] ) ) > 1 ? explode( ' ', $customer['name'], 2 )[1] : $existing->last_name,
+					'phone'      => $customer['phone'] ?? $existing->phone,
+				) );
+
+				// Apply tags.
+				$this->apply_customer_tags( $existing->id, $custom_tags );
+
+				$updated++;
+			} else {
+				// Create new contact.
+				$name_parts = explode( ' ', $customer['name'] ?? '', 2 );
+
+				$contact_id = scrm_create_contact( array(
+					'email'      => $email,
+					'first_name' => $name_parts[0] ?? '',
+					'last_name'  => $name_parts[1] ?? '',
+					'phone'      => $customer['phone'] ?? '',
+					'type'       => 'customer',
+					'source'     => 'stripe',
+					'currency'   => strtoupper( $customer['currency'] ?? 'USD' ),
+				) );
+
+				if ( ! is_wp_error( $contact_id ) ) {
+					// Apply tags.
+					$this->apply_customer_tags( $contact_id, $custom_tags );
+					$imported++;
+				} else {
+					$skipped++;
+				}
+			}
+		}
+
+		$result = array(
+			'imported' => $imported,
+			'updated'  => $updated,
+			'skipped'  => $skipped,
+			'total'    => count( $customers ),
+		);
+
+		do_action( 'scrm_stripe_customers_synced', $result );
+
+		return $result;
+	}
+
+	/**
+	 * Apply tags to a customer.
+	 *
+	 * @param int   $contact_id  Contact ID.
+	 * @param array $custom_tags Custom tags to apply.
+	 */
+	private function apply_customer_tags( $contact_id, $custom_tags ) {
+		foreach ( $custom_tags as $tag_name ) {
+			if ( empty( $tag_name ) ) {
+				continue;
+			}
+
+			$tag = scrm_get_tag_by_name( $tag_name );
+
+			if ( ! $tag ) {
+				$tag_id = scrm_create_tag( array( 'name' => $tag_name ) );
+			} else {
+				$tag_id = $tag->id;
+			}
+
+			if ( $tag_id && ! is_wp_error( $tag_id ) ) {
+				scrm_assign_tag( $tag_id, $contact_id, 'contact' );
+			}
+		}
+	}
+
+	/**
 	 * Process a single charge.
 	 *
 	 * @param array $charge Charge data from Stripe.

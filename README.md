@@ -1,4 +1,4 @@
-# Starter CRM
+# SyncPoint CRM
 
 A lightweight, extensible WordPress CRM plugin with PayPal & Stripe integration, invoicing, and powerful automation capabilities.
 
@@ -24,15 +24,15 @@ A lightweight, extensible WordPress CRM plugin with PayPal & Stripe integration,
 
 ## Installation
 
-1. Upload the `starter-crm` folder to `/wp-content/plugins/`
+1. Upload the `syncpoint-crm` folder to `/wp-content/plugins/`
 2. Activate the plugin through the 'Plugins' menu
 3. Go to CRM → Settings to configure
 
 ## File Structure
 
 ```
-starter-crm/
-├── starter-crm.php          # Main plugin file
+syncpoint-crm/
+├── syncpoint-crm.php          # Main plugin file
 ├── uninstall.php            # Clean uninstall handler
 ├── readme.txt               # WordPress.org readme
 │

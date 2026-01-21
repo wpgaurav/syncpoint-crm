@@ -23,6 +23,12 @@ class SCRM_Cron {
 	public function __construct() {
 		add_action( 'scrm_daily_tasks', array( $this, 'run_daily_tasks' ) );
 		add_action( 'scrm_weekly_tasks', array( $this, 'run_weekly_tasks' ) );
+		add_action( 'scrm_check_overdue_invoices', array( $this, 'check_overdue_invoices' ) );
+		add_action( 'scrm_cleanup_webhook_logs', array( $this, 'cleanup_webhook_log' ) );
+
+		// Gateway sync cron handlers.
+		add_action( 'scrm_paypal_sync', array( $this, 'run_paypal_sync' ) );
+		add_action( 'scrm_stripe_sync', array( $this, 'run_stripe_sync' ) );
 	}
 
 	/**
@@ -157,6 +163,102 @@ class SCRM_Cron {
 		$wpdb->query( $wpdb->prepare(
 			"DELETE FROM {$table} WHERE created_at < %s",
 			date( 'Y-m-d H:i:s', strtotime( '-90 days' ) )
+		) );
+	}
+
+	/**
+	 * Run PayPal transaction sync.
+	 */
+	public function run_paypal_sync() {
+		$settings = scrm_get_settings( 'paypal' );
+
+		if ( empty( $settings['enabled'] ) || empty( $settings['auto_sync'] ) ) {
+			return;
+		}
+
+		if ( scrm_is_sync_running( 'paypal' ) ) {
+			return;
+		}
+
+		$log_id = scrm_start_sync_log( 'paypal', 'cron' );
+
+		$gateway = new SCRM\Gateways\PayPal();
+
+		if ( ! $gateway->is_available() ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'PayPal is not available.', 'syncpoint-crm' ) );
+			return;
+		}
+
+		$results = $gateway->sync_transactions();
+
+		if ( is_wp_error( $results ) ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $results->get_error_message() );
+			return;
+		}
+
+		scrm_complete_sync_log(
+			$log_id,
+			'completed',
+			$results['synced'] ?? 0,
+			$results['skipped'] ?? 0,
+			$results['contacts_added'] ?? 0
+		);
+
+		do_action( 'scrm_cron_paypal_sync_completed', $results );
+	}
+
+	/**
+	 * Run Stripe transaction sync.
+	 */
+	public function run_stripe_sync() {
+		$settings = scrm_get_settings( 'stripe' );
+
+		if ( empty( $settings['enabled'] ) || empty( $settings['auto_sync'] ) ) {
+			return;
+		}
+
+		if ( scrm_is_sync_running( 'stripe' ) ) {
+			return;
+		}
+
+		$log_id = scrm_start_sync_log( 'stripe', 'cron' );
+
+		$gateway = new SCRM\Gateways\Stripe();
+
+		if ( ! $gateway->is_available() ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'Stripe is not available.', 'syncpoint-crm' ) );
+			return;
+		}
+
+		$results = $gateway->sync_transactions();
+
+		if ( is_wp_error( $results ) ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $results->get_error_message() );
+			return;
+		}
+
+		scrm_complete_sync_log(
+			$log_id,
+			'completed',
+			$results['synced'] ?? 0,
+			$results['skipped'] ?? 0,
+			$results['contacts_added'] ?? 0
+		);
+
+		do_action( 'scrm_cron_stripe_sync_completed', $results );
+	}
+
+	/**
+	 * Cleanup sync logs.
+	 */
+	public function cleanup_sync_log() {
+		global $wpdb;
+		$table = $wpdb->prefix . 'scrm_sync_log';
+
+		// Delete logs older than 30 days.
+		$wpdb->query( $wpdb->prepare(
+			"DELETE FROM {$table} WHERE started_at < %s",
+			date( 'Y-m-d H:i:s', strtotime( '-30 days' ) )
 		) );
 	}
 }

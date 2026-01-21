@@ -246,7 +246,7 @@ class SCRM_Admin {
 	 */
 	private function is_scrm_page( $hook ) {
 		$scrm_pages = array(
-			'toplevel_page_starter-crm',
+			'toplevel_page_syncpoint-crm',
 			'crm_page_scrm-contacts',
 			'crm_page_scrm-companies',
 			'crm_page_scrm-transactions',
@@ -267,7 +267,7 @@ class SCRM_Admin {
 	 * @return bool True if dashboard.
 	 */
 	private function is_dashboard_page( $hook ) {
-		return 'toplevel_page_starter-crm' === $hook;
+		return 'toplevel_page_syncpoint-crm' === $hook;
 	}
 
 	/**

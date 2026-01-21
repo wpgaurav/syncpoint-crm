@@ -1113,6 +1113,22 @@ function scrm_get_tag_id_by_slug( $slug ) {
 }
 
 /**
+ * Get a tag by name.
+ *
+ * @since 1.0.0
+ * @param string $name Tag name.
+ * @return object|null Tag object or null.
+ */
+function scrm_get_tag_by_name( $name ) {
+	global $wpdb;
+	$table = $wpdb->prefix . 'scrm_tags';
+
+	return $wpdb->get_row(
+		$wpdb->prepare( "SELECT * FROM {$table} WHERE name = %s", sanitize_text_field( $name ) )
+	);
+}
+
+/**
  * Create a tag.
  *
  * @since 1.0.0

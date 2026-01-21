@@ -935,3 +935,161 @@ function scrm_log_webhook( $source, $endpoint, $payload, $status = 'success', $r
 
 	return $result ? $wpdb->insert_id : false;
 }
+
+/*
+|--------------------------------------------------------------------------
+| Gateway Sync Functions
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * Start a sync log entry.
+ *
+ * @since 1.0.0
+ * @param string $gateway   Gateway name (paypal, stripe).
+ * @param string $sync_type Sync type (manual, cron).
+ * @return int Sync log ID.
+ */
+function scrm_start_sync_log( $gateway, $sync_type = 'manual' ) {
+	global $wpdb;
+	$table = $wpdb->prefix . 'scrm_sync_log';
+
+	$wpdb->insert( $table, array(
+		'gateway'    => sanitize_text_field( $gateway ),
+		'sync_type'  => sanitize_text_field( $sync_type ),
+		'status'     => 'running',
+		'started_at' => current_time( 'mysql' ),
+	) );
+
+	return $wpdb->insert_id;
+}
+
+/**
+ * Complete a sync log entry.
+ *
+ * @since 1.0.0
+ * @param int    $log_id           Sync log ID.
+ * @param string $status           Status (completed, failed).
+ * @param int    $synced           Transactions synced.
+ * @param int    $skipped          Transactions skipped.
+ * @param int    $contacts_created Contacts created.
+ * @param string $error_message    Error message if failed.
+ * @return bool True on success.
+ */
+function scrm_complete_sync_log( $log_id, $status, $synced = 0, $skipped = 0, $contacts_created = 0, $error_message = '' ) {
+	global $wpdb;
+	$table = $wpdb->prefix . 'scrm_sync_log';
+
+	return (bool) $wpdb->update(
+		$table,
+		array(
+			'status'               => sanitize_text_field( $status ),
+			'transactions_synced'  => absint( $synced ),
+			'transactions_skipped' => absint( $skipped ),
+			'contacts_created'     => absint( $contacts_created ),
+			'error_message'        => sanitize_textarea_field( $error_message ),
+			'completed_at'         => current_time( 'mysql' ),
+		),
+		array( 'id' => absint( $log_id ) )
+	);
+}
+
+/**
+ * Get sync logs for a gateway.
+ *
+ * @since 1.0.0
+ * @param string $gateway Gateway name.
+ * @param int    $limit   Number of logs to return.
+ * @return array Array of sync log entries.
+ */
+function scrm_get_sync_logs( $gateway, $limit = 10 ) {
+	global $wpdb;
+	$table = $wpdb->prefix . 'scrm_sync_log';
+
+	return $wpdb->get_results( $wpdb->prepare(
+		"SELECT * FROM {$table} WHERE gateway = %s ORDER BY started_at DESC LIMIT %d",
+		$gateway,
+		$limit
+	) );
+}
+
+/**
+ * Get last successful sync for a gateway.
+ *
+ * @since 1.0.0
+ * @param string $gateway Gateway name.
+ * @return object|null Sync log entry or null.
+ */
+function scrm_get_last_sync( $gateway ) {
+	global $wpdb;
+	$table = $wpdb->prefix . 'scrm_sync_log';
+
+	return $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$table} WHERE gateway = %s AND status = 'completed' ORDER BY completed_at DESC LIMIT 1",
+		$gateway
+	) );
+}
+
+/**
+ * Check if a sync is currently running for a gateway.
+ *
+ * @since 1.0.0
+ * @param string $gateway Gateway name.
+ * @return bool True if sync is running.
+ */
+function scrm_is_sync_running( $gateway ) {
+	global $wpdb;
+	$table = $wpdb->prefix . 'scrm_sync_log';
+
+	$running = $wpdb->get_var( $wpdb->prepare(
+		"SELECT id FROM {$table} WHERE gateway = %s AND status = 'running' LIMIT 1",
+		$gateway
+	) );
+
+	return (bool) $running;
+}
+
+/**
+ * Get next scheduled sync time for a gateway.
+ *
+ * @since 1.0.0
+ * @param string $gateway Gateway name.
+ * @return int|false Timestamp or false if not scheduled.
+ */
+function scrm_get_next_sync_time( $gateway ) {
+	$hook = 'scrm_' . $gateway . '_sync';
+	return wp_next_scheduled( $hook );
+}
+
+/**
+ * Reschedule gateway sync based on frequency setting.
+ *
+ * @since 1.0.0
+ * @param string $gateway   Gateway name.
+ * @param string $frequency Frequency (hourly, twicedaily, daily).
+ * @return void
+ */
+function scrm_reschedule_sync( $gateway, $frequency ) {
+	$hook = 'scrm_' . $gateway . '_sync';
+
+	$timestamp = wp_next_scheduled( $hook );
+	if ( $timestamp ) {
+		wp_unschedule_event( $timestamp, $hook );
+	}
+
+	if ( ! empty( $frequency ) && 'disabled' !== $frequency ) {
+		wp_schedule_event( time() + HOUR_IN_SECONDS, $frequency, $hook );
+	}
+}
+
+/**
+ * Add contact tag helper.
+ *
+ * @since 1.0.0
+ * @param int $contact_id Contact ID.
+ * @param int $tag_id     Tag ID.
+ * @return bool True on success.
+ */
+function scrm_add_contact_tag( $contact_id, $tag_id ) {
+	return scrm_assign_tag( $tag_id, $contact_id, 'contact' );
+}

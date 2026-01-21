@@ -1,4 +1,4 @@
-=== Starter CRM ===
+=== SyncPoint CRM ===
 Contributors: yourname
 Donate link: https://example.com/donate
 Tags: crm, customer relationship management, invoicing, paypal, stripe
@@ -13,7 +13,7 @@ A lightweight, extensible WordPress CRM with PayPal & Stripe integration, invoic
 
 == Description ==
 
-**Starter CRM** is a powerful yet lightweight customer relationship management system built specifically for WordPress. Perfect for freelancers, small agencies, and solopreneurs who need to manage customers, track transactions, and create invoices without the complexity of enterprise CRM solutions.
+**SyncPoint CRM** is a powerful yet lightweight customer relationship management system built specifically for WordPress. Perfect for freelancers, small agencies, and solopreneurs who need to manage customers, track transactions, and create invoices without the complexity of enterprise CRM solutions.
 
 = Key Features =
 
@@ -70,7 +70,7 @@ A lightweight, extensible WordPress CRM with PayPal & Stripe integration, invoic
 * PSR-4 autoloading
 * Extensive documentation
 
-= Why Starter CRM? =
+= Why SyncPoint CRM? =
 
 * **Lightweight** - Only loads resources when needed
 * **Extensible** - Designed for customization
@@ -88,7 +88,7 @@ A lightweight, extensible WordPress CRM with PayPal & Stripe integration, invoic
 
 == Installation ==
 
-1. Upload the `starter-crm` folder to `/wp-content/plugins/`
+1. Upload the `syncpoint-crm` folder to `/wp-content/plugins/`
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Go to CRM → Settings to configure your options
 4. Start adding contacts!
@@ -103,7 +103,7 @@ A lightweight, extensible WordPress CRM with PayPal & Stripe integration, invoic
 
 = Can I import my existing contacts? =
 
-Yes! Starter CRM includes a CSV import wizard with field mapping. You can import contacts, companies, and transactions from any system that exports to CSV.
+Yes! SyncPoint CRM includes a CSV import wizard with field mapping. You can import contacts, companies, and transactions from any system that exports to CSV.
 
 = Does this work with WooCommerce? =
 
@@ -119,11 +119,11 @@ Yes. All data is stored in your WordPress database on your server. Sensitive API
 
 = Can I customize the invoice template? =
 
-Yes! Invoice templates can be overridden in your theme. Copy the template from `starter-crm/templates/invoices/` to `your-theme/starter-crm/invoices/` and customize.
+Yes! Invoice templates can be overridden in your theme. Copy the template from `syncpoint-crm/templates/invoices/` to `your-theme/syncpoint-crm/invoices/` and customize.
 
 = Is there a REST API? =
 
-Yes! Starter CRM provides a comprehensive REST API for all data types. See the documentation for endpoints and authentication.
+Yes! SyncPoint CRM provides a comprehensive REST API for all data types. See the documentation for endpoints and authentication.
 
 = Can I extend the plugin? =
 
@@ -154,7 +154,7 @@ Definitely! We provide 50+ hooks and filters for customization. Check the Develo
 == Upgrade Notice ==
 
 = 1.0.0 =
-Initial release of Starter CRM.
+Initial release of SyncPoint CRM.
 
 == Developer Documentation ==
 

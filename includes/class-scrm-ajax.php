@@ -39,6 +39,8 @@ class SCRM_AJAX {
 			'scrm_import_preview',
 			'scrm_import_run',
 			'scrm_sync_gateway',
+			'scrm_sync_paypal',
+			'scrm_sync_stripe',
 			'scrm_dashboard_stats',
 			'scrm_dashboard_chart_data',
 		);
@@ -370,6 +372,118 @@ class SCRM_AJAX {
 		}
 
 		wp_send_json_success( $results );
+	}
+
+	/**
+	 * Sync PayPal transactions with logging.
+	 */
+	public function handle_sync_paypal() {
+		if ( ! check_ajax_referer( 'scrm_sync_paypal', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( scrm_is_sync_running( 'paypal' ) ) {
+			wp_send_json_error( array( 'message' => __( 'A sync is already in progress.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		$log_id = scrm_start_sync_log( 'paypal', 'manual' );
+
+		$gateway = new SCRM\Gateways\PayPal();
+
+		if ( ! $gateway->is_available() ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'PayPal is not enabled.', 'syncpoint-crm' ) );
+			wp_send_json_error( array( 'message' => __( 'PayPal is not enabled.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		$results = $gateway->sync_transactions();
+
+		if ( is_wp_error( $results ) ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $results->get_error_message() );
+			wp_send_json_error( array( 'message' => $results->get_error_message() ) );
+			return;
+		}
+
+		scrm_complete_sync_log(
+			$log_id,
+			'completed',
+			$results['synced'] ?? 0,
+			$results['skipped'] ?? 0,
+			$results['contacts_added'] ?? 0
+		);
+
+		wp_send_json_success( array(
+			'message' => sprintf(
+				/* translators: 1: transactions synced, 2: contacts created */
+				__( 'Synced %1$d transactions, created %2$d contacts.', 'syncpoint-crm' ),
+				$results['synced'] ?? 0,
+				$results['contacts_added'] ?? 0
+			),
+			'results' => $results,
+		) );
+	}
+
+	/**
+	 * Sync Stripe transactions with logging.
+	 */
+	public function handle_sync_stripe() {
+		if ( ! check_ajax_referer( 'scrm_sync_stripe', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		if ( scrm_is_sync_running( 'stripe' ) ) {
+			wp_send_json_error( array( 'message' => __( 'A sync is already in progress.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		$log_id = scrm_start_sync_log( 'stripe', 'manual' );
+
+		$gateway = new SCRM\Gateways\Stripe();
+
+		if ( ! $gateway->is_available() ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'Stripe is not enabled.', 'syncpoint-crm' ) );
+			wp_send_json_error( array( 'message' => __( 'Stripe is not enabled.', 'syncpoint-crm' ) ) );
+			return;
+		}
+
+		$results = $gateway->sync_transactions();
+
+		if ( is_wp_error( $results ) ) {
+			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $results->get_error_message() );
+			wp_send_json_error( array( 'message' => $results->get_error_message() ) );
+			return;
+		}
+
+		scrm_complete_sync_log(
+			$log_id,
+			'completed',
+			$results['synced'] ?? 0,
+			$results['skipped'] ?? 0,
+			$results['contacts_added'] ?? 0
+		);
+
+		wp_send_json_success( array(
+			'message' => sprintf(
+				/* translators: 1: transactions synced, 2: contacts created */
+				__( 'Synced %1$d transactions, created %2$d contacts.', 'syncpoint-crm' ),
+				$results['synced'] ?? 0,
+				$results['contacts_added'] ?? 0
+			),
+			'results' => $results,
+		) );
 	}
 
 	/**

@@ -1,4 +1,4 @@
-# Starter CRM - Webhooks Integration Guide
+# SyncPoint CRM - Webhooks Integration Guide
 
 **Version**: 1.0.0  
 **Last Updated**: 2026-01-21
@@ -20,7 +20,7 @@ This guide covers how to receive data from external services via webhooks and ho
 
 ## Incoming Webhooks
 
-Starter CRM provides endpoints to receive data from external services, allowing you to automatically create contacts, log transactions, and more.
+SyncPoint CRM provides endpoints to receive data from external services, allowing you to automatically create contacts, log transactions, and more.
 
 ### Generic Webhook Endpoint
 
@@ -536,7 +536,7 @@ add_filter( 'scrm_webhook_payload_mapping', function( $mapping, $source ) {
 
 ## Outgoing Webhooks
 
-Configure Starter CRM to notify external systems when events occur.
+Configure SyncPoint CRM to notify external systems when events occur.
 
 ### Configuration
 
@@ -821,7 +821,7 @@ This logs all webhook requests to `wp-content/debug.log`.
 | `X-SCRM-Signature` | HMAC signature (if secret configured) |
 | `X-SCRM-Event` | Event type (e.g., `contact.created`) |
 | `X-SCRM-Delivery` | Unique delivery ID |
-| `User-Agent` | `StarterCRM/1.0` |
+| `User-Agent` | `SyncPointCRM/1.0` |
 
 ### Expected Response
 

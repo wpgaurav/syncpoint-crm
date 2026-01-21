@@ -1,11 +1,11 @@
 <?php
 /**
- * Uninstall Starter CRM
+ * Uninstall SyncPoint CRM
  *
  * This file is called when the plugin is deleted via the WordPress admin.
  * It removes all plugin data including database tables, options, and capabilities.
  *
- * @package StarterCRM
+ * @package SyncPointCRM
  * @since 1.0.0
  */
 
@@ -114,7 +114,7 @@ foreach ( $events as $event ) {
  * Remove uploaded files (invoices PDFs, etc.)
  */
 $upload_dir = wp_upload_dir();
-$scrm_dir = $upload_dir['basedir'] . '/starter-crm';
+$scrm_dir = $upload_dir['basedir'] . '/syncpoint-crm';
 
 if ( is_dir( $scrm_dir ) ) {
 	// Recursively delete directory.

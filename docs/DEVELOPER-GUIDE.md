@@ -1,9 +1,9 @@
-# Starter CRM - Developer Guide
+# SyncPoint CRM - Developer Guide
 
 **Version**: 1.0.0  
 **Last Updated**: 2026-01-21
 
-This guide covers how to extend Starter CRM with custom functionality, add-ons, and integrations.
+This guide covers how to extend SyncPoint CRM with custom functionality, add-ons, and integrations.
 
 ---
 
@@ -28,7 +28,7 @@ This guide covers how to extend Starter CRM with custom functionality, add-ons, 
 
 ### Namespace & Autoloading
 
-Starter CRM uses PSR-4 autoloading with the `SCRM` namespace:
+SyncPoint CRM uses PSR-4 autoloading with the `SCRM` namespace:
 
 ```
 SCRM\           → includes/
@@ -71,7 +71,7 @@ $scrm->gateways;   // Payment gateways manager
 
 ## Helper Functions
 
-Starter CRM provides helper functions for common operations.
+SyncPoint CRM provides helper functions for common operations.
 
 ### Contacts
 
@@ -456,8 +456,8 @@ $custom_fields = $contact->custom_fields; // JSON decoded array
 ### Add-on Structure
 
 ```
-starter-crm-my-addon/
-├── starter-crm-my-addon.php    # Main plugin file
+syncpoint-crm-my-addon/
+├── syncpoint-crm-my-addon.php    # Main plugin file
 ├── includes/
 │   └── class-my-addon.php
 ├── assets/
@@ -471,8 +471,8 @@ starter-crm-my-addon/
 ```php
 <?php
 /**
- * Plugin Name: Starter CRM - My Add-on
- * Description: Extends Starter CRM with additional features
+ * Plugin Name: SyncPoint CRM - My Add-on
+ * Description: Extends SyncPoint CRM with additional features
  * Version: 1.0.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -482,15 +482,15 @@ starter-crm-my-addon/
 
 defined( 'ABSPATH' ) || exit;
 
-// Check if Starter CRM is active
+// Check if SyncPoint CRM is active
 function scrm_my_addon_check_dependencies() {
     if ( ! class_exists( 'SCRM\Plugin' ) ) {
         add_action( 'admin_notices', function() {
             ?>
             <div class="notice notice-error">
                 <p>
-                    <strong>Starter CRM - My Add-on</strong> requires 
-                    <strong>Starter CRM</strong> to be installed and activated.
+                    <strong>SyncPoint CRM - My Add-on</strong> requires 
+                    <strong>SyncPoint CRM</strong> to be installed and activated.
                 </p>
             </div>
             <?php
@@ -512,8 +512,8 @@ add_action( 'plugins_loaded', function() {
             ?>
             <div class="notice notice-error">
                 <p>
-                    <strong>Starter CRM - My Add-on</strong> requires 
-                    Starter CRM version 1.0.0 or higher.
+                    <strong>SyncPoint CRM - My Add-on</strong> requires 
+                    SyncPoint CRM version 1.0.0 or higher.
                 </p>
             </div>
             <?php
@@ -638,8 +638,8 @@ class My_Gateway extends Abstract_Gateway {
     
     public function __construct() {
         $this->id          = 'my_gateway';
-        $this->title       = __( 'My Payment Gateway', 'starter-crm' );
-        $this->description = __( 'Accept payments via My Gateway', 'starter-crm' );
+        $this->title       = __( 'My Payment Gateway', 'syncpoint-crm' );
+        $this->description = __( 'Accept payments via My Gateway', 'syncpoint-crm' );
         $this->icon        = ''; // URL to icon
         
         parent::__construct();
@@ -652,17 +652,17 @@ class My_Gateway extends Abstract_Gateway {
         return array(
             array(
                 'id'    => 'enabled',
-                'label' => __( 'Enable', 'starter-crm' ),
+                'label' => __( 'Enable', 'syncpoint-crm' ),
                 'type'  => 'checkbox',
             ),
             array(
                 'id'    => 'api_key',
-                'label' => __( 'API Key', 'starter-crm' ),
+                'label' => __( 'API Key', 'syncpoint-crm' ),
                 'type'  => 'password',
             ),
             array(
                 'id'    => 'sandbox_mode',
-                'label' => __( 'Sandbox Mode', 'starter-crm' ),
+                'label' => __( 'Sandbox Mode', 'syncpoint-crm' ),
                 'type'  => 'checkbox',
             ),
         );
@@ -863,13 +863,13 @@ class My_Service_Importer {
 ```php
 add_filter( 'scrm_import_sources', function( $sources ) {
     $sources['my_service'] = array(
-        'label'       => __( 'My Service', 'starter-crm' ),
-        'description' => __( 'Import contacts from My Service', 'starter-crm' ),
+        'label'       => __( 'My Service', 'syncpoint-crm' ),
+        'description' => __( 'Import contacts from My Service', 'syncpoint-crm' ),
         'class'       => 'SCRM\Import\My_Service_Importer',
         'settings'    => array(
             array(
                 'id'    => 'api_key',
-                'label' => __( 'API Key', 'starter-crm' ),
+                'label' => __( 'API Key', 'syncpoint-crm' ),
                 'type'  => 'password',
             ),
         ),
@@ -889,7 +889,7 @@ add_action( 'scrm_dashboard_widgets', function() {
     ?>
     <div class="scrm-dashboard-widget scrm-widget--standard">
         <div class="scrm-widget__header">
-            <h3><?php esc_html_e( 'My Custom Widget', 'starter-crm' ); ?></h3>
+            <h3><?php esc_html_e( 'My Custom Widget', 'syncpoint-crm' ); ?></h3>
         </div>
         <div class="scrm-widget__content">
             <?php
@@ -908,7 +908,7 @@ add_action( 'scrm_dashboard_widgets', function() {
                 }
                 echo '</ul>';
             } else {
-                echo '<p>' . esc_html__( 'No recent leads.', 'starter-crm' ) . '</p>';
+                echo '<p>' . esc_html__( 'No recent leads.', 'syncpoint-crm' ) . '</p>';
             }
             ?>
         </div>
@@ -924,7 +924,7 @@ add_action( 'scrm_dashboard_widgets', function() {
     ?>
     <div class="scrm-dashboard-widget scrm-widget--chart">
         <div class="scrm-widget__header">
-            <h3><?php esc_html_e( 'Lead Sources', 'starter-crm' ); ?></h3>
+            <h3><?php esc_html_e( 'Lead Sources', 'syncpoint-crm' ); ?></h3>
         </div>
         <div class="scrm-widget__content">
             <canvas id="my-lead-sources-chart"></canvas>
@@ -971,19 +971,19 @@ add_action( 'scrm_dashboard_widgets', function() {
 
 ### Template Hierarchy
 
-Starter CRM looks for templates in the following order:
+SyncPoint CRM looks for templates in the following order:
 
-1. `your-theme/starter-crm/{template-name}.php`
-2. `your-theme/starter-crm/templates/{template-name}.php`
-3. `starter-crm/templates/{template-name}.php`
+1. `your-theme/syncpoint-crm/{template-name}.php`
+2. `your-theme/syncpoint-crm/templates/{template-name}.php`
+3. `syncpoint-crm/templates/{template-name}.php`
 
 ### Overriding Templates
 
-Copy the template from `starter-crm/templates/` to your theme:
+Copy the template from `syncpoint-crm/templates/` to your theme:
 
 ```
 your-theme/
-└── starter-crm/
+└── syncpoint-crm/
     └── invoices/
         └── invoice-view.php    # Override invoice public view
 ```
@@ -1170,7 +1170,7 @@ if ( ! $_tests_dir ) {
 require_once $_tests_dir . '/includes/functions.php';
 
 function _manually_load_plugin() {
-    require dirname( dirname( __FILE__ ) ) . '/starter-crm.php';
+    require dirname( dirname( __FILE__ ) ) . '/syncpoint-crm.php';
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
