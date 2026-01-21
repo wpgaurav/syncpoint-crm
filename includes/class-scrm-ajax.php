@@ -548,9 +548,12 @@ class SCRM_AJAX {
 		try {
 			$gateway = new SCRM\Gateways\PayPal();
 
-			if ( ! $gateway->is_available() ) {
-				scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'PayPal is not enabled.', 'syncpoint-crm' ) );
-				wp_send_json_error( array( 'message' => __( 'PayPal is not enabled.', 'syncpoint-crm' ) ) );
+			// Check NVP availability separately from REST API
+			if ( ! $gateway->is_nvp_available() ) {
+				scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'PayPal NVP API credentials are not configured.', 'syncpoint-crm' ) );
+				wp_send_json_error( array( 
+					'message' => __( 'PayPal NVP API credentials are not configured. Please enter your API Username, Password, and Signature in the PayPal Import settings tab and save before importing.', 'syncpoint-crm' ) 
+				) );
 				return;
 			}
 

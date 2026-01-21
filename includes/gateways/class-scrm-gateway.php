@@ -50,6 +50,15 @@ abstract class Gateway {
 	}
 
 	/**
+	 * Get gateway settings.
+	 *
+	 * @return array
+	 */
+	public function get_settings() {
+		return scrm_get_settings( $this->id );
+	}
+
+	/**
 	 * Check if gateway is in test mode.
 	 *
 	 * @return bool

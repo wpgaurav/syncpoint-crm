@@ -364,27 +364,72 @@ class SCRM_Admin_Settings {
 	private function render_paypal_import_settings() {
 		$settings = scrm_get_settings( 'paypal' );
 		$is_running = scrm_is_sync_running( 'paypal' );
+		
+		// Check if NVP credentials are configured
+		$nvp_configured = ! empty( $settings['api_username'] ) 
+			&& ! empty( $settings['api_password'] ) 
+			&& ! empty( $settings['api_signature'] );
+		
+		$mode = $settings['mode'] ?? 'sandbox';
 		?>
 		<h2><?php esc_html_e( 'PayPal Historical Transaction Import', 'syncpoint-crm' ); ?></h2>
 		<p class="description" style="margin-bottom: 20px;">
-			<?php esc_html_e( 'Import historical transactions from PayPal using the Legacy NVP API. This allows importing transactions up to 3 years back.', 'syncpoint-crm' ); ?>
+			<?php esc_html_e( 'Import historical transactions from PayPal using the Legacy NVP API. This feature works independently of the main PayPal REST API integration and allows importing transactions up to 3 years back.', 'syncpoint-crm' ); ?>
 		</p>
 
 		<h3><?php esc_html_e( 'NVP API Credentials', 'syncpoint-crm' ); ?></h3>
 		<p class="description" style="margin-bottom: 15px;">
-			<?php esc_html_e( 'Get these credentials from PayPal Developer Dashboard → API Credentials → NVP/SOAP API.', 'syncpoint-crm' ); ?>
+			<?php esc_html_e( 'Get these credentials from your PayPal account:', 'syncpoint-crm' ); ?><br>
+			<strong><?php esc_html_e( 'Live:', 'syncpoint-crm' ); ?></strong> <?php esc_html_e( 'PayPal Business Account → Settings → Account Settings → API Access → NVP/SOAP API Integration (Classic) → Manage API Credentials', 'syncpoint-crm' ); ?><br>
+			<strong><?php esc_html_e( 'Sandbox:', 'syncpoint-crm' ); ?></strong> <?php esc_html_e( 'PayPal Developer Dashboard → Sandbox Accounts → View/Edit Account → API Credentials tab', 'syncpoint-crm' ); ?>
 		</p>
+
+		<?php if ( $nvp_configured ) : ?>
+		<div class="notice notice-success inline" style="margin-bottom: 15px;">
+			<p>
+				<strong><?php esc_html_e( '✓ NVP API credentials are configured.', 'syncpoint-crm' ); ?></strong>
+				<?php 
+				printf( 
+					/* translators: %s: API mode */
+					esc_html__( 'Mode: %s', 'syncpoint-crm' ), 
+					'<code>' . esc_html( ucfirst( $mode ) ) . '</code>' 
+				); 
+				?>
+			</p>
+		</div>
+		<?php else : ?>
+		<div class="notice notice-warning inline" style="margin-bottom: 15px;">
+			<p><?php esc_html_e( 'NVP API credentials are not configured. Please enter your API Username, Password, and Signature below, then click "Save Settings" before importing.', 'syncpoint-crm' ); ?></p>
+		</div>
+		<?php endif; ?>
 
 		<table class="form-table">
 			<tr>
 				<th scope="row">
-					<label for="paypal_email"><?php esc_html_e( 'PayPal Email', 'syncpoint-crm' ); ?></label>
+					<label for="paypal_mode"><?php esc_html_e( 'API Mode', 'syncpoint-crm' ); ?></label>
 				</th>
 				<td>
-					<input type="email" name="paypal[paypal_email]" id="paypal_email"
-						   value="<?php echo esc_attr( $settings['paypal_email'] ?? '' ); ?>"
-						   class="regular-text">
-					<p class="description"><?php esc_html_e( 'Your PayPal business account email.', 'syncpoint-crm' ); ?></p>
+					<select name="paypal[mode]" id="paypal_mode">
+						<option value="sandbox" <?php selected( $mode, 'sandbox' ); ?>>
+							<?php esc_html_e( 'Sandbox (Testing)', 'syncpoint-crm' ); ?>
+						</option>
+						<option value="live" <?php selected( $mode, 'live' ); ?>>
+							<?php esc_html_e( 'Live (Production)', 'syncpoint-crm' ); ?>
+						</option>
+					</select>
+					<p class="description"><?php esc_html_e( 'Use Sandbox for testing with sandbox accounts, Live for real transactions.', 'syncpoint-crm' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="paypal_api_email"><?php esc_html_e( 'PayPal Email', 'syncpoint-crm' ); ?></label>
+				</th>
+				<td>
+					<input type="email" name="paypal[api_email]" id="paypal_api_email"
+						   value="<?php echo esc_attr( $settings['api_email'] ?? '' ); ?>"
+						   class="regular-text" autocomplete="off"
+						   placeholder="<?php esc_attr_e( 'your-paypal@email.com', 'syncpoint-crm' ); ?>">
+					<p class="description"><?php esc_html_e( 'Your PayPal account email address (optional, for reference).', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
 			<tr>
@@ -394,7 +439,9 @@ class SCRM_Admin_Settings {
 				<td>
 					<input type="text" name="paypal[api_username]" id="paypal_api_username"
 						   value="<?php echo esc_attr( $settings['api_username'] ?? '' ); ?>"
-						   class="regular-text">
+						   class="regular-text" autocomplete="off"
+						   placeholder="<?php esc_attr_e( 'seller_api1.example.com', 'syncpoint-crm' ); ?>">
+					<p class="description"><?php esc_html_e( 'Usually looks like: yourname_api1.yourdomain.com (required for import)', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
 			<tr>
@@ -404,7 +451,7 @@ class SCRM_Admin_Settings {
 				<td>
 					<input type="password" name="paypal[api_password]" id="paypal_api_password"
 						   value="<?php echo esc_attr( $settings['api_password'] ?? '' ); ?>"
-						   class="regular-text">
+						   class="regular-text" autocomplete="new-password">
 				</td>
 			</tr>
 			<tr>
@@ -414,7 +461,9 @@ class SCRM_Admin_Settings {
 				<td>
 					<input type="text" name="paypal[api_signature]" id="paypal_api_signature"
 						   value="<?php echo esc_attr( $settings['api_signature'] ?? '' ); ?>"
-						   class="regular-text code">
+						   class="large-text code" autocomplete="off"
+						   placeholder="<?php esc_attr_e( 'A long string of characters...', 'syncpoint-crm' ); ?>">
+					<p class="description"><?php esc_html_e( 'A long alphanumeric string (API Signature, not Certificate).', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
 			<tr>
@@ -423,23 +472,40 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="date" name="paypal[first_txn_date]" id="paypal_first_txn_date"
-						   value="<?php echo esc_attr( $settings['first_txn_date'] ?? date( 'Y-m-d', strtotime( '-3 years' ) ) ); ?>">
+						   value="<?php echo esc_attr( $settings['first_txn_date'] ?? date( 'Y-m-d', strtotime( '-1 year' ) ) ); ?>">
 					<p class="description"><?php esc_html_e( 'Import transactions starting from this date. PayPal allows up to 3 years of history.', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
 		</table>
 
+		<p class="submit" style="margin-top: 0; padding-top: 0;">
+			<em><?php esc_html_e( 'Remember to click "Save Settings" at the bottom of this page after entering credentials.', 'syncpoint-crm' ); ?></em>
+		</p>
+
+		<hr style="margin: 30px 0;">
+
 		<h3><?php esc_html_e( 'Import Transactions', 'syncpoint-crm' ); ?></h3>
+		
+		<?php if ( $nvp_configured ) : ?>
 		<p>
 			<button type="button" id="scrm-paypal-import-historical" class="button button-primary button-hero" <?php disabled( $is_running ); ?>>
+				<?php $is_running ? esc_html_e( 'Import in Progress...', 'syncpoint-crm' ) : esc_html_e( 'Import Historical Transactions', 'syncpoint-crm' ); ?>
+			</button>
+		</p>
+		<div id="scrm-paypal-import-status" style="margin-top: 15px;"></div>
+		<p class="description"><?php esc_html_e( 'This will import all completed payment transactions from the start date. The process may take several minutes for large transaction histories.', 'syncpoint-crm' ); ?></p>
+		<?php else : ?>
+		<p>
+			<button type="button" class="button button-primary button-hero" disabled>
 				<?php esc_html_e( 'Import Historical Transactions', 'syncpoint-crm' ); ?>
 			</button>
 		</p>
-		<p id="scrm-paypal-import-status"></p>
-		<p class="description"><?php esc_html_e( 'This will import all transactions from the start date. This process may take several minutes for large transaction histories.', 'syncpoint-crm' ); ?></p>
+		<p class="description" style="color: #d63638;"><?php esc_html_e( 'Please configure and save your NVP API credentials above before importing.', 'syncpoint-crm' ); ?></p>
+		<?php endif; ?>
 
 		<?php $this->render_sync_history( 'paypal' ); ?>
 
+		<?php if ( $nvp_configured ) : ?>
 		<script>
 		jQuery(document).ready(function($) {
 			var progressInterval = null;
@@ -456,14 +522,17 @@ class SCRM_Admin_Settings {
 
 							if (data.status === 'running') {
 								$status.html(
-									'<span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>' +
+									'<div style="background: #f0f0f1; padding: 15px; border-left: 4px solid #2271b1;">' +
+									'<span class="spinner is-active" style="float: none; margin: 0 10px 0 0;"></span>' +
 									'<strong>' + data.message + '</strong><br>' +
-									'<small style="color: #666;">' +
+									'<small style="color: #666; margin-top: 5px; display: inline-block;">' +
 									'<?php echo esc_js( __( 'Synced:', 'syncpoint-crm' ) ); ?> ' + data.synced +
 									' | <?php echo esc_js( __( 'Skipped:', 'syncpoint-crm' ) ); ?> ' + data.skipped +
-									' | <?php echo esc_js( __( 'Contacts:', 'syncpoint-crm' ) ); ?> ' + data.contacts_added +
-									'</small>'
+									' | <?php echo esc_js( __( 'Contacts Created:', 'syncpoint-crm' ) ); ?> ' + data.contacts_added +
+									'</small></div>'
 								);
+							} else if (data.status === 'error') {
+								$status.html('<div class="notice notice-error inline"><p>' + data.message + '</p></div>');
 							}
 						}
 					}
@@ -474,14 +543,14 @@ class SCRM_Admin_Settings {
 				var $button = $(this);
 				var $status = $('#scrm-paypal-import-status');
 
-				if (!confirm('<?php echo esc_js( __( 'This will import all historical transactions from PayPal. This may take several minutes. Continue?', 'syncpoint-crm' ) ); ?>')) {
+				if (!confirm('<?php echo esc_js( __( 'This will import all historical transactions from PayPal starting from your configured date. This may take several minutes. Continue?', 'syncpoint-crm' ) ); ?>')) {
 					return;
 				}
 
 				$button.prop('disabled', true).text('<?php echo esc_js( __( 'Importing...', 'syncpoint-crm' ) ); ?>');
-				$status.html('<span class="spinner is-active" style="float: none; margin: 0;"></span> <?php echo esc_js( __( 'Starting import...', 'syncpoint-crm' ) ); ?>');
+				$status.html('<div style="background: #f0f0f1; padding: 15px; border-left: 4px solid #2271b1;"><span class="spinner is-active" style="float: none; margin: 0 10px 0 0;"></span><?php echo esc_js( __( 'Starting import...', 'syncpoint-crm' ) ); ?></div>');
 
-				// Start polling for progress.
+				// Start polling for progress
 				progressInterval = setInterval(checkProgress, 2000);
 
 				$.ajax({
@@ -496,21 +565,26 @@ class SCRM_Admin_Settings {
 						clearInterval(progressInterval);
 						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
 						if (response.success) {
-							$status.html('<span style="color: green; font-weight: bold;">&#10004; ' + response.data.message + '</span>');
+							$status.html('<div class="notice notice-success inline"><p><strong>&#10004; ' + response.data.message + '</strong></p></div>');
 							setTimeout(function() { location.reload(); }, 2000);
 						} else {
-							$status.html('<span style="color: red;">&#10008; ' + response.data.message + '</span>');
+							$status.html('<div class="notice notice-error inline"><p><strong>&#10008; Error:</strong> ' + response.data.message + '</p></div>');
 						}
 					},
-					error: function() {
+					error: function(xhr, status, error) {
 						clearInterval(progressInterval);
 						$button.prop('disabled', false).text('<?php echo esc_js( __( 'Import Historical Transactions', 'syncpoint-crm' ) ); ?>');
-						$status.html('<span style="color: red;"><?php echo esc_js( __( 'An error occurred or the request timed out.', 'syncpoint-crm' ) ); ?></span>');
+						var errorMsg = '<?php echo esc_js( __( 'An error occurred or the request timed out.', 'syncpoint-crm' ) ); ?>';
+						if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+							errorMsg = xhr.responseJSON.data.message;
+						}
+						$status.html('<div class="notice notice-error inline"><p>' + errorMsg + '</p></div>');
 					}
 				});
 			});
 		});
 		</script>
+		<?php endif; ?>
 		<?php
 	}
 

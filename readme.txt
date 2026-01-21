@@ -5,7 +5,7 @@ Tags: crm, customer relationship management, invoicing, paypal, stripe, contacts
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -139,6 +139,15 @@ Definitely! We provide 50+ hooks and filters for customization. Check the Develo
 6. CSV import wizard
 
 == Changelog ==
+
+= 1.2.2 =
+* Fixed PayPal NVP import pagination to fetch all historical transactions (not just 100)
+* Fixed PayPal NVP import to work independently from PayPal REST API integration
+* Fixed syntax errors with stray spaces in array keys in scrm-functions.php
+* Fixed incomplete helper functions (scrm_get_sync_logs, scrm_get_last_sync, etc.)
+* Fixed incomplete render_sync_history() method in admin settings
+* Added more PayPal transaction types support (Express Checkout, Donations, etc.)
+* Improved progress reporting during PayPal historical import
 
 = 1.2.1 =
 * Fixed syntax errors in scrm-functions.php (stray spaces in array keys)

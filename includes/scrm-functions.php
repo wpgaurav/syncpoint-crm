@@ -254,7 +254,7 @@ function scrm_update_contact( $contact_id, $data ) {
 		$update_data['city']           = sanitize_text_field( $data['address']['city'] ?? '' );
 		$update_data['state']          = sanitize_text_field( $data['address']['state'] ?? '' );
 		$update_data['postal_code']    = sanitize_text_field( $data['address']['postal_code'] ?? '' );
-		$update_data['country']        = sanitize_text_field( $data['address']['country' ] ?? '' );
+		$update_data['country']        = sanitize_text_field( $data['address']['country'] ?? '' );
 	}
 
 	if ( empty( $update_data ) ) {

@@ -19,6 +19,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.2] - 2026-01-22
+
+### Fixed
+- Fixed PayPal NVP import pagination to properly fetch all historical transactions (was limited to 100)
+- Fixed PayPal NVP import to work independently from PayPal REST API integration
+- Fixed syntax errors with stray spaces in array keys (`$data['address']['state' ]` → `$data['address']['state']`)
+- Fixed incomplete `scrm_get_sync_logs()` function
+- Fixed incomplete `scrm_get_last_sync()` function
+- Fixed incomplete `render_sync_history()` method in admin settings
+- Added missing `scrm_get_next_sync_time()` function
+- Added missing `scrm_reschedule_sync()` function
+- Added missing `scrm_get_email_template()` function
+- Added missing `scrm_log_email()` function
+
+### Improved
+- Added more PayPal transaction types support (Express Checkout Payment, Donation, eBay Auction Payment, etc.)
+- Improved progress reporting during PayPal historical import with batch count and total fetched
+- Added duplicate transaction prevention during pagination
+- Added rate limiting protection (0.25s delay between API calls)
+- Increased safety limit to 500 pages (50,000 transactions max)
+
 ## [1.2.1] - 2026-01-22
 
 ### Fixed

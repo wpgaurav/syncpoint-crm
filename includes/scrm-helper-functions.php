@@ -1064,8 +1064,8 @@ function scrm_get_last_sync( $gateway ) {
  * Get next scheduled sync time for a gateway.
  *
  * @since 1.0.0
- * @param string $gateway Gateway name.
- * @return int|false Timestamp or false if not scheduled.
+ * @param string $gateway Gateway name (paypal, stripe).
+ * @return int|false Timestamp of next sync or false.
  */
 function scrm_get_next_sync_time( $gateway ) {
 	$hook = 'scrm_' . $gateway . '_sync';
@@ -1073,46 +1073,32 @@ function scrm_get_next_sync_time( $gateway ) {
 }
 
 /**
- * Reschedule gateway sync based on frequency setting.
+ * Reschedule sync for a gateway.
  *
  * @since 1.0.0
  * @param string $gateway   Gateway name.
  * @param string $frequency Frequency (hourly, twicedaily, daily).
- * @return void
+ * @return bool True on success.
  */
 function scrm_reschedule_sync( $gateway, $frequency ) {
 	$hook = 'scrm_' . $gateway . '_sync';
-
+	
+	// Clear existing schedule.
 	$timestamp = wp_next_scheduled( $hook );
 	if ( $timestamp ) {
 		wp_unschedule_event( $timestamp, $hook );
 	}
-
-	if ( ! empty( $frequency ) && 'disabled' !== $frequency ) {
-		wp_schedule_event( time() + HOUR_IN_SECONDS, $frequency, $hook );
+	
+	// Schedule new.
+	if ( ! wp_next_scheduled( $hook ) ) {
+		wp_schedule_event( time(), $frequency, $hook );
 	}
+	
+	return true;
 }
 
 /**
- * Add contact tag helper.
- *
- * @since 1.0.0
- * @param int $contact_id Contact ID.
- * @param int $tag_id     Tag ID.
- * @return bool True on success.
- */
-function scrm_add_contact_tag( $contact_id, $tag_id ) {
-	return scrm_assign_tag( $tag_id, $contact_id, 'contact' );
-}
-
-/*
-|--------------------------------------------------------------------------
-| Email Functions
-|--------------------------------------------------------------------------
-*/
-
-/**
- * Get email template HTML wrapper.
+ * Get email template wrapper.
  *
  * @since 1.0.0
  * @param string $content Email content.
@@ -1121,8 +1107,7 @@ function scrm_add_contact_tag( $contact_id, $tag_id ) {
 function scrm_get_email_template( $content ) {
 	$settings = scrm_get_settings( 'invoices' );
 	$company_name = $settings['company_name'] ?? get_bloginfo( 'name' );
-	$company_logo = $settings['company_logo'] ?? '';
-
+	
 	ob_start();
 	?>
 	<!DOCTYPE html>
@@ -1132,29 +1117,18 @@ function scrm_get_email_template( $content ) {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	</head>
 	<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background-color: #f5f5f5;">
-		<table role="presentation" style="width: 100%; border-collapse: collapse;">
+		<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px;">
 			<tr>
-				<td style="padding: 40px 20px;">
-					<table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-						<?php if ( $company_logo ) : ?>
+				<td align="center">
+					<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
 						<tr>
-							<td style="padding: 30px 40px 20px; text-align: center;">
-								<img src="<?php echo esc_url( $company_logo ); ?>" alt="<?php echo esc_attr( $company_name ); ?>" style="max-width: 200px; height: auto;">
-							</td>
-						</tr>
-						<?php endif; ?>
-						<tr>
-							<td style="padding: 30px 40px;">
-								<div style="color: #333333; font-size: 16px; line-height: 1.6;">
-									<?php echo wp_kses_post( wpautop( $content ) ); ?>
-								</div>
+							<td style="padding: 30px;">
+								<?php echo wp_kses_post( $content ); ?>
 							</td>
 						</tr>
 						<tr>
-							<td style="padding: 20px 40px 30px; border-top: 1px solid #eeeeee;">
-								<p style="margin: 0; color: #888888; font-size: 14px; text-align: center;">
-									<?php echo esc_html( $company_name ); ?>
-								</p>
+							<td style="padding: 20px 30px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px;">
+								<?php echo esc_html( $company_name ); ?>
 							</td>
 						</tr>
 					</table>
@@ -1174,13 +1148,13 @@ function scrm_get_email_template( $content ) {
  * @param int    $contact_id Contact ID.
  * @param string $subject    Email subject.
  * @param string $message    Email message.
- * @param string $status     Email status (sent, failed).
- * @return int|false Email log ID or false on failure.
+ * @param string $status     Status (sent, failed).
+ * @return int|false Log ID or false.
  */
 function scrm_log_email( $contact_id, $subject, $message, $status = 'sent' ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_email_log';
-
+	
 	$result = $wpdb->insert( $table, array(
 		'contact_id' => absint( $contact_id ),
 		'subject'    => sanitize_text_field( $subject ),
@@ -1188,60 +1162,6 @@ function scrm_log_email( $contact_id, $subject, $message, $status = 'sent' ) {
 		'status'     => sanitize_text_field( $status ),
 		'created_at' => current_time( 'mysql' ),
 	) );
-
+	
 	return $result ? $wpdb->insert_id : false;
-}
-
-/**
- * Get email logs for a contact.
- *
- * @since 1.0.0
- * @param int $contact_id Contact ID.
- * @param int $limit      Number of logs to return.
- * @return array Array of email log entries.
- */
-function scrm_get_email_logs( $contact_id, $limit = 20 ) {
-	global $wpdb;
-	$table = $wpdb->prefix . 'scrm_email_log';
-
-	return $wpdb->get_results( $wpdb->prepare(
-		"SELECT * FROM {$table} WHERE contact_id = %d ORDER BY created_at DESC LIMIT %d",
-		$contact_id,
-		$limit
-	) );
-}
-
-/**
- * Get all email logs.
- *
- * @since 1.0.0
- * @param array $args Query arguments.
- * @return array Array of email log entries.
- */
-function scrm_get_all_email_logs( $args = array() ) {
-	global $wpdb;
-	$table = $wpdb->prefix . 'scrm_email_log';
-
-	$defaults = array(
-		'limit'  => 50,
-		'offset' => 0,
-		'status' => '',
-	);
-	$args = wp_parse_args( $args, $defaults );
-
-	$where = '1=1';
-	if ( ! empty( $args['status'] ) ) {
-		$where .= $wpdb->prepare( ' AND status = %s', $args['status'] );
-	}
-
-	return $wpdb->get_results( $wpdb->prepare(
-		"SELECT e.*, c.first_name, c.last_name, c.email as contact_email
-		FROM {$table} e
-		LEFT JOIN {$wpdb->prefix}scrm_contacts c ON e.contact_id = c.id
-		WHERE {$where}
-		ORDER BY e.created_at DESC
-		LIMIT %d OFFSET %d",
-		$args['limit'],
-		$args['offset']
-	) );
 }
