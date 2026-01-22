@@ -1495,7 +1495,8 @@ class SCRM_Admin {
 							)
 						);
 					}
-					$invoice->recalculate_totals();
+					$invoice->calculate_totals();
+					$invoice->save();
 				}
 
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Invoice created successfully.', 'syncpoint-crm' ) . ' <a href="' . esc_url( admin_url( 'admin.php?page=scrm-invoices&action=view&id=' . $invoice->id ) ) . '">' . esc_html__( 'View Invoice', 'syncpoint-crm' ) . '</a></p></div>';

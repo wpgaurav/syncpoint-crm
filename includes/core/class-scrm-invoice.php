@@ -298,7 +298,7 @@ class Invoice {
 	 */
 	public function save() {
 		if ( $this->id ) {
-			return $this->upgmdate();
+			return $this->update();
 		}
 		return $this->create();
 	}
@@ -377,7 +377,7 @@ class Invoice {
 	 *
 	 * @return bool|\WP_Error True or error.
 	 */
-	public function upgmdate() {
+	public function update() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_invoices';
 
@@ -405,7 +405,7 @@ class Invoice {
 			'updated_at'          => current_time( 'mysql' ),
 		);
 
-		$result = $wpdb->upgmdate( $table, $data, array( 'id' => $this->id ) );
+		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
 
 		if ( false === $result ) {
 			return new \WP_Error( 'db_error', $wpdb->last_error );
@@ -645,7 +645,7 @@ class Invoice {
 	public function mark_sent() {
 		if ( 'draft' === $this->status ) {
 			$this->status = 'sent';
-			$result       = $this->upgmdate();
+			$result       = $this->update();
 
 			if ( ! is_wp_error( $result ) ) {
 				do_action( 'scrm_invoice_sent', $this->id, $this->contact_id );
@@ -669,7 +669,7 @@ class Invoice {
 				$this->status = 'viewed';
 			}
 
-			$result = $this->upgmdate();
+			$result = $this->update();
 
 			if ( ! is_wp_error( $result ) ) {
 				do_action( 'scrm_invoice_viewed', $this->id );
@@ -690,7 +690,7 @@ class Invoice {
 		$this->status  = 'paid';
 		$this->paid_at = current_time( 'mysql' );
 
-		$result = $this->upgmdate();
+		$result = $this->update();
 
 		if ( ! is_wp_error( $result ) ) {
 			do_action( 'scrm_invoice_paid', $this->id, $transaction_id );

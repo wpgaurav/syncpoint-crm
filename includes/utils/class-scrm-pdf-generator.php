@@ -58,6 +58,59 @@ class PDF_Generator {
 	}
 
 	/**
+	 * Stream PDF to browser for download.
+	 *
+	 * @return void
+	 */
+	public function stream() {
+		$html     = $this->get_html();
+		$filename = sanitize_file_name( $this->invoice->invoice_number . '.pdf' );
+
+		// Try DOMPDF if available.
+		if ( class_exists( '\Dompdf\Dompdf' ) ) {
+			try {
+				$dompdf = new \Dompdf\Dompdf(
+					array(
+						'isRemoteEnabled' => true,
+					)
+				);
+
+				$dompdf->loadHtml( $html );
+				$dompdf->setPaper( 'A4', 'portrait' );
+				$dompdf->render();
+				$dompdf->stream( $filename, array( 'Attachment' => true ) );
+				return;
+			} catch ( \Exception $e ) {
+				error_log( 'SCRM PDF Stream Error: ' . $e->getMessage() );
+			}
+		}
+
+		// Try mPDF if available.
+		if ( class_exists( '\Mpdf\Mpdf' ) ) {
+			try {
+				$mpdf = new \Mpdf\Mpdf(
+					array(
+						'mode'   => 'utf-8',
+						'format' => 'A4',
+					)
+				);
+
+				$mpdf->WriteHTML( $html );
+				$mpdf->Output( $filename, \Mpdf\Output\Destination::DOWNLOAD );
+				return;
+			} catch ( \Exception $e ) {
+				error_log( 'SCRM PDF Stream Error: ' . $e->getMessage() );
+			}
+		}
+
+		// Fallback: Output HTML with print styling.
+		header( 'Content-Type: text/html; charset=utf-8' );
+		header( 'Content-Disposition: inline; filename="' . $filename . '"' );
+		echo $html;
+		echo '<script>window.print();</script>';
+	}
+
+	/**
 	 * Generate PDF using DOMPDF.
 	 *
 	 * @param string $html HTML content.
