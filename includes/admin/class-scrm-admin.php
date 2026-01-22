@@ -1559,8 +1559,8 @@ class SCRM_Admin {
 											$.each(response.data.contacts, function(i, contact) {
 												if (existingIds.indexOf(contact.id) === -1) {
 													var name = contact.name || ((contact.first_name || '') + ' ' + (contact.last_name || '')).trim() || contact.email;
-													html += '<div class="scrm-suggestion-item" data-id="' + contact.id + '" data-name="' + name + '" data-email="' + contact.email + '">';
-													html += name + ' <small>(' + contact.email + ')</small>';
+													html += '<div class="scrm-suggestion-item" data-id="' + contact.id + '" data-name="' + name + '" data-email="' + contact.email + '" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
+													html += name + ' <small style="color: #666;">(' + contact.email + ')</small>';
 													html += '</div>';
 												}
 											});
@@ -1572,27 +1572,27 @@ class SCRM_Admin {
 								}, 300);
 							});
 							
-							$(document).on('click', '.scrm-contact-option', function() {
+							$(document).on('click', '.scrm-suggestion-item', function() {
 								var id = $(this).data('id');
 								var name = $(this).data('name');
-								
+
 								$('#contact_id').val(id);
 								$('#contact_search').val('').hide();
 								$('#selected_contact_name').text(name);
 								$('#selected_contact').show();
 								$('#contact_results').hide();
 							});
-							
+
 							$('#clear_contact').on('click', function(e) {
 								e.preventDefault();
 								$('#contact_id').val('');
 								$('#contact_search').show().val('');
 								$('#selected_contact').hide();
 							});
-							
-							$(document).on('mouseenter', '.scrm-contact-option', function() {
+
+							$(document).on('mouseenter', '.scrm-suggestion-item', function() {
 								$(this).css('background', '#f0f0f0');
-							}).on('mouseleave', '.scrm-contact-option', function() {
+							}).on('mouseleave', '.scrm-suggestion-item', function() {
 								$(this).css('background', '#fff');
 							});
 							
@@ -1872,7 +1872,7 @@ class SCRM_Admin {
 									<td><code><?php echo esc_html( $tag->color ); ?></code></td>
 									<td><?php echo esc_html( $tag->description ); ?></td>
 									<td>
-										<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=scrm-tags&delete=' . $tag->id ), 'scrm_delete_tag' ) ); ?>" onclick="return confirm('<?php esc_attr_e( 'Delete this tag?', 'syncpoint-crm' ); ?>');" style="color: #dc2626;">
+										<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=scrm-tags&delete=' . $tag->id ), 'scrm_delete_tag' ) ); ?>" class="scrm-delete" style="color: #dc2626;">
 											<?php esc_html_e( 'Delete', 'syncpoint-crm' ); ?>
 										</a>
 									</td>
@@ -2227,10 +2227,10 @@ class SCRM_Admin {
 			<h1><?php esc_html_e( 'Import Data', 'syncpoint-crm' ); ?></h1>
 			
 			<div class="scrm-import-wizard" style="max-width: 800px; background: #fff; padding: 30px; border: 1px solid #ddd; border-radius: 4px; margin-top: 20px;">
-				<div id="scrm-import-step-1">
+				<div id="scrm-import-step-1" class="scrm-import-step">
 					<h2><?php esc_html_e( 'Step 1: Upload CSV File', 'syncpoint-crm' ); ?></h2>
 					<p><?php esc_html_e( 'Upload a CSV file containing your data. The first row should contain column headers.', 'syncpoint-crm' ); ?></p>
-					
+
 					<form id="scrm-import-form" enctype="multipart/form-data">
 						<table class="form-table">
 							<tr>
@@ -2244,9 +2244,9 @@ class SCRM_Admin {
 								</td>
 							</tr>
 							<tr>
-								<th><label for="csv_file"><?php esc_html_e( 'CSV File', 'syncpoint-crm' ); ?></label></th>
+								<th><label for="scrm-import-file"><?php esc_html_e( 'CSV File', 'syncpoint-crm' ); ?></label></th>
 								<td>
-									<input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+									<input type="file" id="scrm-import-file" name="csv_file" accept=".csv" required>
 									<p class="description"><?php esc_html_e( 'Maximum file size: 2MB. Supported format: CSV.', 'syncpoint-crm' ); ?></p>
 								</td>
 							</tr>
@@ -2258,26 +2258,31 @@ class SCRM_Admin {
 								</td>
 							</tr>
 						</table>
-						
+
+						<div id="scrm-import-preview" style="display: none; margin: 20px 0;"></div>
+
 						<p>
-							<button type="submit" class="button button-primary button-hero" id="scrm-import-upload">
-								<?php esc_html_e( 'Upload & Preview', 'syncpoint-crm' ); ?>
+							<button type="button" class="button button-primary button-hero scrm-import-next" disabled>
+								<?php esc_html_e( 'Next: Map Fields', 'syncpoint-crm' ); ?>
 							</button>
 						</p>
 					</form>
 				</div>
-				
-				<div id="scrm-import-step-2" style="display: none;">
+
+				<div id="scrm-import-step-2" class="scrm-import-step" style="display: none;">
 					<h2><?php esc_html_e( 'Step 2: Map Fields', 'syncpoint-crm' ); ?></h2>
 					<p><?php esc_html_e( 'Map the columns from your CSV file to CRM fields.', 'syncpoint-crm' ); ?></p>
-					<div id="scrm-import-mapping"></div>
+					<div id="scrm-field-mapping"></div>
 					<p>
-						<button type="button" class="button button-primary" id="scrm-import-run"><?php esc_html_e( 'Run Import', 'syncpoint-crm' ); ?></button>
-						<button type="button" class="button" id="scrm-import-back"><?php esc_html_e( 'Back', 'syncpoint-crm' ); ?></button>
+						<button type="button" class="button button-primary" id="scrm-start-import"><?php esc_html_e( 'Run Import', 'syncpoint-crm' ); ?></button>
+						<button type="button" class="button scrm-import-prev"><?php esc_html_e( 'Back', 'syncpoint-crm' ); ?></button>
 					</p>
+					<div id="scrm-import-progress" style="display: none; margin-top: 20px;">
+						<p><span class="spinner is-active" style="float: none;"></span> <?php esc_html_e( 'Importing...', 'syncpoint-crm' ); ?></p>
+					</div>
 				</div>
-				
-				<div id="scrm-import-step-3" style="display: none;">
+
+				<div id="scrm-import-step-3" class="scrm-import-step" style="display: none;">
 					<h2><?php esc_html_e( 'Import Complete', 'syncpoint-crm' ); ?></h2>
 					<div id="scrm-import-results"></div>
 					<p>

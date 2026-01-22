@@ -51,18 +51,25 @@ rsync -av --progress . "$PLUGIN_DIR/" \
     --exclude='node_modules' \
     --exclude='vendor' \
     --exclude='tests' \
+    --exclude='bin' \
+    --exclude='coverage' \
+    --exclude='samples' \
     --exclude='phpunit.xml' \
     --exclude='phpunit.xml.dist' \
     --exclude='phpcs.xml' \
     --exclude='.phpcs.xml' \
     --exclude='phpstan.neon' \
     --exclude='phpstan.neon.dist' \
+    --exclude='.phpunit.result.cache' \
     --exclude='composer.json' \
     --exclude='composer.lock' \
     --exclude='package.json' \
     --exclude='package-lock.json' \
     --exclude='.DS_Store' \
-    --exclude='*.md' \
+    --exclude='README.md' \
+    --exclude='CLAUDE.md' \
+    --exclude='CONTRIBUTING.md' \
+    --exclude='CODE_OF_CONDUCT.md' \
     --exclude='build' \
     --exclude='build.sh' \
     --exclude='.editorconfig' \
@@ -88,16 +95,6 @@ echo -e "${GREEN}✓${NC} Copied plugin files"
 if [ -f "readme.txt" ]; then
     cp readme.txt "$PLUGIN_DIR/"
     echo -e "${GREEN}✓${NC} Included readme.txt"
-fi
-
-# Install composer dependencies (production only) if composer.json exists
-if [ -f "composer.json" ]; then
-    echo "Installing Composer dependencies..."
-    cd "$PLUGIN_DIR"
-    composer install --no-dev --optimize-autoloader --prefer-dist --quiet 2>/dev/null || true
-    rm -f composer.json composer.lock
-    cd "$SCRIPT_DIR"
-    echo -e "${GREEN}✓${NC} Installed production dependencies"
 fi
 
 # Create ZIP archive
