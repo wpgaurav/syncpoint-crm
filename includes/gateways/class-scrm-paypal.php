@@ -115,12 +115,12 @@ class PayPal extends Gateway {
 	 */
 	public function is_nvp_available() {
 		$settings = $this->get_settings();
-		
+
 		// Check for NVP-specific credentials (api_username, api_password, api_signature)
 		$username  = $settings['api_username'] ?? '';
 		$password  = $settings['api_password'] ?? '';
 		$signature = $settings['api_signature'] ?? '';
-		
+
 		return ! empty( $username ) && ! empty( $password ) && ! empty( $signature );
 	}
 
@@ -145,12 +145,12 @@ class PayPal extends Gateway {
 	 */
 	protected function get_nvp_url() {
 		$settings = $this->get_settings();
-		$mode = $settings['mode'] ?? 'sandbox';
-		
+		$mode     = $settings['mode'] ?? 'sandbox';
+
 		if ( 'live' === $mode ) {
 			return 'https://api-3t.paypal.com/nvp';
 		}
-		
+
 		return 'https://api-3t.sandbox.paypal.com/nvp';
 	}
 
@@ -228,7 +228,13 @@ class PayPal extends Gateway {
 		$response = wp_remote_request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$this->log( 'API error', array( 'endpoint' => $endpoint, 'error' => $response->get_error_message() ) );
+			$this->log(
+				'API error',
+				array(
+					'endpoint' => $endpoint,
+					'error'    => $response->get_error_message(),
+				)
+			);
 			return $response;
 		}
 
@@ -251,18 +257,20 @@ class PayPal extends Gateway {
 	 */
 	public function sync_transactions( $args = array() ) {
 		$defaults = array(
-			'start_date' => gmdate( 'Y-m-d\TH:i:s\Z', strtotime( '-30 days' ) ),
-			'end_date'   => gmdate( 'Y-m-d\TH:i:s\Z' ),
+			'start_date' => gmgmdate( 'Y-m-d\TH:i:s\Z', strtotime( '-30 days' ) ),
+			'end_date'   => gmgmdate( 'Y-m-d\TH:i:s\Z' ),
 			'page_size'  => 100,
 		);
 
 		$args     = wp_parse_args( $args, $defaults );
-		$endpoint = '/v1/reporting/transactions?' . http_build_query( array(
-			'start_date' => $args['start_date'],
-			'end_date'   => $args['end_date'],
-			'page_size'  => $args['page_size'],
-			'fields'     => 'all',
-		) );
+		$endpoint = '/v1/reporting/transactions?' . http_build_query(
+			array(
+				'start_date' => $args['start_date'],
+				'end_date'   => $args['end_date'],
+				'page_size'  => $args['page_size'],
+				'fields'     => 'all',
+			)
+		);
 
 		$response = $this->api_request( $endpoint );
 
@@ -279,14 +287,14 @@ class PayPal extends Gateway {
 			$result = $this->process_transaction( $txn );
 
 			if ( is_wp_error( $result ) ) {
-				$skipped++;
+				++$skipped;
 			} elseif ( 'contact_created' === $result ) {
-				$synced++;
-				$contacts_added++;
+				++$synced;
+				++$contacts_added;
 			} elseif ( true === $result ) {
-				$synced++;
+				++$synced;
 			} else {
-				$skipped++;
+				++$skipped;
 			}
 		}
 
@@ -306,25 +314,25 @@ class PayPal extends Gateway {
 	 */
 	public function sync_transactions_nvp( $args = array() ) {
 		if ( ! $this->is_nvp_available() ) {
-			return new \WP_Error( 
-				'nvp_not_configured', 
-				__( 'PayPal NVP API credentials are not configured. Please enter your API Username, Password, and Signature in the PayPal Import tab.', 'syncpoint-crm' ) 
+			return new \WP_Error(
+				'nvp_not_configured',
+				__( 'PayPal NVP API credentials are not configured. Please enter your API Username, Password, and Signature in the PayPal Import tab.', 'syncpoint-crm' )
 			);
 		}
 
 		$settings = $this->get_settings();
-		
+
 		// Get NVP credentials
 		$nvp_username  = $settings['api_username'] ?? '';
 		$nvp_password  = $settings['api_password'] ?? '';
 		$nvp_signature = $settings['api_signature'] ?? '';
 
 		// Get date range from settings
-		$start_date_setting = $settings['first_txn_date'] ?? date( 'Y-m-d', strtotime( '-1 year' ) );
-		
+		$start_date_setting = $settings['first_txn_date'] ?? gmdate( 'Y-m-d', strtotime( '-1 year' ) );
+
 		// PayPal NVP requires dates in ISO 8601 format
 		$original_start = $start_date_setting . 'T00:00:00Z';
-		$original_end   = date( 'Y-m-d' ) . 'T23:59:59Z';
+		$original_end   = gmdate( 'Y-m-d' ) . 'T23:59:59Z';
 
 		$defaults = array(
 			'start_date' => $original_start,
@@ -334,13 +342,17 @@ class PayPal extends Gateway {
 		$args = wp_parse_args( $args, $defaults );
 
 		// Update progress
-		set_transient( 'scrm_paypal_import_progress', array(
-			'status'         => 'running',
-			'message'        => __( 'Connecting to PayPal...', 'syncpoint-crm' ),
-			'synced'         => 0,
-			'skipped'        => 0,
-			'contacts_added' => 0,
-		), 600 );
+		set_transient(
+			'scrm_paypal_import_progress',
+			array(
+				'status'         => 'running',
+				'message'        => __( 'Connecting to PayPal...', 'syncpoint-crm' ),
+				'synced'         => 0,
+				'skipped'        => 0,
+				'contacts_added' => 0,
+			),
+			600
+		);
 
 		$results = array(
 			'synced'         => 0,
@@ -352,14 +364,14 @@ class PayPal extends Gateway {
 
 		// PayPal NVP TransactionSearch has a limit of 100 results per call
 		// We need to paginate by adjusting the date range based on the oldest transaction returned
-		$current_start = $args['start_date'];
-		$current_end   = $args['end_date'];
-		$page = 0;
-		$max_pages = 500; // Safety limit - up to 50,000 transactions
+		$current_start       = $args['start_date'];
+		$current_end         = $args['end_date'];
+		$page                = 0;
+		$max_pages           = 500; // Safety limit - up to 50,000 transactions
 		$all_transaction_ids = array(); // Track to avoid duplicates
 
 		while ( $page < $max_pages ) {
-			$page++;
+			++$page;
 
 			// Build NVP request
 			$request_data = array(
@@ -373,23 +385,30 @@ class PayPal extends Gateway {
 			);
 
 			// Update progress
-			set_transient( 'scrm_paypal_import_progress', array(
-				'status'         => 'running',
-				'message'        => sprintf( 
-					/* translators: 1: page number, 2: total fetched */
-					__( 'Fetching transactions (batch %1$d, %2$d total fetched)...', 'syncpoint-crm' ), 
-					$page,
-					$results['total_fetched']
+			set_transient(
+				'scrm_paypal_import_progress',
+				array(
+					'status'         => 'running',
+					'message'        => sprintf(
+						/* translators: 1: page number, 2: total fetched */
+						__( 'Fetching transactions (batch %1$d, %2$d total fetched)...', 'syncpoint-crm' ),
+						$page,
+						$results['total_fetched']
+					),
+					'synced'         => $results['synced'],
+					'skipped'        => $results['skipped'],
+					'contacts_added' => $results['contacts_added'],
 				),
-				'synced'         => $results['synced'],
-				'skipped'        => $results['skipped'],
-				'contacts_added' => $results['contacts_added'],
-			), 600 );
+				600
+			);
 
-			$response = wp_remote_post( $this->get_nvp_url(), array(
-				'body'    => $request_data,
-				'timeout' => 60,
-			) );
+			$response = wp_remote_post(
+				$this->get_nvp_url(),
+				array(
+					'body'    => $request_data,
+					'timeout' => 60,
+				)
+			);
 
 			if ( is_wp_error( $response ) ) {
 				$results['errors'][] = $response->get_error_message();
@@ -402,32 +421,32 @@ class PayPal extends Gateway {
 			// Check for API errors
 			$ack = $result['ACK'] ?? '';
 			if ( ! in_array( $ack, array( 'Success', 'SuccessWithWarning' ), true ) ) {
-				$error_msg = $result['L_LONGMESSAGE0'] ?? $result['L_SHORTMESSAGE0'] ?? __( 'Unknown PayPal NVP error.', 'syncpoint-crm' );
+				$error_msg  = $result['L_LONGMESSAGE0'] ?? $result['L_SHORTMESSAGE0'] ?? __( 'Unknown PayPal NVP error.', 'syncpoint-crm' );
 				$error_code = $result['L_ERRORCODE0'] ?? '';
-				
+
 				// Error code 11002 = "No transactions found" - this is not an error, just no more results
 				if ( '11002' === $error_code ) {
 					// No more transactions in this date range
 					break;
 				}
-				
+
 				return new \WP_Error( 'nvp_error', $error_msg . ' (Code: ' . $error_code . ')' );
 			}
 
 			// Parse transactions from response
 			$transactions = $this->parse_nvp_transactions( $result );
-			
+
 			if ( empty( $transactions ) ) {
 				// No transactions returned
 				break;
 			}
 
-			$batch_count = count( $transactions );
+			$batch_count               = count( $transactions );
 			$results['total_fetched'] += $batch_count;
 
 			// Process each transaction
 			$oldest_timestamp = null;
-			
+
 			foreach ( $transactions as $txn ) {
 				// Skip if we've already processed this transaction (duplicate check)
 				if ( in_array( $txn['transaction_id'], $all_transaction_ids, true ) ) {
@@ -444,31 +463,35 @@ class PayPal extends Gateway {
 				}
 
 				$import_result = $this->import_nvp_transaction( $txn );
-				
+
 				if ( is_wp_error( $import_result ) ) {
-					$results['skipped']++;
+					++$results['skipped'];
 				} elseif ( isset( $import_result['created'] ) && $import_result['created'] ) {
-					$results['synced']++;
+					++$results['synced'];
 					if ( isset( $import_result['contact_created'] ) && $import_result['contact_created'] ) {
-						$results['contacts_added']++;
+						++$results['contacts_added'];
 					}
 				} else {
-					$results['skipped']++;
+					++$results['skipped'];
 				}
 
 				// Update progress periodically
 				if ( ( $results['synced'] + $results['skipped'] ) % 25 === 0 ) {
-					set_transient( 'scrm_paypal_import_progress', array(
-						'status'         => 'running',
-						'message'        => sprintf( 
-							/* translators: %d: transactions processed */
-							__( 'Processing transactions (%d imported)...', 'syncpoint-crm' ), 
-							$results['synced'] 
+					set_transient(
+						'scrm_paypal_import_progress',
+						array(
+							'status'         => 'running',
+							'message'        => sprintf(
+								/* translators: %d: transactions processed */
+								__( 'Processing transactions (%d imported)...', 'syncpoint-crm' ),
+								$results['synced']
+							),
+							'synced'         => $results['synced'],
+							'skipped'        => $results['skipped'],
+							'contacts_added' => $results['contacts_added'],
 						),
-						'synced'         => $results['synced'],
-						'skipped'        => $results['skipped'],
-						'contacts_added' => $results['contacts_added'],
-					), 600 );
+						600
+					);
 				}
 			}
 
@@ -481,13 +504,13 @@ class PayPal extends Gateway {
 			if ( null !== $oldest_timestamp ) {
 				// Set the new end date to 1 second before the oldest transaction
 				// This ensures we don't miss any transactions and don't duplicate
-				$new_end = gmdate( 'Y-m-d\TH:i:s\Z', $oldest_timestamp - 1 );
-				
+				$new_end = gmgmdate( 'Y-m-d\TH:i:s\Z', $oldest_timestamp - 1 );
+
 				// Make sure we haven't gone past our start date
 				if ( strtotime( $new_end ) <= strtotime( $current_start ) ) {
 					break;
 				}
-				
+
 				$current_end = $new_end;
 			} else {
 				// No valid timestamp found, can't paginate
@@ -502,13 +525,16 @@ class PayPal extends Gateway {
 		delete_transient( 'scrm_paypal_import_progress' );
 
 		// Log final results
-		$this->log( 'NVP Import Complete', array(
-			'total_fetched'  => $results['total_fetched'],
-			'synced'         => $results['synced'],
-			'skipped'        => $results['skipped'],
-			'contacts_added' => $results['contacts_added'],
-			'pages'          => $page,
-		) );
+		$this->log(
+			'NVP Import Complete',
+			array(
+				'total_fetched'  => $results['total_fetched'],
+				'synced'         => $results['synced'],
+				'skipped'        => $results['skipped'],
+				'contacts_added' => $results['contacts_added'],
+				'pages'          => $page,
+			)
+		);
 
 		return $results;
 	}
@@ -521,7 +547,7 @@ class PayPal extends Gateway {
 	 */
 	protected function parse_nvp_transactions( $result ) {
 		$transactions = array();
-		$i = 0;
+		$i            = 0;
 
 		// PayPal returns transactions as L_TRANSACTIONID0, L_TRANSACTIONID1, etc.
 		while ( isset( $result[ 'L_TRANSACTIONID' . $i ] ) ) {
@@ -537,7 +563,7 @@ class PayPal extends Gateway {
 				'fee'            => $result[ 'L_FEEAMT' . $i ] ?? 0,
 				'net'            => $result[ 'L_NETAMT' . $i ] ?? 0,
 			);
-			$i++;
+			++$i;
 		}
 
 		return $transactions;
@@ -551,12 +577,12 @@ class PayPal extends Gateway {
 	 */
 	protected function import_nvp_transaction( $txn ) {
 		global $wpdb;
-		
+
 		// Skip non-payment transactions - be more inclusive
-		$payment_types = array( 
-			'Payment', 
-			'Recurring Payment', 
-			'Subscription Payment', 
+		$payment_types = array(
+			'Payment',
+			'Recurring Payment',
+			'Subscription Payment',
 			'Web Accept',
 			'Express Checkout Payment',
 			'Mass Pay Sent',
@@ -564,7 +590,7 @@ class PayPal extends Gateway {
 			'eBay Auction Payment',
 			'Virtual Terminal Payment',
 		);
-		
+
 		if ( ! in_array( $txn['type'], $payment_types, true ) ) {
 			return new \WP_Error( 'skipped', 'Not a payment transaction: ' . $txn['type'] );
 		}
@@ -575,39 +601,46 @@ class PayPal extends Gateway {
 		}
 
 		// Check if transaction already exists
-		$exists = $wpdb->get_var( $wpdb->prepare(
-			"SELECT id FROM {$wpdb->prefix}scrm_transactions WHERE gateway_transaction_id = %s",
-			$txn['transaction_id']
-		) );
+		$exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}scrm_transactions WHERE gateway_transaction_id = %s",
+				$txn['transaction_id']
+			)
+		);
 
 		if ( $exists ) {
-			return array( 'created' => false, 'reason' => 'duplicate' );
+			return array(
+				'created' => false,
+				'reason'  => 'duplicate',
+			);
 		}
 
 		// Find or create contact
-		$contact_id = null;
+		$contact_id      = null;
 		$contact_created = false;
 
 		if ( ! empty( $txn['email'] ) ) {
 			$contact = scrm_get_contact_by_email( $txn['email'] );
-			
+
 			if ( ! $contact ) {
 				// Parse name
 				$name_parts = explode( ' ', trim( $txn['name'] ), 2 );
 				$first_name = $name_parts[0] ?? '';
 				$last_name  = $name_parts[1] ?? '';
 
-				$new_contact_id = scrm_create_contact( array(
-					'email'      => $txn['email'],
-					'first_name' => $first_name,
-					'last_name'  => $last_name,
-					'type'       => 'customer',
-					'currency'   => $txn['currency'],
-					'source'     => 'paypal_import',
-				) );
+				$new_contact_id = scrm_create_contact(
+					array(
+						'email'      => $txn['email'],
+						'first_name' => $first_name,
+						'last_name'  => $last_name,
+						'type'       => 'customer',
+						'currency'   => $txn['currency'],
+						'source'     => 'paypal_import',
+					)
+				);
 
 				if ( ! is_wp_error( $new_contact_id ) ) {
-					$contact_id = $new_contact_id;
+					$contact_id      = $new_contact_id;
 					$contact_created = true;
 				}
 			} else {
@@ -620,7 +653,7 @@ class PayPal extends Gateway {
 		}
 
 		// Map PayPal status to our status
-		$status = 'completed';
+		$status        = 'completed';
 		$paypal_status = strtolower( $txn['status'] ?? '' );
 		if ( in_array( $paypal_status, array( 'pending', 'in-progress', 'processing' ), true ) ) {
 			$status = 'pending';
@@ -631,30 +664,32 @@ class PayPal extends Gateway {
 		}
 
 		// Create transaction
-		$transaction_id = scrm_create_transaction( array(
-			'contact_id'             => $contact_id,
-			'type'                   => 'payment',
-			'gateway'                => 'paypal',
-			'gateway_transaction_id' => $txn['transaction_id'],
-			'amount'                 => abs( floatval( $txn['amount'] ) ),
-			'currency'               => $txn['currency'],
-			'status'                 => $status,
-			'description'            => sprintf( 
+		$transaction_id = scrm_create_transaction(
+			array(
+				'contact_id'             => $contact_id,
+				'type'                   => 'payment',
+				'gateway'                => 'paypal',
+				'gateway_transaction_id' => $txn['transaction_id'],
+				'amount'                 => abs( floatval( $txn['amount'] ) ),
+				'currency'               => $txn['currency'],
+				'status'                 => $status,
+				'description'            => sprintf(
 				/* translators: 1: transaction type, 2: date */
-				__( 'PayPal %1$s - %2$s', 'syncpoint-crm' ),
-				$txn['type'],
-				date( 'M j, Y', strtotime( $txn['timestamp'] ) )
-			),
-			'metadata'               => array(
-				'paypal_type'      => $txn['type'],
-				'paypal_status'    => $txn['status'],
-				'paypal_timestamp' => $txn['timestamp'],
-				'paypal_fee'       => $txn['fee'],
-				'paypal_net'       => $txn['net'],
-				'payer_name'       => $txn['name'],
-				'payer_email'      => $txn['email'],
-			),
-		) );
+					__( 'PayPal %1$s - %2$s', 'syncpoint-crm' ),
+					$txn['type'],
+					gmdate( 'M j, Y', strtotime( $txn['timestamp'] ) )
+				),
+				'metadata'               => array(
+					'paypal_type'      => $txn['type'],
+					'paypal_status'    => $txn['status'],
+					'paypal_timestamp' => $txn['timestamp'],
+					'paypal_fee'       => $txn['fee'],
+					'paypal_net'       => $txn['net'],
+					'payer_name'       => $txn['name'],
+					'payer_email'      => $txn['email'],
+				),
+			)
+		);
 
 		if ( is_wp_error( $transaction_id ) ) {
 			return $transaction_id;

@@ -66,7 +66,7 @@ class SCRM_AJAX {
 	 */
 	private function verify_request( $action = 'scrm_admin_nonce', $nonce_field = 'nonce' ) {
 		$nonce = isset( $_POST[ $nonce_field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $nonce_field ] ) ) : '';
-		
+
 		if ( ! wp_verify_nonce( $nonce, $action ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'syncpoint-crm' ) ) );
 			return false;
@@ -93,12 +93,14 @@ class SCRM_AJAX {
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 
-		$contacts = scrm_get_contacts( array(
-			'search' => $search,
-			'type'   => $type,
-			'status' => 'active',
-			'limit'  => 10,
-		) );
+		$contacts = scrm_get_contacts(
+			array(
+				'search' => $search,
+				'type'   => $type,
+				'status' => 'active',
+				'limit'  => 10,
+			)
+		);
 
 		$results = array();
 		foreach ( $contacts as $contact ) {
@@ -122,10 +124,12 @@ class SCRM_AJAX {
 
 		$search = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 
-		$companies = scrm_get_companies( array(
-			'search' => $search,
-			'limit'  => 10,
-		) );
+		$companies = scrm_get_companies(
+			array(
+				'search' => $search,
+				'limit'  => 10,
+			)
+		);
 
 		$results = array();
 		foreach ( $companies as $company ) {
@@ -183,12 +187,14 @@ class SCRM_AJAX {
 
 		$contact = scrm_get_contact( $result );
 
-		wp_send_json_success( array(
-			'id'         => $contact->id,
-			'contact_id' => $contact->contact_id,
-			'name'       => trim( $contact->first_name . ' ' . $contact->last_name ),
-			'email'      => $contact->email,
-		) );
+		wp_send_json_success(
+			array(
+				'id'         => $contact->id,
+				'contact_id' => $contact->contact_id,
+				'name'       => trim( $contact->first_name . ' ' . $contact->last_name ),
+				'email'      => $contact->email,
+			)
+		);
 	}
 
 	/**
@@ -212,11 +218,13 @@ class SCRM_AJAX {
 
 		$company = scrm_get_company( $result );
 
-		wp_send_json_success( array(
-			'id'         => $company->id,
-			'company_id' => $company->company_id,
-			'name'       => $company->name,
-		) );
+		wp_send_json_success(
+			array(
+				'id'         => $company->id,
+				'company_id' => $company->company_id,
+				'name'       => $company->name,
+			)
+		);
 	}
 
 	/**
@@ -276,14 +284,14 @@ class SCRM_AJAX {
 
 		// Move to temp location.
 		$upload_dir = wp_upload_dir();
-		$temp_dir = $upload_dir['basedir'] . '/starter-crm/temp';
+		$temp_dir   = $upload_dir['basedir'] . '/starter-crm/temp';
 
 		if ( ! file_exists( $temp_dir ) ) {
 			wp_mkdir_p( $temp_dir );
 		}
 
 		$temp_file = $temp_dir . '/' . wp_generate_uuid4() . '.csv';
-		$uploaded = move_uploaded_file( $file['tmp_name'], $temp_file );
+		$uploaded  = move_uploaded_file( $file['tmp_name'], $temp_file );
 
 		if ( ! $uploaded ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to move uploaded file.', 'syncpoint-crm' ) ) );
@@ -291,19 +299,21 @@ class SCRM_AJAX {
 
 		// Parse preview.
 		$importer = new SCRM\Import\CSV_Importer( $temp_file );
-		$headers = $importer->get_headers();
-		$preview = $importer->get_preview( 5 );
+		$headers  = $importer->get_headers();
+		$preview  = $importer->get_preview( 5 );
 
 		if ( is_wp_error( $headers ) ) {
 			unlink( $temp_file );
 			wp_send_json_error( array( 'message' => $headers->get_error_message() ) );
 		}
 
-		wp_send_json_success( array(
-			'file'    => basename( $temp_file ),
-			'headers' => $headers,
-			'preview' => $preview,
-		) );
+		wp_send_json_success(
+			array(
+				'file'    => basename( $temp_file ),
+				'headers' => $headers,
+				'preview' => $preview,
+			)
+		);
 	}
 
 	/**
@@ -312,9 +322,9 @@ class SCRM_AJAX {
 	public function handle_import_run() {
 		$this->verify_request();
 
-		$file = isset( $_POST['file'] ) ? sanitize_file_name( $_POST['file'] ) : '';
-		$mapping = isset( $_POST['mapping'] ) ? (array) $_POST['mapping'] : array();
-		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : 'contacts';
+		$file            = isset( $_POST['file'] ) ? sanitize_file_name( $_POST['file'] ) : '';
+		$mapping         = isset( $_POST['mapping'] ) ? (array) $_POST['mapping'] : array();
+		$type            = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : 'contacts';
 		$skip_duplicates = isset( $_POST['skip_duplicates'] ) && $_POST['skip_duplicates'];
 		$update_existing = isset( $_POST['update_existing'] ) && $_POST['update_existing'];
 
@@ -323,7 +333,7 @@ class SCRM_AJAX {
 		}
 
 		$upload_dir = wp_upload_dir();
-		$file_path = $upload_dir['basedir'] . '/starter-crm/temp/' . $file;
+		$file_path  = $upload_dir['basedir'] . '/starter-crm/temp/' . $file;
 
 		if ( ! file_exists( $file_path ) ) {
 			wp_send_json_error( array( 'message' => __( 'File not found.', 'syncpoint-crm' ) ) );
@@ -339,10 +349,12 @@ class SCRM_AJAX {
 		$importer->set_import_type( $type );
 		$importer->set_mapping( $clean_mapping );
 
-		$results = $importer->run( array(
-			'skip_duplicates' => $skip_duplicates,
-			'update_existing' => $update_existing,
-		) );
+		$results = $importer->run(
+			array(
+				'skip_duplicates' => $skip_duplicates,
+				'update_existing' => $update_existing,
+			)
+		);
 
 		// Clean up temp file.
 		unlink( $file_path );
@@ -452,15 +464,17 @@ class SCRM_AJAX {
 			$results['contacts_added'] ?? 0
 		);
 
-		wp_send_json_success( array(
-			'message' => sprintf(
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
 				/* translators: 1: transactions synced, 2: contacts created */
-				__( 'Synced %1$d transactions, created %2$d contacts.', 'syncpoint-crm' ),
-				$results['synced'] ?? 0,
-				$results['contacts_added'] ?? 0
-			),
-			'results' => $results,
-		) );
+					__( 'Synced %1$d transactions, created %2$d contacts.', 'syncpoint-crm' ),
+					$results['synced'] ?? 0,
+					$results['contacts_added'] ?? 0
+				),
+				'results' => $results,
+			)
+		);
 	}
 
 	/**
@@ -508,15 +522,17 @@ class SCRM_AJAX {
 			$results['contacts_added'] ?? 0
 		);
 
-		wp_send_json_success( array(
-			'message' => sprintf(
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
 				/* translators: 1: transactions synced, 2: contacts created */
-				__( 'Synced %1$d transactions, created %2$d contacts.', 'syncpoint-crm' ),
-				$results['synced'] ?? 0,
-				$results['contacts_added'] ?? 0
-			),
-			'results' => $results,
-		) );
+					__( 'Synced %1$d transactions, created %2$d contacts.', 'syncpoint-crm' ),
+					$results['synced'] ?? 0,
+					$results['contacts_added'] ?? 0
+				),
+				'results' => $results,
+			)
+		);
 	}
 
 	/**
@@ -551,9 +567,11 @@ class SCRM_AJAX {
 			// Check NVP availability separately from REST API
 			if ( ! $gateway->is_nvp_available() ) {
 				scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, __( 'PayPal NVP API credentials are not configured.', 'syncpoint-crm' ) );
-				wp_send_json_error( array( 
-					'message' => __( 'PayPal NVP API credentials are not configured. Please enter your API Username, Password, and Signature in the PayPal Import settings tab and save before importing.', 'syncpoint-crm' ) 
-				) );
+				wp_send_json_error(
+					array(
+						'message' => __( 'PayPal NVP API credentials are not configured. Please enter your API Username, Password, and Signature in the PayPal Import settings tab and save before importing.', 'syncpoint-crm' ),
+					)
+				);
 				return;
 			}
 
@@ -573,28 +591,38 @@ class SCRM_AJAX {
 				$results['contacts_added'] ?? 0
 			);
 
-			wp_send_json_success( array(
-				'message' => sprintf(
+			wp_send_json_success(
+				array(
+					'message' => sprintf(
 					/* translators: 1: transactions synced, 2: contacts created */
-					__( 'Imported %1$d historical transactions, created %2$d contacts.', 'syncpoint-crm' ),
-					$results['synced'] ?? 0,
-					$results['contacts_added'] ?? 0
-				),
-				'results' => $results,
-			) );
+						__( 'Imported %1$d historical transactions, created %2$d contacts.', 'syncpoint-crm' ),
+						$results['synced'] ?? 0,
+						$results['contacts_added'] ?? 0
+					),
+					'results' => $results,
+				)
+			);
 
 		} catch ( \Exception $e ) {
-			set_transient( 'scrm_paypal_import_progress', array(
-				'status'  => 'error',
-				'message' => $e->getMessage(),
-			), 600 );
+			set_transient(
+				'scrm_paypal_import_progress',
+				array(
+					'status'  => 'error',
+					'message' => $e->getMessage(),
+				),
+				600
+			);
 			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $e->getMessage() );
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		} catch ( \Error $e ) {
-			set_transient( 'scrm_paypal_import_progress', array(
-				'status'  => 'error',
-				'message' => $e->getMessage(),
-			), 600 );
+			set_transient(
+				'scrm_paypal_import_progress',
+				array(
+					'status'  => 'error',
+					'message' => $e->getMessage(),
+				),
+				600
+			);
 			scrm_complete_sync_log( $log_id, 'failed', 0, 0, 0, $e->getMessage() );
 			wp_send_json_error( array( 'message' => 'PHP Error: ' . $e->getMessage() ) );
 		}
@@ -647,10 +675,12 @@ class SCRM_AJAX {
 		$progress = get_transient( 'scrm_paypal_import_progress' );
 
 		if ( ! $progress ) {
-			wp_send_json_success( array(
-				'status'  => 'idle',
-				'message' => __( 'No import in progress.', 'syncpoint-crm' ),
-			) );
+			wp_send_json_success(
+				array(
+					'status'  => 'idle',
+					'message' => __( 'No import in progress.', 'syncpoint-crm' ),
+				)
+			);
 			return;
 		}
 
@@ -685,10 +715,10 @@ class SCRM_AJAX {
 			return;
 		}
 
-		$sent     = 0;
-		$failed   = 0;
-		$settings = scrm_get_settings( 'invoices' );
-		$from_name = $settings['company_name'] ?? get_bloginfo( 'name' );
+		$sent       = 0;
+		$failed     = 0;
+		$settings   = scrm_get_settings( 'invoices' );
+		$from_name  = $settings['company_name'] ?? get_bloginfo( 'name' );
 		$from_email = get_option( 'admin_email' );
 
 		$headers = array(
@@ -700,7 +730,7 @@ class SCRM_AJAX {
 			$contact = scrm_get_contact( $contact_id );
 
 			if ( ! $contact || empty( $contact->email ) ) {
-				$failed++;
+				++$failed;
 				continue;
 			}
 
@@ -726,29 +756,36 @@ class SCRM_AJAX {
 			$result = wp_mail( $contact->email, $personalized_subject, $email_body, $headers );
 
 			if ( $result ) {
-				$sent++;
-				scrm_log_activity( 'contact', $contact_id, 'email_sent', sprintf(
+				++$sent;
+				scrm_log_activity(
+					'contact',
+					$contact_id,
+					'email_sent',
+					sprintf(
 					/* translators: %s: email subject */
-					__( 'Email sent: %s', 'syncpoint-crm' ),
-					$personalized_subject
-				) );
+						__( 'Email sent: %s', 'syncpoint-crm' ),
+						$personalized_subject
+					)
+				);
 				scrm_log_email( $contact_id, $personalized_subject, $personalized_message, 'sent' );
 			} else {
-				$failed++;
+				++$failed;
 				scrm_log_email( $contact_id, $personalized_subject, $personalized_message, 'failed' );
 			}
 		}
 
-		wp_send_json_success( array(
-			'message' => sprintf(
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
 				/* translators: 1: emails sent, 2: emails failed */
-				__( 'Sent %1$d emails, %2$d failed.', 'syncpoint-crm' ),
-				$sent,
-				$failed
-			),
-			'sent'   => $sent,
-			'failed' => $failed,
-		) );
+					__( 'Sent %1$d emails, %2$d failed.', 'syncpoint-crm' ),
+					$sent,
+					$failed
+				),
+				'sent'    => $sent,
+				'failed'  => $failed,
+			)
+		);
 	}
 
 	/**
@@ -770,7 +807,7 @@ class SCRM_AJAX {
 	public function handle_dashboard_chart_data() {
 		$this->verify_request();
 
-		$chart = isset( $_POST['chart'] ) ? sanitize_text_field( wp_unslash( $_POST['chart'] ) ) : 'revenue';
+		$chart  = isset( $_POST['chart'] ) ? sanitize_text_field( wp_unslash( $_POST['chart'] ) ) : 'revenue';
 		$period = isset( $_POST['period'] ) ? sanitize_text_field( wp_unslash( $_POST['period'] ) ) : '30days';
 
 		$data = array();
@@ -805,9 +842,11 @@ class SCRM_AJAX {
 		require_once SCRM_PLUGIN_DIR . 'includes/class-scrm-activator.php';
 		SCRM_Activator::activate();
 
-		wp_send_json_success( array(
-			'message' => __( 'Tables recreated successfully.', 'syncpoint-crm' ),
-		) );
+		wp_send_json_success(
+			array(
+				'message' => __( 'Tables recreated successfully.', 'syncpoint-crm' ),
+			)
+		);
 	}
 
 	/**
@@ -845,17 +884,19 @@ class SCRM_AJAX {
 			$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
 			if ( $exists ) {
 				$wpdb->query( "OPTIMIZE TABLE {$table}" );
-				$optimized++;
+				++$optimized;
 			}
 		}
 
-		wp_send_json_success( array(
-			'message' => sprintf(
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
 				/* translators: %d: number of tables optimized */
-				__( 'Optimized %d tables.', 'syncpoint-crm' ),
-				$optimized
-			),
-		) );
+					__( 'Optimized %d tables.', 'syncpoint-crm' ),
+					$optimized
+				),
+			)
+		);
 	}
 
 	/**
@@ -890,7 +931,7 @@ class SCRM_AJAX {
 			file_put_contents( $export_dir . '/index.php', '<?php // Silence is golden.' );
 		}
 
-		$timestamp    = gmdate( 'Y-m-d-His' );
+		$timestamp    = gmgmdate( 'Y-m-d-His' );
 		$zip_filename = "scrm-export-{$timestamp}.zip";
 		$zip_path     = $export_dir . '/' . $zip_filename;
 
@@ -942,7 +983,7 @@ class SCRM_AJAX {
 			fclose( $csv );
 
 			$zip->addFromString( $filename, $csv_content );
-			$exported_tables++;
+			++$exported_tables;
 		}
 
 		$zip->close();
@@ -955,14 +996,16 @@ class SCRM_AJAX {
 
 		$download_url = $upload_dir['baseurl'] . '/scrm-exports/' . $zip_filename;
 
-		wp_send_json_success( array(
-			'message'      => sprintf(
+		wp_send_json_success(
+			array(
+				'message'      => sprintf(
 				/* translators: %d: number of tables exported */
-				__( 'Export completed. %d tables exported.', 'syncpoint-crm' ),
-				$exported_tables
-			),
-			'download_url' => $download_url,
-		) );
+					__( 'Export completed. %d tables exported.', 'syncpoint-crm' ),
+					$exported_tables
+				),
+				'download_url' => $download_url,
+			)
+		);
 	}
 }
 

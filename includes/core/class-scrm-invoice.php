@@ -221,10 +221,12 @@ class Invoice {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_invoices';
 
-		$row = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$table} WHERE id = %d",
-			$id
-		) );
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE id = %d",
+				$id
+			)
+		);
 
 		if ( $row ) {
 			$this->set_props( $row );
@@ -240,10 +242,12 @@ class Invoice {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_invoices';
 
-		$row = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$table} WHERE invoice_number = %s",
-			$number
-		) );
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE invoice_number = %s",
+				$number
+			)
+		);
 
 		if ( $row ) {
 			$this->set_props( $row );
@@ -294,7 +298,7 @@ class Invoice {
 	 */
 	public function save() {
 		if ( $this->id ) {
-			return $this->update();
+			return $this->upgmdate();
 		}
 		return $this->create();
 	}
@@ -321,7 +325,7 @@ class Invoice {
 		}
 
 		if ( empty( $this->due_date ) ) {
-			$this->due_date = date( 'Y-m-d', strtotime( '+30 days', strtotime( $this->issue_date ) ) );
+			$this->due_date = gmdate( 'Y-m-d', strtotime( '+30 days', strtotime( $this->issue_date ) ) );
 		}
 
 		if ( empty( $this->currency ) ) {
@@ -373,7 +377,7 @@ class Invoice {
 	 *
 	 * @return bool|\WP_Error True or error.
 	 */
-	public function update() {
+	public function upgmdate() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_invoices';
 
@@ -401,7 +405,7 @@ class Invoice {
 			'updated_at'          => current_time( 'mysql' ),
 		);
 
-		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
+		$result = $wpdb->upgmdate( $table, $data, array( 'id' => $this->id ) );
 
 		if ( false === $result ) {
 			return new \WP_Error( 'db_error', $wpdb->last_error );
@@ -456,10 +460,12 @@ class Invoice {
 			global $wpdb;
 			$table = $wpdb->prefix . 'scrm_invoice_items';
 
-			$this->items = $wpdb->get_results( $wpdb->prepare(
-				"SELECT * FROM {$table} WHERE invoice_id = %d ORDER BY sort_order ASC",
-				$this->id
-			) );
+			$this->items = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM {$table} WHERE invoice_id = %d ORDER BY sort_order ASC",
+					$this->id
+				)
+			);
 		}
 
 		return $this->items ?: array();
@@ -509,10 +515,13 @@ class Invoice {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_invoice_items';
 
-		$result = $wpdb->delete( $table, array(
-			'id'         => $item_id,
-			'invoice_id' => $this->id,
-		) );
+		$result = $wpdb->delete(
+			$table,
+			array(
+				'id'         => $item_id,
+				'invoice_id' => $this->id,
+			)
+		);
 
 		if ( $result ) {
 			$this->items = null;
@@ -636,7 +645,7 @@ class Invoice {
 	public function mark_sent() {
 		if ( 'draft' === $this->status ) {
 			$this->status = 'sent';
-			$result = $this->update();
+			$result       = $this->upgmdate();
 
 			if ( ! is_wp_error( $result ) ) {
 				do_action( 'scrm_invoice_sent', $this->id, $this->contact_id );
@@ -660,7 +669,7 @@ class Invoice {
 				$this->status = 'viewed';
 			}
 
-			$result = $this->update();
+			$result = $this->upgmdate();
 
 			if ( ! is_wp_error( $result ) ) {
 				do_action( 'scrm_invoice_viewed', $this->id );
@@ -681,7 +690,7 @@ class Invoice {
 		$this->status  = 'paid';
 		$this->paid_at = current_time( 'mysql' );
 
-		$result = $this->update();
+		$result = $this->upgmdate();
 
 		if ( ! is_wp_error( $result ) ) {
 			do_action( 'scrm_invoice_paid', $this->id, $transaction_id );
@@ -697,10 +706,13 @@ class Invoice {
 	 * @return string Public invoice URL.
 	 */
 	public function get_public_url() {
-		return add_query_arg( array(
-			'scrm_invoice' => $this->invoice_number,
-			'key'          => $this->get_access_key(),
-		), home_url( '/invoice/' ) );
+		return add_query_arg(
+			array(
+				'scrm_invoice' => $this->invoice_number,
+				'key'          => $this->get_access_key(),
+			),
+			home_url( '/invoice/' )
+		);
 	}
 
 	/**
@@ -718,11 +730,14 @@ class Invoice {
 	 * @return string PDF download URL.
 	 */
 	public function get_pdf_url() {
-		return add_query_arg( array(
-			'scrm_invoice' => $this->invoice_number,
-			'key'          => $this->get_access_key(),
-			'download'     => 'pdf',
-		), home_url( '/invoice/' ) );
+		return add_query_arg(
+			array(
+				'scrm_invoice' => $this->invoice_number,
+				'key'          => $this->get_access_key(),
+				'download'     => 'pdf',
+			),
+			home_url( '/invoice/' )
+		);
 	}
 
 	/**

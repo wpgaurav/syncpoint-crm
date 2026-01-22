@@ -199,7 +199,7 @@ class CSV_Exporter {
 	 */
 	public function download( $filename = '' ) {
 		if ( empty( $filename ) ) {
-			$filename = $this->export_type . '-' . date( 'Y-m-d' ) . '.csv';
+			$filename = $this->export_type . '-' . gmdate( 'Y-m-d' ) . '.csv';
 		}
 
 		$content = $this->generate();
@@ -256,16 +256,19 @@ class CSV_Exporter {
 	 * @return array Contacts data.
 	 */
 	private function get_contacts_data() {
-		$args = wp_parse_args( $this->args, array(
-			'limit' => -1,
-		) );
+		$args = wp_parse_args(
+			$this->args,
+			array(
+				'limit' => -1,
+			)
+		);
 
 		$contacts = scrm_get_contacts( $args );
-		$data = array();
+		$data     = array();
 
 		foreach ( $contacts as $contact ) {
-			$company = $contact->company_id ? scrm_get_company( $contact->company_id ) : null;
-			$tags = scrm_get_object_tags( $contact->id, 'contact' );
+			$company   = $contact->company_id ? scrm_get_company( $contact->company_id ) : null;
+			$tags      = scrm_get_object_tags( $contact->id, 'contact' );
 			$tag_names = wp_list_pluck( $tags, 'name' );
 
 			$data[] = array(
@@ -298,12 +301,15 @@ class CSV_Exporter {
 	 * @return array Companies data.
 	 */
 	private function get_companies_data() {
-		$args = wp_parse_args( $this->args, array(
-			'limit' => -1,
-		) );
+		$args = wp_parse_args(
+			$this->args,
+			array(
+				'limit' => -1,
+			)
+		);
 
 		$companies = scrm_get_companies( $args );
-		$data = array();
+		$data      = array();
 
 		foreach ( $companies as $company ) {
 			$data[] = array(
@@ -341,7 +347,7 @@ class CSV_Exporter {
 		}
 
 		$transactions = $wpdb->get_results( $sql );
-		$data = array();
+		$data         = array();
 
 		foreach ( $transactions as $txn ) {
 			$contact = scrm_get_contact( $txn->contact_id );
@@ -379,7 +385,7 @@ class CSV_Exporter {
 		}
 
 		$invoices = $wpdb->get_results( $sql );
-		$data = array();
+		$data     = array();
 
 		foreach ( $invoices as $invoice ) {
 			$contact = scrm_get_contact( $invoice->contact_id );

@@ -80,11 +80,16 @@ class Emails {
 			$invoice->mark_sent();
 
 			// Log activity.
-			scrm_log_activity( 'invoice', $invoice->id, 'email_sent', sprintf(
+			scrm_log_activity(
+				'invoice',
+				$invoice->id,
+				'email_sent',
+				sprintf(
 				/* translators: %s: email address */
-				__( 'Invoice emailed to %s', 'syncpoint-crm' ),
-				$contact->email
-			) );
+					__( 'Invoice emailed to %s', 'syncpoint-crm' ),
+					$contact->email
+				)
+			);
 
 			do_action( 'scrm_invoice_email_sent', $invoice, $contact );
 		}
@@ -100,11 +105,11 @@ class Emails {
 	 * @return string Email HTML content.
 	 */
 	private static function get_invoice_email_content( $invoice, $contact ) {
-		$settings = scrm_get_settings( 'invoices' );
+		$settings     = scrm_get_settings( 'invoices' );
 		$company_name = $settings['company_name'] ?? get_bloginfo( 'name' );
 
 		$view_url = $invoice->get_public_url();
-		$pdf_url = $invoice->get_pdf_url();
+		$pdf_url  = $invoice->get_pdf_url();
 
 		ob_start();
 		?>
@@ -168,7 +173,7 @@ class Emails {
 														<td style="padding: 5px 0;">
 															<span style="color: #6b7280; font-size: 14px;"><?php esc_html_e( 'Issue Date:', 'syncpoint-crm' ); ?></span>
 															<span style="color: #1f2937; font-size: 14px; float: right;">
-																<?php echo esc_html( scrm_format_date( $invoice->issue_date ) ); ?>
+																<?php echo esc_html( scrm_format_gmdate( $invoice->issue_date ) ); ?>
 															</span>
 														</td>
 													</tr>
@@ -176,7 +181,7 @@ class Emails {
 														<td style="padding: 5px 0;">
 															<span style="color: #6b7280; font-size: 14px;"><?php esc_html_e( 'Due Date:', 'syncpoint-crm' ); ?></span>
 															<span style="color: #1f2937; font-size: 14px; float: right;">
-																<?php echo esc_html( scrm_format_date( $invoice->due_date ) ); ?>
+																<?php echo esc_html( scrm_format_gmdate( $invoice->due_date ) ); ?>
 															</span>
 														</td>
 													</tr>
@@ -198,7 +203,7 @@ class Emails {
 										<tr>
 											<td align="center" style="padding-bottom: 20px;">
 												<a href="<?php echo esc_url( $view_url ); ?>"
-												   style="display: inline-block; padding: 14px 32px; background-color: #3b82f6; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 6px;">
+													style="display: inline-block; padding: 14px 32px; background-color: #3b82f6; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 6px;">
 													<?php esc_html_e( 'View & Pay Invoice', 'syncpoint-crm' ); ?>
 												</a>
 											</td>
@@ -206,7 +211,7 @@ class Emails {
 										<tr>
 											<td align="center">
 												<a href="<?php echo esc_url( $pdf_url ); ?>"
-												   style="color: #6b7280; text-decoration: underline; font-size: 14px;">
+													style="color: #6b7280; text-decoration: underline; font-size: 14px;">
 													<?php esc_html_e( 'Download PDF', 'syncpoint-crm' ); ?>
 												</a>
 											</td>
@@ -253,7 +258,7 @@ class Emails {
 			return false;
 		}
 
-		$settings = scrm_get_settings( 'invoices' );
+		$settings     = scrm_get_settings( 'invoices' );
 		$company_name = $settings['company_name'] ?? get_bloginfo( 'name' );
 
 		$subject = sprintf(
@@ -272,11 +277,16 @@ class Emails {
 		$result = wp_mail( $contact->email, $subject, $message, $headers );
 
 		if ( $result ) {
-			scrm_log_activity( 'invoice', $invoice->id, 'payment_email_sent', sprintf(
+			scrm_log_activity(
+				'invoice',
+				$invoice->id,
+				'payment_email_sent',
+				sprintf(
 				/* translators: %s: email address */
-				__( 'Payment confirmation emailed to %s', 'syncpoint-crm' ),
-				$contact->email
-			) );
+					__( 'Payment confirmation emailed to %s', 'syncpoint-crm' ),
+					$contact->email
+				)
+			);
 		}
 
 		return $result;
@@ -291,7 +301,7 @@ class Emails {
 	 * @return string Email HTML content.
 	 */
 	private static function get_payment_confirmation_content( $invoice, $transaction, $contact ) {
-		$settings = scrm_get_settings( 'invoices' );
+		$settings     = scrm_get_settings( 'invoices' );
 		$company_name = $settings['company_name'] ?? get_bloginfo( 'name' );
 
 		ob_start();
@@ -342,7 +352,7 @@ class Emails {
 										</tr>
 										<tr>
 											<td style="padding: 8px 0; color: #6b7280;"><?php esc_html_e( 'Date:', 'syncpoint-crm' ); ?></td>
-											<td style="padding: 8px 0; text-align: right;"><?php echo esc_html( scrm_format_date( $transaction->created_at ) ); ?></td>
+											<td style="padding: 8px 0; text-align: right;"><?php echo esc_html( scrm_format_gmdate( $transaction->created_at ) ); ?></td>
 										</tr>
 										<tr>
 											<td style="padding: 8px 0; color: #6b7280;"><?php esc_html_e( 'Transaction ID:', 'syncpoint-crm' ); ?></td>
@@ -379,7 +389,7 @@ class Emails {
 			return false;
 		}
 
-		$settings = scrm_get_settings( 'invoices' );
+		$settings     = scrm_get_settings( 'invoices' );
 		$company_name = $settings['company_name'] ?? get_bloginfo( 'name' );
 
 		$is_overdue = $invoice->is_overdue();
@@ -398,11 +408,16 @@ class Emails {
 		$result = wp_mail( $contact->email, $subject, $message, $headers );
 
 		if ( $result ) {
-			scrm_log_activity( 'invoice', $invoice->id, 'reminder_sent', sprintf(
+			scrm_log_activity(
+				'invoice',
+				$invoice->id,
+				'reminder_sent',
+				sprintf(
 				/* translators: %s: email address */
-				__( 'Reminder emailed to %s', 'syncpoint-crm' ),
-				$contact->email
-			) );
+					__( 'Reminder emailed to %s', 'syncpoint-crm' ),
+					$contact->email
+				)
+			);
 		}
 
 		return $result;
@@ -417,9 +432,9 @@ class Emails {
 	 * @return string Email HTML content.
 	 */
 	private static function get_reminder_email_content( $invoice, $contact, $is_overdue ) {
-		$settings = scrm_get_settings( 'invoices' );
+		$settings     = scrm_get_settings( 'invoices' );
 		$company_name = $settings['company_name'] ?? get_bloginfo( 'name' );
-		$view_url = $invoice->get_public_url();
+		$view_url     = $invoice->get_public_url();
 
 		$header_color = $is_overdue ? '#dc2626' : '#f59e0b';
 
@@ -464,14 +479,14 @@ class Emails {
 												/* translators: %1$s: invoice number, %2$s: due date */
 												esc_html__( 'Invoice %1$s was due on %2$s. Please make payment as soon as possible.', 'syncpoint-crm' ),
 												esc_html( $invoice->invoice_number ),
-												esc_html( scrm_format_date( $invoice->due_date ) )
+												esc_html( scrm_format_gmdate( $invoice->due_date ) )
 											);
 										} else {
 											printf(
 												/* translators: %1$s: invoice number, %2$s: due date */
 												esc_html__( 'This is a friendly reminder that invoice %1$s is due on %2$s.', 'syncpoint-crm' ),
 												esc_html( $invoice->invoice_number ),
-												esc_html( scrm_format_date( $invoice->due_date ) )
+												esc_html( scrm_format_gmdate( $invoice->due_date ) )
 											);
 										}
 										?>
@@ -481,7 +496,7 @@ class Emails {
 									</p>
 									<p style="text-align: center;">
 										<a href="<?php echo esc_url( $view_url ); ?>"
-										   style="display: inline-block; padding: 14px 32px; background: <?php echo esc_attr( $header_color ); ?>; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600;">
+											style="display: inline-block; padding: 14px 32px; background: <?php echo esc_attr( $header_color ); ?>; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600;">
 											<?php esc_html_e( 'Pay Now', 'syncpoint-crm' ); ?>
 										</a>
 									</p>

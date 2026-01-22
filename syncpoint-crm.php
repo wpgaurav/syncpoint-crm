@@ -309,11 +309,14 @@ final class SyncPoint_CRM {
 		 * @since 1.0.0
 		 * @param array $gateways Array of gateway class names.
 		 */
-		$gateway_classes = apply_filters( 'scrm_payment_gateways', array(
-			'paypal' => 'SCRM\Gateways\PayPal',
-			'stripe' => 'SCRM\Gateways\Stripe',
-			'manual' => 'SCRM\Gateways\Manual',
-		) );
+		$gateway_classes = apply_filters(
+			'scrm_payment_gateways',
+			array(
+				'paypal' => 'SCRM\Gateways\PayPal',
+				'stripe' => 'SCRM\Gateways\Stripe',
+				'manual' => 'SCRM\Gateways\Manual',
+			)
+		);
 
 		// Initialize gateway instances.
 		$this->gateways = array();

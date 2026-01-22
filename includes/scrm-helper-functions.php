@@ -87,15 +87,15 @@ function scrm_is_enabled( $feature ) {
  */
 function scrm_get_default_settings() {
 	return array(
-		'general' => array(
-			'default_currency'     => 'USD',
-			'date_format'          => 'Y-m-d',
-			'contact_id_prefix'    => 'CUST',
-			'company_id_prefix'    => 'COMP',
-			'invoice_prefix'       => 'INV',
-			'next_contact_number'  => 1,
-			'next_company_number'  => 1,
-			'next_invoice_number'  => 1,
+		'general'  => array(
+			'default_currency'    => 'USD',
+			'date_format'         => 'Y-m-d',
+			'contact_id_prefix'   => 'CUST',
+			'company_id_prefix'   => 'COMP',
+			'invoice_prefix'      => 'INV',
+			'next_contact_number' => 1,
+			'next_company_number' => 1,
+			'next_invoice_number' => 1,
 		),
 		'paypal'   => array(
 			'enabled'       => false,
@@ -163,124 +163,124 @@ function scrm_get_default_currency() {
 function scrm_get_currencies() {
 	$currencies = array(
 		'USD' => array(
-			'name'      => 'US Dollar',
-			'symbol'    => '$',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'US Dollar',
+			'symbol'   => '$',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'EUR' => array(
-			'name'      => 'Euro',
-			'symbol'    => '€',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Euro',
+			'symbol'   => '€',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'GBP' => array(
-			'name'      => 'British Pound',
-			'symbol'    => '£',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'British Pound',
+			'symbol'   => '£',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'CAD' => array(
-			'name'      => 'Canadian Dollar',
-			'symbol'    => 'C$',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Canadian Dollar',
+			'symbol'   => 'C$',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'AUD' => array(
-			'name'      => 'Australian Dollar',
-			'symbol'    => 'A$',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Australian Dollar',
+			'symbol'   => 'A$',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'INR' => array(
-			'name'      => 'Indian Rupee',
-			'symbol'    => '₹',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Indian Rupee',
+			'symbol'   => '₹',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'JPY' => array(
-			'name'      => 'Japanese Yen',
-			'symbol'    => '¥',
-			'decimals'  => 0,
-			'position'  => 'before',
+			'name'     => 'Japanese Yen',
+			'symbol'   => '¥',
+			'decimals' => 0,
+			'position' => 'before',
 		),
 		'CNY' => array(
-			'name'      => 'Chinese Yuan',
-			'symbol'    => '¥',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Chinese Yuan',
+			'symbol'   => '¥',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'CHF' => array(
-			'name'      => 'Swiss Franc',
-			'symbol'    => 'CHF',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Swiss Franc',
+			'symbol'   => 'CHF',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'SGD' => array(
-			'name'      => 'Singapore Dollar',
-			'symbol'    => 'S$',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Singapore Dollar',
+			'symbol'   => 'S$',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'NZD' => array(
-			'name'      => 'New Zealand Dollar',
-			'symbol'    => 'NZ$',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'New Zealand Dollar',
+			'symbol'   => 'NZ$',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'BRL' => array(
-			'name'      => 'Brazilian Real',
-			'symbol'    => 'R$',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Brazilian Real',
+			'symbol'   => 'R$',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'MXN' => array(
-			'name'      => 'Mexican Peso',
-			'symbol'    => 'MX$',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Mexican Peso',
+			'symbol'   => 'MX$',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'SEK' => array(
-			'name'      => 'Swedish Krona',
-			'symbol'    => 'kr',
-			'decimals'  => 2,
-			'position'  => 'after',
+			'name'     => 'Swedish Krona',
+			'symbol'   => 'kr',
+			'decimals' => 2,
+			'position' => 'after',
 		),
 		'NOK' => array(
-			'name'      => 'Norwegian Krone',
-			'symbol'    => 'kr',
-			'decimals'  => 2,
-			'position'  => 'after',
+			'name'     => 'Norwegian Krone',
+			'symbol'   => 'kr',
+			'decimals' => 2,
+			'position' => 'after',
 		),
 		'DKK' => array(
-			'name'      => 'Danish Krone',
-			'symbol'    => 'kr',
-			'decimals'  => 2,
-			'position'  => 'after',
+			'name'     => 'Danish Krone',
+			'symbol'   => 'kr',
+			'decimals' => 2,
+			'position' => 'after',
 		),
 		'PLN' => array(
-			'name'      => 'Polish Zloty',
-			'symbol'    => 'zł',
-			'decimals'  => 2,
-			'position'  => 'after',
+			'name'     => 'Polish Zloty',
+			'symbol'   => 'zł',
+			'decimals' => 2,
+			'position' => 'after',
 		),
 		'ZAR' => array(
-			'name'      => 'South African Rand',
-			'symbol'    => 'R',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'South African Rand',
+			'symbol'   => 'R',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'AED' => array(
-			'name'      => 'UAE Dirham',
-			'symbol'    => 'د.إ',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'UAE Dirham',
+			'symbol'   => 'د.إ',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 		'HKD' => array(
-			'name'      => 'Hong Kong Dollar',
-			'symbol'    => 'HK$',
-			'decimals'  => 2,
-			'position'  => 'before',
+			'name'     => 'Hong Kong Dollar',
+			'symbol'   => 'HK$',
+			'decimals' => 2,
+			'position' => 'before',
 		),
 	);
 
@@ -323,14 +323,14 @@ function scrm_format_currency( $amount, $currency = '' ) {
 		$currency = scrm_get_default_currency();
 	}
 
-	$currencies = scrm_get_currencies();
+	$currencies    = scrm_get_currencies();
 	$currency_data = isset( $currencies[ $currency ] ) ? $currencies[ $currency ] : array(
 		'symbol'   => $currency,
 		'decimals' => 2,
 		'position' => 'before',
 	);
 
-	$symbol = $currency_data['symbol'];
+	$symbol   = $currency_data['symbol'];
 	$decimals = $currency_data['decimals'];
 	$position = $currency_data['position'];
 
@@ -378,9 +378,9 @@ function scrm_generate_id( $type, $subtype = '' ) {
 				'lead'     => 'LEAD',
 				'prospect' => 'PROS',
 			);
-			$prefix = isset( $prefixes[ $subtype ] ) ? $prefixes[ $subtype ] : $prefixes['customer'];
-			$format = $prefix . '-{number}';
-			$number = scrm_get_next_number( 'contact' );
+			$prefix   = isset( $prefixes[ $subtype ] ) ? $prefixes[ $subtype ] : $prefixes['customer'];
+			$format   = $prefix . '-{number}';
+			$number   = scrm_get_next_number( 'contact' );
 
 			/**
 			 * Filter contact ID format.
@@ -431,10 +431,10 @@ function scrm_generate_id( $type, $subtype = '' ) {
 
 	// Replace placeholders.
 	$padded_number = str_pad( $number, 3, '0', STR_PAD_LEFT );
-	$replacements = array(
+	$replacements  = array(
 		'{number}' => $padded_number,
-		'{year}'   => date( 'Y' ),
-		'{month}'  => date( 'm' ),
+		'{year}'   => gmdate( 'Y' ),
+		'{month}'  => gmdate( 'm' ),
 	);
 
 	$id = str_replace( array_keys( $replacements ), array_values( $replacements ), $format );
@@ -450,7 +450,7 @@ function scrm_generate_id( $type, $subtype = '' ) {
  * @return int Next number.
  */
 function scrm_get_next_number( $type ) {
-	$key = 'next_' . $type . '_number';
+	$key    = 'next_' . $type . '_number';
 	$number = (int) scrm_get_setting( 'general', $key, 1 );
 
 	// Increment for next use.
@@ -481,16 +481,19 @@ function scrm_current_user_can( $capability ) {
 	 * @since 1.0.0
 	 * @param array $mappings Capability to role mappings.
 	 */
-	$mappings = apply_filters( 'scrm_capability_mappings', array(
-		'scrm_manage_contacts'     => 'manage_options',
-		'scrm_manage_companies'    => 'manage_options',
-		'scrm_manage_transactions' => 'manage_options',
-		'scrm_manage_invoices'     => 'manage_options',
-		'scrm_manage_settings'     => 'manage_options',
-		'scrm_view_dashboard'      => 'manage_options',
-		'scrm_import_data'         => 'manage_options',
-		'scrm_export_data'         => 'manage_options',
-	) );
+	$mappings = apply_filters(
+		'scrm_capability_mappings',
+		array(
+			'scrm_manage_contacts'     => 'manage_options',
+			'scrm_manage_companies'    => 'manage_options',
+			'scrm_manage_transactions' => 'manage_options',
+			'scrm_manage_invoices'     => 'manage_options',
+			'scrm_manage_settings'     => 'manage_options',
+			'scrm_view_dashboard'      => 'manage_options',
+			'scrm_import_data'         => 'manage_options',
+			'scrm_export_data'         => 'manage_options',
+		)
+	);
 
 	// Map SCRM capability to WordPress capability.
 	$wp_capability = isset( $mappings[ $capability ] ) ? $mappings[ $capability ] : 'manage_options';
@@ -551,11 +554,13 @@ function scrm_cache_delete_group( $group ) {
 
 	$like = $wpdb->esc_like( 'scrm_' . $group );
 
-	$wpdb->query( $wpdb->prepare(
-		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-		'_transient_' . $like . '%',
-		'_transient_timeout_' . $like . '%'
-	) );
+	$wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+			'_transient_' . $like . '%',
+			'_transient_timeout_' . $like . '%'
+		)
+	);
 
 	return true;
 }
@@ -619,7 +624,7 @@ function scrm_encrypt( $data ) {
 	}
 
 	$key = wp_salt( 'auth' );
-	$iv = substr( $key, 0, 16 );
+	$iv  = substr( $key, 0, 16 );
 
 	$encrypted = openssl_encrypt( $data, 'AES-256-CBC', $key, 0, $iv );
 
@@ -639,7 +644,7 @@ function scrm_decrypt( $data ) {
 	}
 
 	$key = wp_salt( 'auth' );
-	$iv = substr( $key, 0, 16 );
+	$iv  = substr( $key, 0, 16 );
 
 	$decrypted = openssl_decrypt( base64_decode( $data ), 'AES-256-CBC', $key, 0, $iv );
 
@@ -833,7 +838,7 @@ function scrm_template_exists_in_theme( $template ) {
  * @param string $format Format (optional, uses WordPress setting).
  * @return string Formatted date.
  */
-function scrm_format_date( $date, $format = '' ) {
+function scrm_format_gmdate( $date, $format = '' ) {
 	if ( empty( $format ) ) {
 		$format = get_option( 'date_format' );
 	}
@@ -924,15 +929,18 @@ function scrm_log_webhook( $source, $endpoint, $payload, $status = 'success', $r
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_webhook_log';
 
-	$result = $wpdb->insert( $table, array(
-		'source'       => sanitize_text_field( $source ),
-		'endpoint'     => esc_url_raw( $endpoint ),
-		'payload'      => wp_json_encode( $payload ),
-		'status'       => sanitize_text_field( $status ),
-		'response'     => sanitize_textarea_field( $response ),
-		'processed_at' => 'success' === $status ? current_time( 'mysql' ) : null,
-		'created_at'   => current_time( 'mysql' ),
-	) );
+	$result = $wpdb->insert(
+		$table,
+		array(
+			'source'       => sanitize_text_field( $source ),
+			'endpoint'     => esc_url_raw( $endpoint ),
+			'payload'      => wp_json_encode( $payload ),
+			'status'       => sanitize_text_field( $status ),
+			'response'     => sanitize_textarea_field( $response ),
+			'processed_at' => 'success' === $status ? current_time( 'mysql' ) : null,
+			'created_at'   => current_time( 'mysql' ),
+		)
+	);
 
 	return $result ? $wpdb->insert_id : false;
 }
@@ -955,12 +963,15 @@ function scrm_start_sync_log( $gateway, $sync_type = 'manual' ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_sync_log';
 
-	$wpdb->insert( $table, array(
-		'gateway'    => sanitize_text_field( $gateway ),
-		'sync_type'  => sanitize_text_field( $sync_type ),
-		'status'     => 'running',
-		'started_at' => current_time( 'mysql' ),
-	) );
+	$wpdb->insert(
+		$table,
+		array(
+			'gateway'    => sanitize_text_field( $gateway ),
+			'sync_type'  => sanitize_text_field( $sync_type ),
+			'status'     => 'running',
+			'started_at' => current_time( 'mysql' ),
+		)
+	);
 
 	return $wpdb->insert_id;
 }
@@ -981,7 +992,7 @@ function scrm_complete_sync_log( $log_id, $status, $synced = 0, $skipped = 0, $c
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_sync_log';
 
-	$result = $wpdb->update(
+	$result = $wpdb->upgmdate(
 		$table,
 		array(
 			'status'               => sanitize_text_field( $status ),
@@ -1015,11 +1026,13 @@ function scrm_is_sync_running( $gateway ) {
 	$table = $wpdb->prefix . 'scrm_sync_log';
 
 	// Check for running status in database
-	$running = $wpdb->get_var( $wpdb->prepare(
-		"SELECT id FROM {$table} WHERE gateway = %s AND status = 'running' AND started_at > %s LIMIT 1",
-		$gateway,
-		date( 'Y-m-d H:i:s', strtotime( '-30 minutes' ) ) // Consider stale after 30 minutes
-	) );
+	$running = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT id FROM {$table} WHERE gateway = %s AND status = 'running' AND started_at > %s LIMIT 1",
+			$gateway,
+			gmdate( 'Y-m-d H:i:s', strtotime( '-30 minutes' ) ) // Consider stale after 30 minutes
+		)
+	);
 
 	return ! empty( $running );
 }
@@ -1036,11 +1049,13 @@ function scrm_get_sync_logs( $gateway, $limit = 10 ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_sync_log';
 
-	return $wpdb->get_results( $wpdb->prepare(
-		"SELECT * FROM {$table} WHERE gateway = %s ORDER BY started_at DESC LIMIT %d",
-		$gateway,
-		$limit
-	) );
+	return $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE gateway = %s ORDER BY started_at DESC LIMIT %d",
+			$gateway,
+			$limit
+		)
+	);
 }
 
 /**
@@ -1054,10 +1069,12 @@ function scrm_get_last_sync( $gateway ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_sync_log';
 
-	return $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM {$table} WHERE gateway = %s AND status = 'completed' ORDER BY completed_at DESC LIMIT 1",
-		$gateway
-	) );
+	return $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE gateway = %s AND status = 'completed' ORDER BY completed_at DESC LIMIT 1",
+			$gateway
+		)
+	);
 }
 
 /**
@@ -1082,18 +1099,18 @@ function scrm_get_next_sync_time( $gateway ) {
  */
 function scrm_reschedule_sync( $gateway, $frequency ) {
 	$hook = 'scrm_' . $gateway . '_sync';
-	
+
 	// Clear existing schedule.
 	$timestamp = wp_next_scheduled( $hook );
 	if ( $timestamp ) {
 		wp_unschedule_event( $timestamp, $hook );
 	}
-	
+
 	// Schedule new.
 	if ( ! wp_next_scheduled( $hook ) ) {
 		wp_schedule_event( time(), $frequency, $hook );
 	}
-	
+
 	return true;
 }
 
@@ -1105,9 +1122,9 @@ function scrm_reschedule_sync( $gateway, $frequency ) {
  * @return string Wrapped email HTML.
  */
 function scrm_get_email_template( $content ) {
-	$settings = scrm_get_settings( 'invoices' );
+	$settings     = scrm_get_settings( 'invoices' );
 	$company_name = $settings['company_name'] ?? get_bloginfo( 'name' );
-	
+
 	ob_start();
 	?>
 	<!DOCTYPE html>
@@ -1154,14 +1171,17 @@ function scrm_get_email_template( $content ) {
 function scrm_log_email( $contact_id, $subject, $message, $status = 'sent' ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_email_log';
-	
-	$result = $wpdb->insert( $table, array(
-		'contact_id' => absint( $contact_id ),
-		'subject'    => sanitize_text_field( $subject ),
-		'message'    => wp_kses_post( $message ),
-		'status'     => sanitize_text_field( $status ),
-		'created_at' => current_time( 'mysql' ),
-	) );
-	
+
+	$result = $wpdb->insert(
+		$table,
+		array(
+			'contact_id' => absint( $contact_id ),
+			'subject'    => sanitize_text_field( $subject ),
+			'message'    => wp_kses_post( $message ),
+			'status'     => sanitize_text_field( $status ),
+			'created_at' => current_time( 'mysql' ),
+		)
+	);
+
 	return $result ? $wpdb->insert_id : false;
 }

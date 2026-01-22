@@ -113,7 +113,7 @@ class SCRM_Admin_Settings {
 		<nav class="nav-tab-wrapper">
 			<?php foreach ( $this->tabs as $tab_id => $tab_name ) : ?>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=scrm-settings&tab=' . $tab_id ) ); ?>"
-				   class="nav-tab <?php echo $current_tab === $tab_id ? 'nav-tab-active' : ''; ?>">
+					class="nav-tab <?php echo $current_tab === $tab_id ? 'nav-tab-active' : ''; ?>">
 					<?php echo esc_html( $tab_name ); ?>
 				</a>
 			<?php endforeach; ?>
@@ -125,7 +125,7 @@ class SCRM_Admin_Settings {
 	 * Render general settings.
 	 */
 	private function render_general_settings() {
-		$settings = scrm_get_settings( 'general' );
+		$settings   = scrm_get_settings( 'general' );
 		$currencies = scrm_get_currencies();
 		?>
 		<table class="form-table">
@@ -150,8 +150,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="general[contact_id_prefix]" id="contact_id_prefix"
-						   value="<?php echo esc_attr( $settings['contact_id_prefix'] ?? 'CUST' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['contact_id_prefix'] ?? 'CUST' ); ?>"
+							class="regular-text">
 					<p class="description"><?php esc_html_e( 'Prefix for contact IDs (e.g., CUST-001)', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
@@ -161,8 +161,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="general[company_id_prefix]" id="company_id_prefix"
-						   value="<?php echo esc_attr( $settings['company_id_prefix'] ?? 'COMP' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['company_id_prefix'] ?? 'COMP' ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 			<tr>
@@ -171,8 +171,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="general[invoice_prefix]" id="invoice_prefix"
-						   value="<?php echo esc_attr( $settings['invoice_prefix'] ?? 'INV' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['invoice_prefix'] ?? 'INV' ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 		</table>
@@ -183,9 +183,9 @@ class SCRM_Admin_Settings {
 	 * Render PayPal settings.
 	 */
 	private function render_paypal_settings() {
-		$settings = scrm_get_settings( 'paypal' );
-		$last_sync = scrm_get_last_sync( 'paypal' );
-		$next_sync = scrm_get_next_sync_time( 'paypal' );
+		$settings   = scrm_get_settings( 'paypal' );
+		$last_sync  = scrm_get_last_sync( 'paypal' );
+		$next_sync  = scrm_get_next_sync_time( 'paypal' );
 		$is_running = scrm_is_sync_running( 'paypal' );
 		?>
 		<table class="form-table">
@@ -220,8 +220,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="paypal[client_id]" id="paypal_client_id"
-						   value="<?php echo esc_attr( $settings['client_id'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['client_id'] ?? '' ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 			<tr>
@@ -230,8 +230,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="password" name="paypal[client_secret]" id="paypal_client_secret"
-						   value="<?php echo esc_attr( $settings['client_secret'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['client_secret'] ?? '' ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 			<tr>
@@ -240,8 +240,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="paypal[webhook_id]" id="paypal_webhook_id"
-						   value="<?php echo esc_attr( $settings['webhook_id'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['webhook_id'] ?? '' ); ?>"
+							class="regular-text">
 					<p class="description">
 						<?php
 						printf(
@@ -290,7 +290,7 @@ class SCRM_Admin_Settings {
 							printf(
 								/* translators: %s: next sync time */
 								esc_html__( 'Next scheduled sync: %s', 'syncpoint-crm' ),
-								esc_html( scrm_format_datetime( date( 'Y-m-d H:i:s', $next_sync ) ) )
+								esc_html( scrm_format_datetime( gmdate( 'Y-m-d H:i:s', $next_sync ) ) )
 							);
 							?>
 						</p>
@@ -362,14 +362,14 @@ class SCRM_Admin_Settings {
 	 * Render PayPal Import settings (separate tab).
 	 */
 	private function render_paypal_import_settings() {
-		$settings = scrm_get_settings( 'paypal' );
+		$settings   = scrm_get_settings( 'paypal' );
 		$is_running = scrm_is_sync_running( 'paypal' );
-		
+
 		// Check if NVP credentials are configured
-		$nvp_configured = ! empty( $settings['api_username'] ) 
-			&& ! empty( $settings['api_password'] ) 
+		$nvp_configured = ! empty( $settings['api_username'] )
+			&& ! empty( $settings['api_password'] )
 			&& ! empty( $settings['api_signature'] );
-		
+
 		$mode = $settings['mode'] ?? 'sandbox';
 		?>
 		<h2><?php esc_html_e( 'PayPal Historical Transaction Import', 'syncpoint-crm' ); ?></h2>
@@ -388,12 +388,12 @@ class SCRM_Admin_Settings {
 		<div class="notice notice-success inline" style="margin-bottom: 15px;">
 			<p>
 				<strong><?php esc_html_e( '✓ NVP API credentials are configured.', 'syncpoint-crm' ); ?></strong>
-				<?php 
-				printf( 
+				<?php
+				printf(
 					/* translators: %s: API mode */
-					esc_html__( 'Mode: %s', 'syncpoint-crm' ), 
-					'<code>' . esc_html( ucfirst( $mode ) ) . '</code>' 
-				); 
+					esc_html__( 'Mode: %s', 'syncpoint-crm' ),
+					'<code>' . esc_html( ucfirst( $mode ) ) . '</code>'
+				);
 				?>
 			</p>
 		</div>
@@ -426,9 +426,9 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="email" name="paypal[api_email]" id="paypal_api_email"
-						   value="<?php echo esc_attr( $settings['api_email'] ?? '' ); ?>"
-						   class="regular-text" autocomplete="off"
-						   placeholder="<?php esc_attr_e( 'your-paypal@email.com', 'syncpoint-crm' ); ?>">
+							value="<?php echo esc_attr( $settings['api_email'] ?? '' ); ?>"
+							class="regular-text" autocomplete="off"
+							placeholder="<?php esc_attr_e( 'your-paypal@email.com', 'syncpoint-crm' ); ?>">
 					<p class="description"><?php esc_html_e( 'Your PayPal account email address (optional, for reference).', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
@@ -438,9 +438,9 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="paypal[api_username]" id="paypal_api_username"
-						   value="<?php echo esc_attr( $settings['api_username'] ?? '' ); ?>"
-						   class="regular-text" autocomplete="off"
-						   placeholder="<?php esc_attr_e( 'seller_api1.example.com', 'syncpoint-crm' ); ?>">
+							value="<?php echo esc_attr( $settings['api_username'] ?? '' ); ?>"
+							class="regular-text" autocomplete="off"
+							placeholder="<?php esc_attr_e( 'seller_api1.example.com', 'syncpoint-crm' ); ?>">
 					<p class="description"><?php esc_html_e( 'Usually looks like: yourname_api1.yourdomain.com (required for import)', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
@@ -450,8 +450,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="password" name="paypal[api_password]" id="paypal_api_password"
-						   value="<?php echo esc_attr( $settings['api_password'] ?? '' ); ?>"
-						   class="regular-text" autocomplete="new-password">
+							value="<?php echo esc_attr( $settings['api_password'] ?? '' ); ?>"
+							class="regular-text" autocomplete="new-password">
 				</td>
 			</tr>
 			<tr>
@@ -460,9 +460,9 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="paypal[api_signature]" id="paypal_api_signature"
-						   value="<?php echo esc_attr( $settings['api_signature'] ?? '' ); ?>"
-						   class="large-text code" autocomplete="off"
-						   placeholder="<?php esc_attr_e( 'A long string of characters...', 'syncpoint-crm' ); ?>">
+							value="<?php echo esc_attr( $settings['api_signature'] ?? '' ); ?>"
+							class="large-text code" autocomplete="off"
+							placeholder="<?php esc_attr_e( 'A long string of characters...', 'syncpoint-crm' ); ?>">
 					<p class="description"><?php esc_html_e( 'A long alphanumeric string (API Signature, not Certificate).', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
@@ -472,7 +472,7 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="date" name="paypal[first_txn_date]" id="paypal_first_txn_date"
-						   value="<?php echo esc_attr( $settings['first_txn_date'] ?? date( 'Y-m-d', strtotime( '-1 year' ) ) ); ?>">
+							value="<?php echo esc_attr( $settings['first_txn_date'] ?? gmdate( 'Y-m-d', strtotime( '-1 year' ) ) ); ?>">
 					<p class="description"><?php esc_html_e( 'Import transactions starting from this date. PayPal allows up to 3 years of history.', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
@@ -686,9 +686,9 @@ class SCRM_Admin_Settings {
 	 * Render Stripe settings.
 	 */
 	private function render_stripe_settings() {
-		$settings = scrm_get_settings( 'stripe' );
-		$last_sync = scrm_get_last_sync( 'stripe' );
-		$next_sync = scrm_get_next_sync_time( 'stripe' );
+		$settings   = scrm_get_settings( 'stripe' );
+		$last_sync  = scrm_get_last_sync( 'stripe' );
+		$next_sync  = scrm_get_next_sync_time( 'stripe' );
 		$is_running = scrm_is_sync_running( 'stripe' );
 		?>
 		<table class="form-table">
@@ -728,8 +728,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="stripe[test_publishable]" id="stripe_test_publishable"
-						   value="<?php echo esc_attr( $settings['test_publishable'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['test_publishable'] ?? '' ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 			<tr>
@@ -738,8 +738,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="password" name="stripe[test_secret]" id="stripe_test_secret"
-						   value="<?php echo esc_attr( $settings['test_secret'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['test_secret'] ?? '' ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 			<tr>
@@ -753,8 +753,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="stripe[live_publishable]" id="stripe_live_publishable"
-						   value="<?php echo esc_attr( $settings['live_publishable'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['live_publishable'] ?? '' ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 			<tr>
@@ -763,8 +763,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="password" name="stripe[live_secret]" id="stripe_live_secret"
-						   value="<?php echo esc_attr( $settings['live_secret'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['live_secret'] ?? '' ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 			<tr>
@@ -778,8 +778,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="password" name="stripe[webhook_secret]" id="stripe_webhook_secret"
-						   value="<?php echo esc_attr( $settings['webhook_secret'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['webhook_secret'] ?? '' ); ?>"
+							class="regular-text">
 					<p class="description">
 						<?php
 						printf(
@@ -828,7 +828,7 @@ class SCRM_Admin_Settings {
 							printf(
 								/* translators: %s: next sync time */
 								esc_html__( 'Next scheduled sync: %s', 'syncpoint-crm' ),
-								esc_html( scrm_format_datetime( date( 'Y-m-d H:i:s', $next_sync ) ) )
+								esc_html( scrm_format_datetime( gmdate( 'Y-m-d H:i:s', $next_sync ) ) )
 							);
 							?>
 						</p>
@@ -909,8 +909,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="invoices[company_name]" id="company_name"
-						   value="<?php echo esc_attr( $settings['company_name'] ?? get_bloginfo( 'name' ) ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['company_name'] ?? get_bloginfo( 'name' ) ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 			<tr>
@@ -919,7 +919,7 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<textarea name="invoices[company_address]" id="company_address"
-							  rows="3" class="large-text"><?php echo esc_textarea( $settings['company_address'] ?? '' ); ?></textarea>
+								rows="3" class="large-text"><?php echo esc_textarea( $settings['company_address'] ?? '' ); ?></textarea>
 				</td>
 			</tr>
 			<tr>
@@ -928,8 +928,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="invoices[company_tax_id]" id="company_tax_id"
-						   value="<?php echo esc_attr( $settings['company_tax_id'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_attr( $settings['company_tax_id'] ?? '' ); ?>"
+							class="regular-text">
 				</td>
 			</tr>
 			<tr>
@@ -938,8 +938,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="url" name="invoices[company_logo]" id="company_logo"
-						   value="<?php echo esc_url( $settings['company_logo'] ?? '' ); ?>"
-						   class="regular-text">
+							value="<?php echo esc_url( $settings['company_logo'] ?? '' ); ?>"
+							class="regular-text">
 					<p class="description"><?php esc_html_e( 'URL to your logo image for invoices.', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
@@ -949,7 +949,7 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<textarea name="invoices[default_terms]" id="default_terms"
-							  rows="3" class="large-text"><?php echo esc_textarea( $settings['default_terms'] ?? '' ); ?></textarea>
+								rows="3" class="large-text"><?php echo esc_textarea( $settings['default_terms'] ?? '' ); ?></textarea>
 				</td>
 			</tr>
 			<tr>
@@ -958,7 +958,7 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<textarea name="invoices[default_notes]" id="default_notes"
-							  rows="3" class="large-text"><?php echo esc_textarea( $settings['default_notes'] ?? '' ); ?></textarea>
+								rows="3" class="large-text"><?php echo esc_textarea( $settings['default_notes'] ?? '' ); ?></textarea>
 				</td>
 			</tr>
 		</table>
@@ -988,8 +988,8 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<input type="text" name="webhooks[secret_key]" id="webhook_secret_key"
-						   value="<?php echo esc_attr( $settings['secret_key'] ?? '' ); ?>"
-						   class="regular-text" readonly>
+							value="<?php echo esc_attr( $settings['secret_key'] ?? '' ); ?>"
+							class="regular-text" readonly>
 					<button type="button" class="button" id="scrm-regenerate-key">
 						<?php esc_html_e( 'Regenerate', 'syncpoint-crm' ); ?>
 					</button>
@@ -1004,7 +1004,7 @@ class SCRM_Admin_Settings {
 				</th>
 				<td>
 					<textarea name="webhooks[allowed_ips]" id="allowed_ips"
-							  rows="5" class="large-text"><?php echo esc_textarea( $settings['allowed_ips'] ?? '' ); ?></textarea>
+								rows="5" class="large-text"><?php echo esc_textarea( $settings['allowed_ips'] ?? '' ); ?></textarea>
 					<p class="description"><?php esc_html_e( 'One IP per line. Leave empty to allow all IPs.', 'syncpoint-crm' ); ?></p>
 				</td>
 			</tr>
@@ -1055,9 +1055,9 @@ class SCRM_Admin_Settings {
 
 		$table_status = array();
 		foreach ( $tables as $table => $label ) {
-			$full_name = $wpdb->prefix . $table;
-			$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $full_name ) ) === $full_name;
-			$rows = $exists ? $wpdb->get_var( "SELECT COUNT(*) FROM {$full_name}" ) : 0;
+			$full_name              = $wpdb->prefix . $table;
+			$exists                 = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $full_name ) ) === $full_name;
+			$rows                   = $exists ? $wpdb->get_var( "SELECT COUNT(*) FROM {$full_name}" ) : 0;
 			$table_status[ $table ] = array(
 				'label'  => $label,
 				'exists' => $exists,
@@ -1262,7 +1262,7 @@ class SCRM_Admin_Settings {
 			return false;
 		}
 
-		$settings = get_option( 'scrm_settings', array() );
+		$settings     = get_option( 'scrm_settings', array() );
 		$new_settings = array();
 
 		// Sanitize based on tab.
@@ -1292,7 +1292,7 @@ class SCRM_Admin_Settings {
 
 		// Preserve number counters for general tab.
 		if ( 'general' === $tab ) {
-			$old = $settings['general'] ?? array();
+			$old                                     = $settings['general'] ?? array();
 			$new_settings['next_contact_number']     = $old['next_contact_number'] ?? 1;
 			$new_settings['next_company_number']     = $old['next_company_number'] ?? 1;
 			$new_settings['next_invoice_number']     = $old['next_invoice_number'] ?? 1;

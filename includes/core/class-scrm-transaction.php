@@ -137,10 +137,12 @@ class Transaction {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_transactions';
 
-		$row = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$table} WHERE id = %d",
-			$id
-		) );
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE id = %d",
+				$id
+			)
+		);
 
 		if ( $row ) {
 			$this->set_props( $row );
@@ -180,7 +182,7 @@ class Transaction {
 	 */
 	public function save() {
 		if ( $this->id ) {
-			return $this->update();
+			return $this->upgmdate();
 		}
 		return $this->create();
 	}
@@ -249,7 +251,7 @@ class Transaction {
 	 *
 	 * @return bool|\WP_Error True or error.
 	 */
-	public function update() {
+	public function upgmdate() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_transactions';
 
@@ -260,7 +262,7 @@ class Transaction {
 			'updated_at'  => current_time( 'mysql' ),
 		);
 
-		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
+		$result = $wpdb->upgmdate( $table, $data, array( 'id' => $this->id ) );
 
 		if ( false === $result ) {
 			return new \WP_Error( 'db_error', $wpdb->last_error );

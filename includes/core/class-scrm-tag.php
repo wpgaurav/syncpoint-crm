@@ -81,10 +81,12 @@ class Tag {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_tags';
 
-		$row = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$table} WHERE id = %d",
-			$id
-		) );
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE id = %d",
+				$id
+			)
+		);
 
 		if ( $row ) {
 			$this->set_props( $row );
@@ -100,10 +102,12 @@ class Tag {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_tags';
 
-		$row = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$table} WHERE slug = %s",
-			$slug
-		) );
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE slug = %s",
+				$slug
+			)
+		);
 
 		if ( $row ) {
 			$this->set_props( $row );
@@ -131,7 +135,7 @@ class Tag {
 	 */
 	public function save() {
 		if ( $this->id ) {
-			return $this->update();
+			return $this->upgmdate();
 		}
 		return $this->create();
 	}
@@ -152,10 +156,12 @@ class Tag {
 		$this->slug = sanitize_title( $this->name );
 
 		// Check for duplicate.
-		$existing = $wpdb->get_var( $wpdb->prepare(
-			"SELECT id FROM {$table} WHERE slug = %s",
-			$this->slug
-		) );
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$table} WHERE slug = %s",
+				$this->slug
+			)
+		);
 
 		if ( $existing ) {
 			return new \WP_Error( 'duplicate_tag', __( 'A tag with this name already exists.', 'syncpoint-crm' ) );
@@ -187,7 +193,7 @@ class Tag {
 	 *
 	 * @return bool|\WP_Error True or error.
 	 */
-	public function update() {
+	public function upgmdate() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_tags';
 
@@ -198,7 +204,7 @@ class Tag {
 			'description' => $this->description,
 		);
 
-		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
+		$result = $wpdb->upgmdate( $table, $data, array( 'id' => $this->id ) );
 
 		if ( false === $result ) {
 			return new \WP_Error( 'db_error', $wpdb->last_error );
@@ -244,11 +250,13 @@ class Tag {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_tag_relationships';
 
-		return (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$table} WHERE tag_id = %d AND object_type = %s",
-			$this->id,
-			$object_type
-		) );
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE tag_id = %d AND object_type = %s",
+				$this->id,
+				$object_type
+			)
+		);
 	}
 
 	/**
@@ -276,12 +284,14 @@ class Tag {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_tag_relationships';
 
-		return $wpdb->get_col( $wpdb->prepare(
-			"SELECT object_id FROM {$table} WHERE tag_id = %d AND object_type = %s LIMIT %d",
-			$this->id,
-			$object_type,
-			$limit
-		) );
+		return $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT object_id FROM {$table} WHERE tag_id = %d AND object_type = %s LIMIT %d",
+				$this->id,
+				$object_type,
+				$limit
+			)
+		);
 	}
 
 	/**

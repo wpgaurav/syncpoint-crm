@@ -193,10 +193,12 @@ class Contact {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_contacts';
 
-		$row = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$table} WHERE id = %d",
-			$id
-		) );
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE id = %d",
+				$id
+			)
+		);
 
 		if ( $row ) {
 			$this->set_props( $row );
@@ -244,7 +246,7 @@ class Contact {
 	 */
 	public function save() {
 		if ( $this->id ) {
-			return $this->update();
+			return $this->upgmdate();
 		}
 		return $this->create();
 	}
@@ -305,7 +307,7 @@ class Contact {
 			return new \WP_Error( 'db_error', $wpdb->last_error );
 		}
 
-		$this->id = $wpdb->insert_id;
+		$this->id         = $wpdb->insert_id;
 		$this->created_at = $data['created_at'];
 		$this->updated_at = $data['updated_at'];
 
@@ -319,7 +321,7 @@ class Contact {
 	 *
 	 * @return bool|\WP_Error True or error.
 	 */
-	public function update() {
+	public function upgmdate() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_contacts';
 
@@ -344,7 +346,7 @@ class Contact {
 			'updated_at'     => current_time( 'mysql' ),
 		);
 
-		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
+		$result = $wpdb->upgmdate( $table, $data, array( 'id' => $this->id ) );
 
 		if ( false === $result ) {
 			return new \WP_Error( 'db_error', $wpdb->last_error );
@@ -366,7 +368,7 @@ class Contact {
 	public function delete( $force = false ) {
 		if ( ! $force ) {
 			$this->status = 'archived';
-			return $this->update();
+			return $this->upgmdate();
 		}
 
 		global $wpdb;
@@ -452,14 +454,16 @@ class Contact {
 	 * @return string Formatted address.
 	 */
 	public function get_formatted_address() {
-		$parts = array_filter( array(
-			$this->address_line_1,
-			$this->address_line_2,
-			$this->city,
-			$this->state,
-			$this->postal_code,
-			$this->country,
-		) );
+		$parts = array_filter(
+			array(
+				$this->address_line_1,
+				$this->address_line_2,
+				$this->city,
+				$this->state,
+				$this->postal_code,
+				$this->country,
+			)
+		);
 
 		return implode( ', ', $parts );
 	}

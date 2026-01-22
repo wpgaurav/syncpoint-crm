@@ -23,11 +23,13 @@ class SCRM_Contacts_List_Table extends WP_List_Table {
 	 * Constructor.
 	 */
 	public function __construct() {
-		parent::__construct( array(
-			'singular' => 'contact',
-			'plural'   => 'contacts',
-			'ajax'     => false,
-		) );
+		parent::__construct(
+			array(
+				'singular' => 'contact',
+				'plural'   => 'contacts',
+				'ajax'     => false,
+			)
+		);
 	}
 
 	/**
@@ -80,7 +82,7 @@ class SCRM_Contacts_List_Table extends WP_List_Table {
 	 * Prepare items for display.
 	 */
 	public function prepare_items() {
-		$per_page = 20;
+		$per_page     = 20;
 		$current_page = $this->get_pagenum();
 
 		// Query args.
@@ -114,17 +116,21 @@ class SCRM_Contacts_List_Table extends WP_List_Table {
 		$this->items = scrm_get_contacts( $args );
 
 		// Count for pagination.
-		$total_items = scrm_count_contacts( array(
-			'type'   => $args['type'] ?? '',
-			'status' => $args['status'] ?? '',
-			'search' => $args['search'] ?? '',
-		) );
+		$total_items = scrm_count_contacts(
+			array(
+				'type'   => $args['type'] ?? '',
+				'status' => $args['status'] ?? '',
+				'search' => $args['search'] ?? '',
+			)
+		);
 
-		$this->set_pagination_args( array(
-			'total_items' => $total_items,
-			'per_page'    => $per_page,
-			'total_pages' => ceil( $total_items / $per_page ),
-		) );
+		$this->set_pagination_args(
+			array(
+				'total_items' => $total_items,
+				'per_page'    => $per_page,
+				'total_pages' => ceil( $total_items / $per_page ),
+			)
+		);
 
 		$this->_column_headers = array(
 			$this->get_columns(),
@@ -166,18 +172,18 @@ class SCRM_Contacts_List_Table extends WP_List_Table {
 		$view_url = admin_url( 'admin.php?page=scrm-contacts&action=view&id=' . $item->id );
 
 		$actions = array(
-			'edit'   => sprintf( '<a href="%s">%s</a>', esc_url( $edit_url ), esc_html__( 'Edit', 'syncpoint-crm' ) ),
-			'view'   => sprintf( '<a href="%s">%s</a>', esc_url( $view_url ), esc_html__( 'View', 'syncpoint-crm' ) ),
+			'edit' => sprintf( '<a href="%s">%s</a>', esc_url( $edit_url ), esc_html__( 'Edit', 'syncpoint-crm' ) ),
+			'view' => sprintf( '<a href="%s">%s</a>', esc_url( $view_url ), esc_html__( 'View', 'syncpoint-crm' ) ),
 		);
 
 		if ( 'archived' === $item->status ) {
-			$restore_url = wp_nonce_url(
+			$restore_url        = wp_nonce_url(
 				admin_url( 'admin.php?page=scrm-contacts&action=restore&id=' . $item->id ),
 				'restore_contact_' . $item->id
 			);
 			$actions['restore'] = sprintf( '<a href="%s">%s</a>', esc_url( $restore_url ), esc_html__( 'Restore', 'syncpoint-crm' ) );
 		} else {
-			$archive_url = wp_nonce_url(
+			$archive_url        = wp_nonce_url(
 				admin_url( 'admin.php?page=scrm-contacts&action=archive&id=' . $item->id ),
 				'archive_contact_' . $item->id
 			);
@@ -304,7 +310,7 @@ class SCRM_Contacts_List_Table extends WP_List_Table {
 		return sprintf(
 			'<span title="%s">%s</span>',
 			esc_attr( $item->created_at ),
-			esc_html( scrm_format_date( $item->created_at ) )
+			esc_html( scrm_format_gmdate( $item->created_at ) )
 		);
 	}
 

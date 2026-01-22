@@ -65,16 +65,18 @@ class PDF_Generator {
 	 */
 	private function generate_with_dompdf( $html ) {
 		try {
-			$dompdf = new \Dompdf\Dompdf( array(
-				'isRemoteEnabled' => true,
-			) );
+			$dompdf = new \Dompdf\Dompdf(
+				array(
+					'isRemoteEnabled' => true,
+				)
+			);
 
 			$dompdf->loadHtml( $html );
 			$dompdf->setPaper( 'A4', 'portrait' );
 			$dompdf->render();
 
 			$output = $dompdf->output();
-			$path = $this->get_pdf_path();
+			$path   = $this->get_pdf_path();
 
 			file_put_contents( $path, $output );
 
@@ -93,10 +95,12 @@ class PDF_Generator {
 	 */
 	private function generate_with_mpdf( $html ) {
 		try {
-			$mpdf = new \Mpdf\Mpdf( array(
-				'mode'   => 'utf-8',
-				'format' => 'A4',
-			) );
+			$mpdf = new \Mpdf\Mpdf(
+				array(
+					'mode'   => 'utf-8',
+					'format' => 'A4',
+				)
+			);
 
 			$mpdf->WriteHTML( $html );
 
@@ -117,7 +121,7 @@ class PDF_Generator {
 	 * @return string|false HTML path or false.
 	 */
 	private function save_html( $html ) {
-		$path = $this->get_pdf_path( 'html' );
+		$path   = $this->get_pdf_path( 'html' );
 		$result = file_put_contents( $path, $html );
 
 		return $result ? $path : false;
@@ -131,7 +135,7 @@ class PDF_Generator {
 	 */
 	private function get_pdf_path( $extension = 'pdf' ) {
 		$upload_dir = wp_upload_dir();
-		$scrm_dir = $upload_dir['basedir'] . '/starter-crm/invoices';
+		$scrm_dir   = $upload_dir['basedir'] . '/starter-crm/invoices';
 
 		// Create directory if needed.
 		if ( ! file_exists( $scrm_dir ) ) {

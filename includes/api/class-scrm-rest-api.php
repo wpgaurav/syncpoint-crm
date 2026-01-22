@@ -40,88 +40,112 @@ class SCRM_REST_API {
 	 */
 	public function register_routes() {
 		// Contacts endpoints.
-		register_rest_route( self::NAMESPACE, '/contacts', array(
+		register_rest_route(
+			self::NAMESPACE,
+			'/contacts',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_contacts' ),
-				'permission_callback' => array( $this, 'check_read_permission' ),
-				'args'                => $this->get_collection_params(),
-			),
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'create_contact' ),
-				'permission_callback' => array( $this, 'check_write_permission' ),
-				'args'                => $this->get_contact_params(),
-			),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_contacts' ),
+					'permission_callback' => array( $this, 'check_read_permission' ),
+					'args'                => $this->get_collection_params(),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_contact' ),
+					'permission_callback' => array( $this, 'check_write_permission' ),
+					'args'                => $this->get_contact_params(),
+				),
+			)
+		);
 
-		register_rest_route( self::NAMESPACE, '/contacts/(?P<id>[\w-]+)', array(
+		register_rest_route(
+			self::NAMESPACE,
+			'/contacts/(?P<id>[\w-]+)',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_contact' ),
-				'permission_callback' => array( $this, 'check_read_permission' ),
-			),
-			array(
-				'methods'             => WP_REST_Server::EDITABLE,
-				'callback'            => array( $this, 'update_contact' ),
-				'permission_callback' => array( $this, 'check_write_permission' ),
-				'args'                => $this->get_contact_params(),
-			),
-			array(
-				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'delete_contact' ),
-				'permission_callback' => array( $this, 'check_write_permission' ),
-			),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_contact' ),
+					'permission_callback' => array( $this, 'check_read_permission' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_contact' ),
+					'permission_callback' => array( $this, 'check_write_permission' ),
+					'args'                => $this->get_contact_params(),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_contact' ),
+					'permission_callback' => array( $this, 'check_write_permission' ),
+				),
+			)
+		);
 
 		// Companies endpoints.
-		register_rest_route( self::NAMESPACE, '/companies', array(
+		register_rest_route(
+			self::NAMESPACE,
+			'/companies',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_companies' ),
-				'permission_callback' => array( $this, 'check_read_permission' ),
-			),
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'create_company' ),
-				'permission_callback' => array( $this, 'check_write_permission' ),
-			),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_companies' ),
+					'permission_callback' => array( $this, 'check_read_permission' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_company' ),
+					'permission_callback' => array( $this, 'check_write_permission' ),
+				),
+			)
+		);
 
 		// Transactions endpoints.
-		register_rest_route( self::NAMESPACE, '/transactions', array(
+		register_rest_route(
+			self::NAMESPACE,
+			'/transactions',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_transactions' ),
-				'permission_callback' => array( $this, 'check_read_permission' ),
-			),
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'create_transaction' ),
-				'permission_callback' => array( $this, 'check_write_permission' ),
-			),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_transactions' ),
+					'permission_callback' => array( $this, 'check_read_permission' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_transaction' ),
+					'permission_callback' => array( $this, 'check_write_permission' ),
+				),
+			)
+		);
 
 		// Dashboard stats endpoint.
-		register_rest_route( self::NAMESPACE, '/dashboard/stats', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( $this, 'get_dashboard_stats' ),
-			'permission_callback' => array( $this, 'check_read_permission' ),
-		) );
-
-		// Tags endpoints.
-		register_rest_route( self::NAMESPACE, '/tags', array(
+		register_rest_route(
+			self::NAMESPACE,
+			'/dashboard/stats',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_tags' ),
+				'callback'            => array( $this, 'get_dashboard_stats' ),
 				'permission_callback' => array( $this, 'check_read_permission' ),
-			),
+			)
+		);
+
+		// Tags endpoints.
+		register_rest_route(
+			self::NAMESPACE,
+			'/tags',
 			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'create_tag' ),
-				'permission_callback' => array( $this, 'check_write_permission' ),
-			),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_tags' ),
+					'permission_callback' => array( $this, 'check_read_permission' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_tag' ),
+					'permission_callback' => array( $this, 'check_write_permission' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -261,26 +285,30 @@ class SCRM_REST_API {
 		);
 
 		$contacts = scrm_get_contacts( $args );
-		$total = scrm_count_contacts( array(
-			'type'   => $request->get_param( 'type' ),
-			'status' => $request->get_param( 'status' ),
-		) );
+		$total    = scrm_count_contacts(
+			array(
+				'type'   => $request->get_param( 'type' ),
+				'status' => $request->get_param( 'status' ),
+			)
+		);
 
 		$data = array();
 		foreach ( $contacts as $contact ) {
 			$data[] = $this->prepare_contact_response( $contact );
 		}
 
-		$response = rest_ensure_response( array(
-			'success' => true,
-			'data'    => $data,
-			'meta'    => array(
-				'total'       => $total,
-				'page'        => $request->get_param( 'page' ),
-				'per_page'    => $request->get_param( 'per_page' ),
-				'total_pages' => ceil( $total / $request->get_param( 'per_page' ) ),
-			),
-		) );
+		$response = rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $data,
+				'meta'    => array(
+					'total'       => $total,
+					'page'        => $request->get_param( 'page' ),
+					'per_page'    => $request->get_param( 'per_page' ),
+					'total_pages' => ceil( $total / $request->get_param( 'per_page' ) ),
+				),
+			)
+		);
 
 		return $response;
 	}
@@ -303,10 +331,12 @@ class SCRM_REST_API {
 			);
 		}
 
-		return rest_ensure_response( array(
-			'success' => true,
-			'data'    => $this->prepare_contact_response( $contact ),
-		) );
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $this->prepare_contact_response( $contact ),
+			)
+		);
 	}
 
 	/**
@@ -346,10 +376,12 @@ class SCRM_REST_API {
 
 		do_action( 'scrm_api_contact_created', $result, $request );
 
-		$response = rest_ensure_response( array(
-			'success' => true,
-			'data'    => $this->prepare_contact_response( $contact ),
-		) );
+		$response = rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $this->prepare_contact_response( $contact ),
+			)
+		);
 		$response->set_status( 201 );
 
 		return $response;
@@ -373,14 +405,16 @@ class SCRM_REST_API {
 			);
 		}
 
-		$data = array_filter( array(
-			'first_name' => $request->get_param( 'first_name' ),
-			'last_name'  => $request->get_param( 'last_name' ),
-			'email'      => $request->get_param( 'email' ),
-			'phone'      => $request->get_param( 'phone' ),
-			'type'       => $request->get_param( 'type' ),
-			'status'     => $request->get_param( 'status' ),
-		) );
+		$data = array_filter(
+			array(
+				'first_name' => $request->get_param( 'first_name' ),
+				'last_name'  => $request->get_param( 'last_name' ),
+				'email'      => $request->get_param( 'email' ),
+				'phone'      => $request->get_param( 'phone' ),
+				'type'       => $request->get_param( 'type' ),
+				'status'     => $request->get_param( 'status' ),
+			)
+		);
 
 		$result = scrm_update_contact( $contact->id, $data );
 
@@ -390,10 +424,12 @@ class SCRM_REST_API {
 
 		$contact = scrm_get_contact( $contact->id );
 
-		return rest_ensure_response( array(
-			'success' => true,
-			'data'    => $this->prepare_contact_response( $contact ),
-		) );
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $this->prepare_contact_response( $contact ),
+			)
+		);
 	}
 
 	/**
@@ -414,17 +450,19 @@ class SCRM_REST_API {
 			);
 		}
 
-		$force = $request->get_param( 'force' ) === true;
+		$force  = $request->get_param( 'force' ) === true;
 		$result = scrm_delete_contact( $contact->id, $force );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
-		return rest_ensure_response( array(
-			'success' => true,
-			'message' => $force ? __( 'Contact deleted.', 'syncpoint-crm' ) : __( 'Contact archived.', 'syncpoint-crm' ),
-		) );
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'message' => $force ? __( 'Contact deleted.', 'syncpoint-crm' ) : __( 'Contact archived.', 'syncpoint-crm' ),
+			)
+		);
 	}
 
 	/**
@@ -480,14 +518,18 @@ class SCRM_REST_API {
 	 * @return WP_REST_Response Response object.
 	 */
 	public function get_companies( $request ) {
-		$companies = scrm_get_companies( array(
-			'limit' => 50,
-		) );
+		$companies = scrm_get_companies(
+			array(
+				'limit' => 50,
+			)
+		);
 
-		return rest_ensure_response( array(
-			'success' => true,
-			'data'    => $companies,
-		) );
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $companies,
+			)
+		);
 	}
 
 	/**
@@ -498,12 +540,14 @@ class SCRM_REST_API {
 	 * @return WP_REST_Response|WP_Error Response or error.
 	 */
 	public function create_company( $request ) {
-		$result = scrm_create_company( array(
-			'name'    => $request->get_param( 'name' ),
-			'email'   => $request->get_param( 'email' ),
-			'website' => $request->get_param( 'website' ),
-			'phone'   => $request->get_param( 'phone' ),
-		) );
+		$result = scrm_create_company(
+			array(
+				'name'    => $request->get_param( 'name' ),
+				'email'   => $request->get_param( 'email' ),
+				'website' => $request->get_param( 'website' ),
+				'phone'   => $request->get_param( 'phone' ),
+			)
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -511,10 +555,12 @@ class SCRM_REST_API {
 
 		$company = scrm_get_company( $result );
 
-		$response = rest_ensure_response( array(
-			'success' => true,
-			'data'    => $company,
-		) );
+		$response = rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $company,
+			)
+		);
 		$response->set_status( 201 );
 
 		return $response;
@@ -529,11 +575,13 @@ class SCRM_REST_API {
 	 */
 	public function get_transactions( $request ) {
 		// TODO: Implement transactions list.
-		return rest_ensure_response( array(
-			'success' => true,
-			'data'    => array(),
-			'message' => __( 'Transactions endpoint coming soon.', 'syncpoint-crm' ),
-		) );
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => array(),
+				'message' => __( 'Transactions endpoint coming soon.', 'syncpoint-crm' ),
+			)
+		);
 	}
 
 	/**
@@ -544,15 +592,17 @@ class SCRM_REST_API {
 	 * @return WP_REST_Response|WP_Error Response or error.
 	 */
 	public function create_transaction( $request ) {
-		$result = scrm_create_transaction( array(
-			'contact_id'  => $request->get_param( 'contact_id' ),
-			'type'        => $request->get_param( 'type' ),
-			'gateway'     => $request->get_param( 'gateway' ) ?: 'api',
-			'amount'      => $request->get_param( 'amount' ),
-			'currency'    => $request->get_param( 'currency' ),
-			'status'      => $request->get_param( 'status' ),
-			'description' => $request->get_param( 'description' ),
-		) );
+		$result = scrm_create_transaction(
+			array(
+				'contact_id'  => $request->get_param( 'contact_id' ),
+				'type'        => $request->get_param( 'type' ),
+				'gateway'     => $request->get_param( 'gateway' ) ?: 'api',
+				'amount'      => $request->get_param( 'amount' ),
+				'currency'    => $request->get_param( 'currency' ),
+				'status'      => $request->get_param( 'status' ),
+				'description' => $request->get_param( 'description' ),
+			)
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -560,10 +610,12 @@ class SCRM_REST_API {
 
 		$transaction = scrm_get_transaction( $result );
 
-		$response = rest_ensure_response( array(
-			'success' => true,
-			'data'    => $transaction,
-		) );
+		$response = rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $transaction,
+			)
+		);
 		$response->set_status( 201 );
 
 		return $response;
@@ -582,12 +634,27 @@ class SCRM_REST_API {
 		$stats = array(
 			'period'    => $period,
 			'contacts'  => array(
-				'total' => scrm_count_contacts( array( 'status' => 'active' ) ),
-				'new'   => 0, // TODO: Calculate based on period.
+				'total'   => scrm_count_contacts( array( 'status' => 'active' ) ),
+				'new'     => 0, // TODO: Calculate based on period.
 				'by_type' => array(
-					'customer' => scrm_count_contacts( array( 'type' => 'customer', 'status' => 'active' ) ),
-					'lead'     => scrm_count_contacts( array( 'type' => 'lead', 'status' => 'active' ) ),
-					'prospect' => scrm_count_contacts( array( 'type' => 'prospect', 'status' => 'active' ) ),
+					'customer' => scrm_count_contacts(
+						array(
+							'type'   => 'customer',
+							'status' => 'active',
+						)
+					),
+					'lead'     => scrm_count_contacts(
+						array(
+							'type'   => 'lead',
+							'status' => 'active',
+						)
+					),
+					'prospect' => scrm_count_contacts(
+						array(
+							'type'   => 'prospect',
+							'status' => 'active',
+						)
+					),
 				),
 			),
 			'companies' => array(
@@ -613,10 +680,12 @@ class SCRM_REST_API {
 		 */
 		$stats = apply_filters( 'scrm_dashboard_stats', $stats, $period );
 
-		return rest_ensure_response( array(
-			'success' => true,
-			'data'    => $stats,
-		) );
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $stats,
+			)
+		);
 	}
 
 	/**
@@ -632,10 +701,12 @@ class SCRM_REST_API {
 
 		$tags = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY name ASC" );
 
-		return rest_ensure_response( array(
-			'success' => true,
-			'data'    => $tags,
-		) );
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $tags,
+			)
+		);
 	}
 
 	/**
@@ -646,11 +717,13 @@ class SCRM_REST_API {
 	 * @return WP_REST_Response|WP_Error Response or error.
 	 */
 	public function create_tag( $request ) {
-		$result = scrm_create_tag( array(
-			'name'        => $request->get_param( 'name' ),
-			'color'       => $request->get_param( 'color' ),
-			'description' => $request->get_param( 'description' ),
-		) );
+		$result = scrm_create_tag(
+			array(
+				'name'        => $request->get_param( 'name' ),
+				'color'       => $request->get_param( 'color' ),
+				'description' => $request->get_param( 'description' ),
+			)
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -658,10 +731,12 @@ class SCRM_REST_API {
 
 		$tag = scrm_get_tag( $result );
 
-		$response = rest_ensure_response( array(
-			'success' => true,
-			'data'    => $tag,
-		) );
+		$response = rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $tag,
+			)
+		);
 		$response->set_status( 201 );
 
 		return $response;

@@ -40,25 +40,37 @@ class SCRM_Webhooks {
 	 */
 	public function register_routes() {
 		// Generic inbound webhook.
-		register_rest_route( self::NAMESPACE, '/webhooks/inbound', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( $this, 'handle_inbound' ),
-			'permission_callback' => array( $this, 'verify_webhook_key' ),
-		) );
+		register_rest_route(
+			self::NAMESPACE,
+			'/webhooks/inbound',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'handle_inbound' ),
+				'permission_callback' => array( $this, 'verify_webhook_key' ),
+			)
+		);
 
 		// PayPal webhook.
-		register_rest_route( self::NAMESPACE, '/webhooks/paypal', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( $this, 'handle_paypal' ),
-			'permission_callback' => '__return_true', // PayPal uses signature verification.
-		) );
+		register_rest_route(
+			self::NAMESPACE,
+			'/webhooks/paypal',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'handle_paypal' ),
+				'permission_callback' => '__return_true', // PayPal uses signature verification.
+			)
+		);
 
 		// Stripe webhook.
-		register_rest_route( self::NAMESPACE, '/webhooks/stripe', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( $this, 'handle_stripe' ),
-			'permission_callback' => '__return_true', // Stripe uses signature verification.
-		) );
+		register_rest_route(
+			self::NAMESPACE,
+			'/webhooks/stripe',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'handle_stripe' ),
+				'permission_callback' => '__return_true', // Stripe uses signature verification.
+			)
+		);
 	}
 
 	/**
@@ -106,7 +118,7 @@ class SCRM_Webhooks {
 		$allowed_ips = scrm_get_setting( 'webhooks', 'allowed_ips' );
 		if ( ! empty( $allowed_ips ) ) {
 			$client_ip = scrm_get_client_ip();
-			$ip_list = array_map( 'trim', explode( "\n", $allowed_ips ) );
+			$ip_list   = array_map( 'trim', explode( "\n", $allowed_ips ) );
 
 			if ( ! in_array( $client_ip, $ip_list, true ) ) {
 				return new WP_Error(
@@ -137,9 +149,9 @@ class SCRM_Webhooks {
 	 */
 	public function handle_inbound( $request ) {
 		$payload = $request->get_json_params();
-		$source = $payload['source'] ?? 'custom';
-		$action = $payload['action'] ?? '';
-		$data = $payload['data'] ?? array();
+		$source  = $payload['source'] ?? 'custom';
+		$action  = $payload['action'] ?? '';
+		$data    = $payload['data'] ?? array();
 
 		// Log the webhook.
 		$log_id = scrm_log_webhook( $source, $request->get_route(), $payload, 'pending' );
@@ -195,7 +207,7 @@ class SCRM_Webhooks {
 			// Update log status.
 			if ( $log_id ) {
 				global $wpdb;
-				$wpdb->update(
+				$wpdb->upgmdate(
 					$wpdb->prefix . 'scrm_webhook_log',
 					array(
 						'status'       => 'success',
@@ -216,17 +228,19 @@ class SCRM_Webhooks {
 			 */
 			do_action( 'scrm_webhook_processed', $source, $payload, $result );
 
-			return rest_ensure_response( array(
-				'success' => true,
-				'data'    => $result,
-				'message' => __( 'Webhook processed successfully.', 'syncpoint-crm' ),
-			) );
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'data'    => $result,
+					'message' => __( 'Webhook processed successfully.', 'syncpoint-crm' ),
+				)
+			);
 
 		} catch ( Exception $e ) {
 			// Update log status to failed.
 			if ( $log_id ) {
 				global $wpdb;
-				$wpdb->update(
+				$wpdb->upgmdate(
 					$wpdb->prefix . 'scrm_webhook_log',
 					array(
 						'status'   => 'failed',
@@ -367,7 +381,7 @@ class SCRM_Webhooks {
 		$contact_id = null;
 
 		if ( ! empty( $data['contact_id'] ) ) {
-			$contact = scrm_get_contact( $data['contact_id'] );
+			$contact    = scrm_get_contact( $data['contact_id'] );
 			$contact_id = $contact ? $contact->id : null;
 		} elseif ( ! empty( $data['contact_email'] ) ) {
 			$contact = scrm_get_contact_by_email( $data['contact_email'] );
@@ -375,11 +389,13 @@ class SCRM_Webhooks {
 				$contact_id = $contact->id;
 			} else {
 				// Create contact if not exists.
-				$contact_id = scrm_create_contact( array(
-					'email'  => $data['contact_email'],
-					'type'   => 'customer',
-					'source' => 'webhook',
-				) );
+				$contact_id = scrm_create_contact(
+					array(
+						'email'  => $data['contact_email'],
+						'type'   => 'customer',
+						'source' => 'webhook',
+					)
+				);
 				if ( is_wp_error( $contact_id ) ) {
 					throw new Exception( $contact_id->get_error_message() );
 				}
@@ -391,7 +407,7 @@ class SCRM_Webhooks {
 		}
 
 		$data['contact_id'] = $contact_id;
-		$data['gateway'] = $data['gateway'] ?? 'webhook';
+		$data['gateway']    = $data['gateway'] ?? 'webhook';
 
 		$txn_id = scrm_create_transaction( $data );
 
@@ -426,7 +442,7 @@ class SCRM_Webhooks {
 			throw new Exception( __( 'Contact not found.', 'syncpoint-crm' ) );
 		}
 
-		$tags = $data['tags'] ?? array();
+		$tags     = $data['tags'] ?? array();
 		$assigned = array();
 
 		foreach ( (array) $tags as $tag ) {
@@ -460,7 +476,7 @@ class SCRM_Webhooks {
 	 * @return WP_REST_Response|WP_Error Response or error.
 	 */
 	public function handle_paypal( $request ) {
-		$payload = $request->get_json_params();
+		$payload    = $request->get_json_params();
 		$event_type = $payload['event_type'] ?? '';
 
 		// Log the webhook.
@@ -479,10 +495,12 @@ class SCRM_Webhooks {
 
 		// TODO: Process PayPal events.
 
-		return rest_ensure_response( array(
-			'success' => true,
-			'message' => __( 'PayPal webhook received.', 'syncpoint-crm' ),
-		) );
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'message' => __( 'PayPal webhook received.', 'syncpoint-crm' ),
+			)
+		);
 	}
 
 	/**
@@ -493,7 +511,7 @@ class SCRM_Webhooks {
 	 * @return WP_REST_Response|WP_Error Response or error.
 	 */
 	public function handle_stripe( $request ) {
-		$payload = $request->get_body();
+		$payload    = $request->get_body();
 		$sig_header = $request->get_header( 'Stripe-Signature' );
 
 		// Log the webhook.
@@ -502,7 +520,7 @@ class SCRM_Webhooks {
 		// TODO: Verify Stripe webhook signature.
 		// $webhook_secret = scrm_get_setting( 'stripe', 'webhook_secret' );
 
-		$event = json_decode( $payload, true );
+		$event      = json_decode( $payload, true );
 		$event_type = $event['type'] ?? '';
 
 		/**
@@ -516,10 +534,12 @@ class SCRM_Webhooks {
 
 		// TODO: Process Stripe events.
 
-		return rest_ensure_response( array(
-			'success' => true,
-			'message' => __( 'Stripe webhook received.', 'syncpoint-crm' ),
-		) );
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'message' => __( 'Stripe webhook received.', 'syncpoint-crm' ),
+			)
+		);
 	}
 }
 

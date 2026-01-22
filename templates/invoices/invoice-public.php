@@ -264,11 +264,11 @@
 			<div class="invoice-meta">
 				<div class="meta-group">
 					<label><?php esc_html_e( 'Issue Date', 'syncpoint-crm' ); ?></label>
-					<span><?php echo esc_html( scrm_format_date( $invoice->issue_date ) ); ?></span>
+					<span><?php echo esc_html( scrm_format_gmdate( $invoice->issue_date ) ); ?></span>
 				</div>
 				<div class="meta-group">
 					<label><?php esc_html_e( 'Due Date', 'syncpoint-crm' ); ?></label>
-					<span><?php echo esc_html( scrm_format_date( $invoice->due_date ) ); ?></span>
+					<span><?php echo esc_html( scrm_format_gmdate( $invoice->due_date ) ); ?></span>
 				</div>
 				<div class="meta-group">
 					<label><?php esc_html_e( 'Status', 'syncpoint-crm' ); ?></label>
@@ -336,7 +336,8 @@
 								?>
 							</span>
 							<span>
-								-<?php
+								-
+								<?php
 								$discount = 'percentage' === $invoice->discount_type
 									? $invoice->subtotal * ( $invoice->discount_value / 100 )
 									: $invoice->discount_value;
@@ -387,7 +388,7 @@
 					<h3 style="color: #065f46;">
 						✓ <?php esc_html_e( 'Paid', 'syncpoint-crm' ); ?>
 						<?php if ( ! empty( $invoice->paid_at ) ) : ?>
-							- <?php echo esc_html( scrm_format_date( $invoice->paid_at ) ); ?>
+							- <?php echo esc_html( scrm_format_gmdate( $invoice->paid_at ) ); ?>
 						<?php endif; ?>
 					</h3>
 				</div>

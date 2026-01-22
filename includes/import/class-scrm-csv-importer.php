@@ -124,7 +124,7 @@ class CSV_Importer {
 
 		while ( ( $row = fgetcsv( $handle ) ) !== false && $i < $count ) {
 			$rows[] = $row;
-			$i++;
+			++$i;
 		}
 
 		fclose( $handle );
@@ -172,18 +172,18 @@ class CSV_Importer {
 		);
 
 		while ( ( $row = fgetcsv( $handle ) ) !== false ) {
-			$stats['total']++;
+			++$stats['total'];
 
 			$result = $this->process_row( $row, $options );
 
 			if ( is_wp_error( $result ) ) {
-				$stats['errors']++;
+				++$stats['errors'];
 			} elseif ( 'created' === $result ) {
-				$stats['created']++;
+				++$stats['created'];
 			} elseif ( 'updated' === $result ) {
-				$stats['updated']++;
+				++$stats['updated'];
 			} else {
-				$stats['skipped']++;
+				++$stats['skipped'];
 			}
 		}
 
@@ -333,10 +333,12 @@ class CSV_Importer {
 		$name = sanitize_text_field( $data['name'] );
 
 		global $wpdb;
-		$existing = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$wpdb->prefix}scrm_companies WHERE name = %s",
-			$name
-		) );
+		$existing = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}scrm_companies WHERE name = %s",
+				$name
+			)
+		);
 
 		if ( $existing ) {
 			if ( $options['skip_duplicates'] && ! $options['update_existing'] ) {
@@ -347,7 +349,7 @@ class CSV_Importer {
 				$update_data = $this->sanitize_company_data( $data );
 				unset( $update_data['name'] );
 
-				$wpdb->update(
+				$wpdb->upgmdate(
 					$wpdb->prefix . 'scrm_companies',
 					$update_data,
 					array( 'id' => $existing->id )

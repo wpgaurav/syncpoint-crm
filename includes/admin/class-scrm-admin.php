@@ -205,17 +205,21 @@ class SCRM_Admin {
 		);
 
 		// Localize script.
-		wp_localize_script( 'scrm-admin', 'scrm', array(
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'scrm_admin_nonce' ),
-			'i18n'     => array(
-				'saving'         => __( 'Saving...', 'syncpoint-crm' ),
-				'saved'          => __( 'Saved!', 'syncpoint-crm' ),
-				'error'          => __( 'An error occurred. Please try again.', 'syncpoint-crm' ),
-				'confirm_delete' => __( 'Are you sure you want to delete this item?', 'syncpoint-crm' ),
-				'confirm_cancel' => __( 'Are you sure you want to cancel this sync?', 'syncpoint-crm' ),
-			),
-		) );
+		wp_localize_script(
+			'scrm-admin',
+			'scrm',
+			array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'scrm_admin_nonce' ),
+				'i18n'     => array(
+					'saving'         => __( 'Saving...', 'syncpoint-crm' ),
+					'saved'          => __( 'Saved!', 'syncpoint-crm' ),
+					'error'          => __( 'An error occurred. Please try again.', 'syncpoint-crm' ),
+					'confirm_delete' => __( 'Are you sure you want to delete this item?', 'syncpoint-crm' ),
+					'confirm_cancel' => __( 'Are you sure you want to cancel this sync?', 'syncpoint-crm' ),
+				),
+			)
+		);
 
 		// Charts only on dashboard.
 		if ( $this->is_dashboard_page( $hook ) ) {
@@ -236,10 +240,14 @@ class SCRM_Admin {
 			);
 
 			// Pass chart data.
-			wp_localize_script( 'scrm-charts', 'scrm_charts_data', array(
-				'revenue'  => SCRM_Dashboard::get_revenue_chart_data(),
-				'contacts' => SCRM_Dashboard::get_contacts_chart_data(),
-			) );
+			wp_localize_script(
+				'scrm-charts',
+				'scrm_charts_data',
+				array(
+					'revenue'  => SCRM_Dashboard::get_revenue_chart_data(),
+					'contacts' => SCRM_Dashboard::get_contacts_chart_data(),
+				)
+			);
 		}
 
 		// Import wizard scripts.
@@ -443,7 +451,7 @@ class SCRM_Admin {
 	private function render_contacts_list() {
 		// TODO: Implement WP_List_Table for contacts.
 		$contacts = scrm_get_contacts( array( 'limit' => 50 ) );
-		
+
 		if ( empty( $contacts ) ) {
 			?>
 			<div class="scrm-empty-state">
@@ -457,7 +465,7 @@ class SCRM_Admin {
 			<?php
 			return;
 		}
-		
+
 		?>
 		<table class="wp-list-table widefat fixed striped scrm-table">
 			<thead>
@@ -493,7 +501,7 @@ class SCRM_Admin {
 								<?php echo esc_html( ucfirst( $contact->status ) ); ?>
 							</span>
 						</td>
-						<td><?php echo esc_html( scrm_format_date( $contact->created_at ) ); ?></td>
+						<td><?php echo esc_html( scrm_format_gmdate( $contact->created_at ) ); ?></td>
 						<td>
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=scrm-contacts&action=edit&id=' . $contact->id ) ); ?>"><?php esc_html_e( 'Edit', 'syncpoint-crm' ); ?></a>
 						</td>
@@ -510,13 +518,13 @@ class SCRM_Admin {
 	 * @since 1.0.0
 	 */
 	private function render_contact_form() {
-		$contact = null;
+		$contact    = null;
 		$contact_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
-		
+
 		if ( $contact_id ) {
 			$contact = scrm_get_contact( $contact_id );
 		}
-		
+
 		// Handle form submission.
 		if ( isset( $_POST['scrm_save_contact'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'scrm_save_contact' ) ) {
 			$data = array(
@@ -529,28 +537,28 @@ class SCRM_Admin {
 				'company_id' => absint( $_POST['company_id'] ?? 0 ) ?: null,
 				'currency'   => sanitize_text_field( $_POST['currency'] ?? scrm_get_default_currency() ),
 			);
-			
+
 			if ( $contact_id ) {
 				$result = scrm_update_contact( $contact_id, $data );
 			} else {
 				$result = scrm_create_contact( $data );
 			}
-			
+
 			if ( is_wp_error( $result ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
 			} else {
 				$redirect_id = $contact_id ?: $result;
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Contact saved successfully.', 'syncpoint-crm' ) . '</p></div>';
-				
+
 				// Refresh contact data.
 				$contact = scrm_get_contact( $redirect_id );
 			}
 		}
-		
-		$types = scrm_get_contact_types();
-		$statuses = scrm_get_contact_statuses();
+
+		$types      = scrm_get_contact_types();
+		$statuses   = scrm_get_contact_statuses();
 		$currencies = scrm_get_currencies();
-		
+
 		?>
 		<form method="post" class="scrm-form">
 			<?php wp_nonce_field( 'scrm_save_contact' ); ?>
@@ -618,7 +626,7 @@ class SCRM_Admin {
 	 */
 	public function render_companies() {
 		$action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : 'list';
-		
+
 		?>
 		<div class="wrap scrm-wrap">
 			<?php if ( 'add' === $action ) : ?>
@@ -648,17 +656,17 @@ class SCRM_Admin {
 	private function render_companies_list() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_companies';
-		
+
 		$search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
-		
+
 		$where = array( '1=1' );
 		if ( $search ) {
-			$like = '%' . $wpdb->esc_like( $search ) . '%';
+			$like    = '%' . $wpdb->esc_like( $search ) . '%';
 			$where[] = $wpdb->prepare( '(name LIKE %s OR email LIKE %s)', $like, $like );
 		}
-		
-		$companies = $wpdb->get_results( "SELECT * FROM {$table} WHERE " . implode( ' AND ', $where ) . " ORDER BY name ASC LIMIT 50" );
-		
+
+		$companies = $wpdb->get_results( "SELECT * FROM {$table} WHERE " . implode( ' AND ', $where ) . ' ORDER BY name ASC LIMIT 50' );
+
 		?>
 		<!-- Search -->
 		<form method="get" style="margin-bottom: 15px;">
@@ -690,9 +698,10 @@ class SCRM_Admin {
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $companies as $company ) : 
+					<?php
+					foreach ( $companies as $company ) :
 						$contact_count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}scrm_contacts WHERE company_id = %d", $company->id ) );
-					?>
+						?>
 						<tr>
 							<td><code><?php echo esc_html( $company->company_id ); ?></code></td>
 							<td>
@@ -723,7 +732,8 @@ class SCRM_Admin {
 					<?php endforeach; ?>
 				</tbody>
 			</table>
-		<?php endif;
+			<?php
+		endif;
 	}
 
 	/**
@@ -742,16 +752,16 @@ class SCRM_Admin {
 				'address' => sanitize_textarea_field( $_POST['address'] ?? '' ),
 				'notes'   => sanitize_textarea_field( $_POST['notes'] ?? '' ),
 			);
-			
+
 			$result = scrm_create_company( $data );
-			
+
 			if ( is_wp_error( $result ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
 			} else {
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Company created successfully.', 'syncpoint-crm' ) . ' <a href="' . esc_url( admin_url( 'admin.php?page=scrm-companies&action=view&id=' . $result ) ) . '">' . esc_html__( 'View Company', 'syncpoint-crm' ) . '</a></p></div>';
 			}
 		}
-		
+
 		?>
 		<form method="post" class="scrm-form" style="max-width: 600px;">
 			<?php wp_nonce_field( 'scrm_save_company' ); ?>
@@ -798,27 +808,31 @@ class SCRM_Admin {
 	 */
 	private function render_company_detail( $id ) {
 		$company = scrm_get_company( $id );
-		
+
 		if ( ! $company ) {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'Company not found.', 'syncpoint-crm' ) . '</p></div>';
 			return;
 		}
-		
+
 		// Get associated contacts.
 		global $wpdb;
-		$contacts = $wpdb->get_results( $wpdb->prepare(
-			"SELECT * FROM {$wpdb->prefix}scrm_contacts WHERE company_id = %d ORDER BY first_name ASC",
-			$id
-		) );
-		
+		$contacts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}scrm_contacts WHERE company_id = %d ORDER BY first_name ASC",
+				$id
+			)
+		);
+
 		// Get transactions total.
-		$revenue = $wpdb->get_var( $wpdb->prepare(
-			"SELECT SUM(t.amount) FROM {$wpdb->prefix}scrm_transactions t 
+		$revenue = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT SUM(t.amount) FROM {$wpdb->prefix}scrm_transactions t 
 			 JOIN {$wpdb->prefix}scrm_contacts c ON t.contact_id = c.id 
 			 WHERE c.company_id = %d AND t.type = 'payment' AND t.status = 'completed'",
-			$id
-		) );
-		
+				$id
+			)
+		);
+
 		?>
 		<h1>
 			<?php echo esc_html( $company->name ); ?>
@@ -913,12 +927,12 @@ class SCRM_Admin {
 	 */
 	public function render_transactions() {
 		$action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : 'list';
-		
+
 		// Handle sync action.
 		if ( 'sync' === $action && isset( $_GET['gateway'] ) ) {
 			$this->handle_transaction_sync();
 		}
-		
+
 		?>
 		<div class="wrap scrm-wrap">
 			<?php if ( 'add' === $action ) : ?>
@@ -940,9 +954,9 @@ class SCRM_Admin {
 					<?php
 					$paypal_settings = scrm_get_settings( 'paypal' );
 					$stripe_settings = scrm_get_settings( 'stripe' );
-					
+
 					if ( ! empty( $paypal_settings['enabled'] ) ) :
-					?>
+						?>
 						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=scrm-transactions&action=sync&gateway=paypal' ), 'scrm_sync_paypal' ) ); ?>" class="button">
 							<span class="dashicons dashicons-update" style="vertical-align: middle;"></span>
 							<?php esc_html_e( 'Sync PayPal', 'syncpoint-crm' ); ?>
@@ -970,22 +984,22 @@ class SCRM_Admin {
 	 */
 	private function handle_transaction_sync() {
 		$gateway = sanitize_text_field( wp_unslash( $_GET['gateway'] ) );
-		
+
 		if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'scrm_sync_' . $gateway ) ) {
 			wp_die( esc_html__( 'Security check failed.', 'syncpoint-crm' ) );
 		}
-		
+
 		$gateway_instance = null;
-		
+
 		if ( 'paypal' === $gateway ) {
 			$gateway_instance = new SCRM\Gateways\PayPal();
 		} elseif ( 'stripe' === $gateway ) {
 			$gateway_instance = new SCRM\Gateways\Stripe();
 		}
-		
+
 		if ( $gateway_instance ) {
 			$result = $gateway_instance->sync_transactions();
-			
+
 			if ( is_wp_error( $result ) ) {
 				add_settings_error( 'scrm_messages', 'sync_error', $result->get_error_message(), 'error' );
 			} else {
@@ -1002,7 +1016,7 @@ class SCRM_Admin {
 				);
 			}
 		}
-		
+
 		settings_errors( 'scrm_messages' );
 	}
 
@@ -1014,13 +1028,13 @@ class SCRM_Admin {
 	private function render_transactions_list() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_transactions';
-		
+
 		// Filters.
-		$where = array( '1=1' );
-		$filter_type = isset( $_GET['type'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : '';
+		$where          = array( '1=1' );
+		$filter_type    = isset( $_GET['type'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : '';
 		$filter_gateway = isset( $_GET['gateway'] ) ? sanitize_text_field( wp_unslash( $_GET['gateway'] ) ) : '';
-		$filter_status = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
-		
+		$filter_status  = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
+
 		if ( $filter_type ) {
 			$where[] = $wpdb->prepare( 'type = %s', $filter_type );
 		}
@@ -1030,10 +1044,10 @@ class SCRM_Admin {
 		if ( $filter_status ) {
 			$where[] = $wpdb->prepare( 'status = %s', $filter_status );
 		}
-		
-		$sql = "SELECT * FROM {$table} WHERE " . implode( ' AND ', $where ) . " ORDER BY created_at DESC LIMIT 50";
+
+		$sql          = "SELECT * FROM {$table} WHERE " . implode( ' AND ', $where ) . ' ORDER BY created_at DESC LIMIT 50';
 		$transactions = $wpdb->get_results( $sql );
-		
+
 		?>
 		<!-- Filters -->
 		<form method="get" class="scrm-filters" style="margin-bottom: 15px;">
@@ -1087,9 +1101,10 @@ class SCRM_Admin {
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $transactions as $txn ) : 
+					<?php
+					foreach ( $transactions as $txn ) :
 						$contact = scrm_get_contact( $txn->contact_id );
-					?>
+						?>
 						<tr>
 							<td>
 								<a href="<?php echo esc_url( admin_url( 'admin.php?page=scrm-transactions&action=view&id=' . $txn->id ) ); ?>">
@@ -1124,12 +1139,13 @@ class SCRM_Admin {
 									<?php echo esc_html( ucfirst( $txn->status ) ); ?>
 								</span>
 							</td>
-							<td><?php echo esc_html( scrm_format_date( $txn->created_at ) ); ?></td>
+							<td><?php echo esc_html( scrm_format_gmdate( $txn->created_at ) ); ?></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
 			</table>
-		<?php endif;
+			<?php
+		endif;
 	}
 
 	/**
@@ -1149,19 +1165,24 @@ class SCRM_Admin {
 				'status'      => sanitize_text_field( $_POST['status'] ?? 'completed' ),
 				'description' => sanitize_textarea_field( $_POST['description'] ?? '' ),
 			);
-			
+
 			$result = scrm_create_transaction( $data );
-			
+
 			if ( is_wp_error( $result ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
 			} else {
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Transaction created successfully.', 'syncpoint-crm' ) . '</p></div>';
 			}
 		}
-		
+
 		$currencies = scrm_get_currencies();
-		$contacts = scrm_get_contacts( array( 'status' => 'active', 'limit' => 100 ) );
-		
+		$contacts   = scrm_get_contacts(
+			array(
+				'status' => 'active',
+				'limit'  => 100,
+			)
+		);
+
 		?>
 		<form method="post" class="scrm-form">
 			<?php wp_nonce_field( 'scrm_save_transaction' ); ?>
@@ -1236,19 +1257,21 @@ class SCRM_Admin {
 	 */
 	private function render_transaction_detail( $id ) {
 		global $wpdb;
-		$txn = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$wpdb->prefix}scrm_transactions WHERE id = %d",
-			$id
-		) );
-		
+		$txn = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}scrm_transactions WHERE id = %d",
+				$id
+			)
+		);
+
 		if ( ! $txn ) {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'Transaction not found.', 'syncpoint-crm' ) . '</p></div>';
 			return;
 		}
-		
-		$contact = scrm_get_contact( $txn->contact_id );
+
+		$contact  = scrm_get_contact( $txn->contact_id );
 		$metadata = ! empty( $txn->metadata ) ? json_decode( $txn->metadata, true ) : array();
-		
+
 		?>
 		<h1>
 			<?php echo esc_html( $txn->transaction_id ); ?>
@@ -1318,7 +1341,7 @@ class SCRM_Admin {
 	 */
 	public function render_invoices() {
 		$action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : 'list';
-		
+
 		?>
 		<div class="wrap scrm-wrap">
 			<?php if ( 'add' === $action ) : ?>
@@ -1348,16 +1371,16 @@ class SCRM_Admin {
 	private function render_invoices_list() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_invoices';
-		
+
 		$filter_status = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
-		
+
 		$where = array( '1=1' );
 		if ( $filter_status ) {
 			$where[] = $wpdb->prepare( 'status = %s', $filter_status );
 		}
-		
-		$invoices = $wpdb->get_results( "SELECT * FROM {$table} WHERE " . implode( ' AND ', $where ) . " ORDER BY created_at DESC LIMIT 50" );
-		
+
+		$invoices = $wpdb->get_results( "SELECT * FROM {$table} WHERE " . implode( ' AND ', $where ) . ' ORDER BY created_at DESC LIMIT 50' );
+
 		?>
 		<!-- Filters -->
 		<form method="get" style="margin-bottom: 15px;">
@@ -1394,10 +1417,11 @@ class SCRM_Admin {
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $invoices as $inv ) : 
-						$contact = scrm_get_contact( $inv->contact_id );
+					<?php
+					foreach ( $invoices as $inv ) :
+						$contact    = scrm_get_contact( $inv->contact_id );
 						$is_overdue = 'paid' !== $inv->status && strtotime( $inv->due_date ) < time();
-					?>
+						?>
 						<tr>
 							<td>
 								<a href="<?php echo esc_url( admin_url( 'admin.php?page=scrm-invoices&action=view&id=' . $inv->id ) ); ?>">
@@ -1414,17 +1438,17 @@ class SCRM_Admin {
 							<td><strong><?php echo esc_html( scrm_format_currency( $inv->total, $inv->currency ) ); ?></strong></td>
 							<td>
 								<span class="scrm-badge scrm-badge--<?php echo esc_attr( $inv->status ); ?> <?php echo $is_overdue ? 'scrm-badge--overdue' : ''; ?>">
-									<?php 
+									<?php
 									if ( $is_overdue && 'paid' !== $inv->status ) {
 										esc_html_e( 'Overdue', 'syncpoint-crm' );
 									} else {
-										echo esc_html( ucfirst( $inv->status ) ); 
+										echo esc_html( ucfirst( $inv->status ) );
 									}
 									?>
 								</span>
 							</td>
-							<td><?php echo esc_html( scrm_format_date( $inv->issue_date ) ); ?></td>
-							<td><?php echo esc_html( scrm_format_date( $inv->due_date ) ); ?></td>
+							<td><?php echo esc_html( scrm_format_gmdate( $inv->issue_date ) ); ?></td>
+							<td><?php echo esc_html( scrm_format_gmdate( $inv->due_date ) ); ?></td>
 							<td>
 								<a href="<?php echo esc_url( admin_url( 'admin.php?page=scrm-invoices&action=view&id=' . $inv->id ) ); ?>"><?php esc_html_e( 'View', 'syncpoint-crm' ); ?></a>
 							</td>
@@ -1432,7 +1456,8 @@ class SCRM_Admin {
 					<?php endforeach; ?>
 				</tbody>
 			</table>
-		<?php endif;
+			<?php
+		endif;
 	}
 
 	/**
@@ -1443,38 +1468,42 @@ class SCRM_Admin {
 	private function render_invoice_form() {
 		// Handle form submission.
 		if ( isset( $_POST['scrm_save_invoice'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'scrm_save_invoice' ) ) {
-			$invoice = new SCRM\Core\Invoice();
+			$invoice             = new SCRM\Core\Invoice();
 			$invoice->contact_id = absint( $_POST['contact_id'] ?? 0 );
-			$invoice->currency = sanitize_text_field( $_POST['currency'] ?? scrm_get_default_currency() );
-			$invoice->issue_date = sanitize_text_field( $_POST['issue_date'] ?? date( 'Y-m-d' ) );
-			$invoice->due_date = sanitize_text_field( $_POST['due_date'] ?? date( 'Y-m-d', strtotime( '+30 days' ) ) );
-			$invoice->notes = sanitize_textarea_field( $_POST['notes'] ?? '' );
-			$invoice->terms = sanitize_textarea_field( $_POST['terms'] ?? '' );
-			
+			$invoice->currency   = sanitize_text_field( $_POST['currency'] ?? scrm_get_default_currency() );
+			$invoice->issue_date = sanitize_text_field( $_POST['issue_date'] ?? gmdate( 'Y-m-d' ) );
+			$invoice->due_date   = sanitize_text_field( $_POST['due_date'] ?? gmdate( 'Y-m-d', strtotime( '+30 days' ) ) );
+			$invoice->notes      = sanitize_textarea_field( $_POST['notes'] ?? '' );
+			$invoice->terms      = sanitize_textarea_field( $_POST['terms'] ?? '' );
+
 			$result = $invoice->save();
-			
+
 			if ( is_wp_error( $result ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
 			} else {
 				// Add line items.
 				if ( ! empty( $_POST['items'] ) ) {
 					foreach ( $_POST['items'] as $item ) {
-						if ( empty( $item['description'] ) ) continue;
-						$invoice->add_item( array(
-							'description' => sanitize_text_field( $item['description'] ),
-							'quantity'    => floatval( $item['quantity'] ?? 1 ),
-							'unit_price'  => floatval( $item['unit_price'] ?? 0 ),
-						) );
+						if ( empty( $item['description'] ) ) {
+							continue;
+						}
+						$invoice->add_item(
+							array(
+								'description' => sanitize_text_field( $item['description'] ),
+								'quantity'    => floatval( $item['quantity'] ?? 1 ),
+								'unit_price'  => floatval( $item['unit_price'] ?? 0 ),
+							)
+						);
 					}
 					$invoice->recalculate_totals();
 				}
-				
+
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Invoice created successfully.', 'syncpoint-crm' ) . ' <a href="' . esc_url( admin_url( 'admin.php?page=scrm-invoices&action=view&id=' . $invoice->id ) ) . '">' . esc_html__( 'View Invoice', 'syncpoint-crm' ) . '</a></p></div>';
 			}
 		}
-		
+
 		$currencies = scrm_get_currencies();
-		
+
 		?>
 		<form method="post" class="scrm-form">
 			<?php wp_nonce_field( 'scrm_save_invoice' ); ?>
@@ -1588,11 +1617,11 @@ class SCRM_Admin {
 				</tr>
 				<tr>
 					<th><label for="issue_date"><?php esc_html_e( 'Issue Date', 'syncpoint-crm' ); ?></label></th>
-					<td><input type="date" id="issue_date" name="issue_date" value="<?php echo esc_attr( date( 'Y-m-d' ) ); ?>"></td>
+					<td><input type="date" id="issue_date" name="issue_date" value="<?php echo esc_attr( gmdate( 'Y-m-d' ) ); ?>"></td>
 				</tr>
 				<tr>
 					<th><label for="due_date"><?php esc_html_e( 'Due Date', 'syncpoint-crm' ); ?></label></th>
-					<td><input type="date" id="due_date" name="due_date" value="<?php echo esc_attr( date( 'Y-m-d', strtotime( '+30 days' ) ) ); ?>"></td>
+					<td><input type="date" id="due_date" name="due_date" value="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( '+30 days' ) ) ); ?>"></td>
 				</tr>
 			</table>
 			
@@ -1638,19 +1667,19 @@ class SCRM_Admin {
 	 */
 	private function render_invoice_detail( $id ) {
 		$invoice = new SCRM\Core\Invoice( $id );
-		
+
 		if ( ! $invoice->exists() ) {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'Invoice not found.', 'syncpoint-crm' ) . '</p></div>';
 			return;
 		}
-		
+
 		$contact = scrm_get_contact( $invoice->contact_id );
-		$items = $invoice->get_items();
-		
+		$items   = $invoice->get_items();
+
 		// Handle actions.
 		if ( isset( $_GET['do'] ) && wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'scrm_invoice_action' ) ) {
 			$do = sanitize_text_field( wp_unslash( $_GET['do'] ) );
-			
+
 			if ( 'send' === $do ) {
 				$invoice->mark_sent();
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Invoice marked as sent.', 'syncpoint-crm' ) . '</p></div>';
@@ -1666,7 +1695,7 @@ class SCRM_Admin {
 				}
 			}
 		}
-		
+
 		?>
 		<h1>
 			<?php echo esc_html( $invoice->invoice_number ); ?>
@@ -1700,8 +1729,8 @@ class SCRM_Admin {
 				<div style="text-align: right;">
 					<span class="scrm-badge scrm-badge--<?php echo esc_attr( $invoice->status ); ?>" style="font-size: 14px;"><?php echo esc_html( ucfirst( $invoice->status ) ); ?></span>
 					<br><br>
-					<strong><?php esc_html_e( 'Issue:', 'syncpoint-crm' ); ?></strong> <?php echo esc_html( scrm_format_date( $invoice->issue_date ) ); ?><br>
-					<strong><?php esc_html_e( 'Due:', 'syncpoint-crm' ); ?></strong> <?php echo esc_html( scrm_format_date( $invoice->due_date ) ); ?>
+					<strong><?php esc_html_e( 'Issue:', 'syncpoint-crm' ); ?></strong> <?php echo esc_html( scrm_format_gmdate( $invoice->issue_date ) ); ?><br>
+					<strong><?php esc_html_e( 'Due:', 'syncpoint-crm' ); ?></strong> <?php echo esc_html( scrm_format_gmdate( $invoice->due_date ) ); ?>
 				</div>
 			</div>
 			
@@ -1763,7 +1792,7 @@ class SCRM_Admin {
 	public function render_tags() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_tags';
-		
+
 		// Handle form submission.
 		if ( isset( $_POST['scrm_save_tag'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'scrm_save_tag' ) ) {
 			$data = array(
@@ -1771,25 +1800,25 @@ class SCRM_Admin {
 				'color'       => scrm_sanitize_hex_color( $_POST['color'] ?? '#6B7280' ),
 				'description' => sanitize_textarea_field( $_POST['description'] ?? '' ),
 			);
-			
+
 			$result = scrm_create_tag( $data );
-			
+
 			if ( is_wp_error( $result ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
 			} else {
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Tag created successfully.', 'syncpoint-crm' ) . '</p></div>';
 			}
 		}
-		
+
 		// Handle delete.
 		if ( isset( $_GET['delete'] ) && wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'scrm_delete_tag' ) ) {
 			$delete_id = absint( $_GET['delete'] );
 			scrm_delete_tag( $delete_id );
 			echo '<div class="notice notice-success"><p>' . esc_html__( 'Tag deleted.', 'syncpoint-crm' ) . '</p></div>';
 		}
-		
+
 		$tags = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY name ASC" );
-		
+
 		?>
 		<div class="wrap scrm-wrap">
 			<h1><?php esc_html_e( 'Tags', 'syncpoint-crm' ); ?></h1>
@@ -1936,7 +1965,7 @@ class SCRM_Admin {
 	 */
 	private function render_email_compose() {
 		$contact_ids = isset( $_GET['contacts'] ) ? array_map( 'absint', explode( ',', sanitize_text_field( wp_unslash( $_GET['contacts'] ) ) ) ) : array();
-		$contacts = array();
+		$contacts    = array();
 		foreach ( $contact_ids as $id ) {
 			$contact = scrm_get_contact( $id );
 			if ( $contact ) {
@@ -1990,12 +2019,16 @@ class SCRM_Admin {
 							</th>
 							<td>
 								<?php
-								wp_editor( '', 'email_message', array(
-									'textarea_name' => 'message',
-									'textarea_rows' => 15,
-									'media_buttons' => true,
-									'teeny'         => false,
-								) );
+								wp_editor(
+									'',
+									'email_message',
+									array(
+										'textarea_name' => 'message',
+										'textarea_rows' => 15,
+										'media_buttons' => true,
+										'teeny'         => false,
+									)
+								);
 								?>
 								<p class="description"><?php esc_html_e( 'Available merge tags: {first_name}, {last_name}, {email}, {company}', 'syncpoint-crm' ); ?></p>
 							</td>

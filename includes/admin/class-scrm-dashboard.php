@@ -24,8 +24,8 @@ class SCRM_Dashboard {
 	 * @return array Statistics data.
 	 */
 	public static function get_stats( $period = '30days' ) {
-		$end_date = current_time( 'Y-m-d' );
-		$start_date = self::get_start_date( $period );
+		$end_date   = current_time( 'Y-m-d' );
+		$start_date = self::get_start_gmdate( $period );
 
 		$stats = array(
 			'period'       => $period,
@@ -54,18 +54,18 @@ class SCRM_Dashboard {
 	 * @param string $period Period.
 	 * @return string Start date.
 	 */
-	private static function get_start_date( $period ) {
+	private static function get_start_gmdate( $period ) {
 		switch ( $period ) {
 			case '7days':
-				return date( 'Y-m-d', strtotime( '-7 days' ) );
+				return gmdate( 'Y-m-d', strtotime( '-7 days' ) );
 			case '30days':
-				return date( 'Y-m-d', strtotime( '-30 days' ) );
+				return gmdate( 'Y-m-d', strtotime( '-30 days' ) );
 			case '90days':
-				return date( 'Y-m-d', strtotime( '-90 days' ) );
+				return gmdate( 'Y-m-d', strtotime( '-90 days' ) );
 			case 'year':
-				return date( 'Y-m-d', strtotime( '-1 year' ) );
+				return gmdate( 'Y-m-d', strtotime( '-1 year' ) );
 			default:
-				return date( 'Y-m-d', strtotime( '-30 days' ) );
+				return gmdate( 'Y-m-d', strtotime( '-30 days' ) );
 		}
 	}
 
@@ -84,14 +84,16 @@ class SCRM_Dashboard {
 			"SELECT COUNT(*) FROM {$table} WHERE status = 'active'"
 		);
 
-		$new_in_period = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$table} WHERE created_at >= %s AND created_at <= %s",
-			$start_date . ' 00:00:00',
-			$end_date . ' 23:59:59'
-		) );
+		$new_in_period = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE created_at >= %s AND created_at <= %s",
+				$start_date . ' 00:00:00',
+				$end_date . ' 23:59:59'
+			)
+		);
 
 		$by_type = array();
-		$types = $wpdb->get_results(
+		$types   = $wpdb->get_results(
 			"SELECT type, COUNT(*) as count FROM {$table} WHERE status != 'archived' GROUP BY type"
 		);
 		foreach ( $types as $row ) {
@@ -132,21 +134,25 @@ class SCRM_Dashboard {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_transactions';
 
-		$total = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$table} WHERE created_at >= %s AND created_at <= %s",
-			$start_date . ' 00:00:00',
-			$end_date . ' 23:59:59'
-		) );
+		$total = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE created_at >= %s AND created_at <= %s",
+				$start_date . ' 00:00:00',
+				$end_date . ' 23:59:59'
+			)
+		);
 
 		$by_gateway = array();
-		$gateways = $wpdb->get_results( $wpdb->prepare(
-			"SELECT gateway, COUNT(*) as count, SUM(amount) as total
+		$gateways   = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT gateway, COUNT(*) as count, SUM(amount) as total
 			FROM {$table}
 			WHERE created_at >= %s AND created_at <= %s AND type = 'payment' AND status = 'completed'
 			GROUP BY gateway",
-			$start_date . ' 00:00:00',
-			$end_date . ' 23:59:59'
-		) );
+				$start_date . ' 00:00:00',
+				$end_date . ' 23:59:59'
+			)
+		);
 		foreach ( $gateways as $row ) {
 			$by_gateway[ $row->gateway ] = array(
 				'count' => (int) $row->count,
@@ -170,7 +176,7 @@ class SCRM_Dashboard {
 		$table = $wpdb->prefix . 'scrm_invoices';
 
 		$by_status = array();
-		$statuses = $wpdb->get_results(
+		$statuses  = $wpdb->get_results(
 			"SELECT status, COUNT(*) as count, SUM(total) as total FROM {$table} GROUP BY status"
 		);
 		foreach ( $statuses as $row ) {
@@ -181,11 +187,13 @@ class SCRM_Dashboard {
 		}
 
 		// Count overdue.
-		$overdue = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$table}
+		$overdue = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table}
 			WHERE status IN ('sent', 'viewed') AND due_date < %s",
-			current_time( 'Y-m-d' )
-		) );
+				current_time( 'Y-m-d' )
+			)
+		);
 
 		return array(
 			'by_status' => $by_status,
@@ -204,34 +212,38 @@ class SCRM_Dashboard {
 	 */
 	private static function get_revenue_stats( $start_date, $end_date ) {
 		global $wpdb;
-		$table = $wpdb->prefix . 'scrm_transactions';
+		$table            = $wpdb->prefix . 'scrm_transactions';
 		$default_currency = scrm_get_default_currency();
 
 		// Get total revenue in default currency.
-		$total = (float) $wpdb->get_var( $wpdb->prepare(
-			"SELECT SUM(amount) FROM {$table}
+		$total = (float) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT SUM(amount) FROM {$table}
 			WHERE type = 'payment' AND status = 'completed'
 			AND currency = %s
 			AND created_at >= %s AND created_at <= %s",
-			$default_currency,
-			$start_date . ' 00:00:00',
-			$end_date . ' 23:59:59'
-		) );
+				$default_currency,
+				$start_date . ' 00:00:00',
+				$end_date . ' 23:59:59'
+			)
+		);
 
 		// Get previous period for comparison.
 		$period_days = ( strtotime( $end_date ) - strtotime( $start_date ) ) / DAY_IN_SECONDS;
-		$prev_start = date( 'Y-m-d', strtotime( $start_date . ' -' . $period_days . ' days' ) );
-		$prev_end = date( 'Y-m-d', strtotime( $start_date . ' -1 day' ) );
+		$prev_start  = gmdate( 'Y-m-d', strtotime( $start_date . ' -' . $period_days . ' days' ) );
+		$prev_end    = gmdate( 'Y-m-d', strtotime( $start_date . ' -1 day' ) );
 
-		$prev_total = (float) $wpdb->get_var( $wpdb->prepare(
-			"SELECT SUM(amount) FROM {$table}
+		$prev_total = (float) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT SUM(amount) FROM {$table}
 			WHERE type = 'payment' AND status = 'completed'
 			AND currency = %s
 			AND created_at >= %s AND created_at <= %s",
-			$default_currency,
-			$prev_start . ' 00:00:00',
-			$prev_end . ' 23:59:59'
-		) );
+				$default_currency,
+				$prev_start . ' 00:00:00',
+				$prev_end . ' 23:59:59'
+			)
+		);
 
 		// Calculate change percentage.
 		$change = 0;
@@ -241,14 +253,16 @@ class SCRM_Dashboard {
 
 		// Get by currency.
 		$by_currency = array();
-		$currencies = $wpdb->get_results( $wpdb->prepare(
-			"SELECT currency, SUM(amount) as total FROM {$table}
+		$currencies  = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT currency, SUM(amount) as total FROM {$table}
 			WHERE type = 'payment' AND status = 'completed'
 			AND created_at >= %s AND created_at <= %s
 			GROUP BY currency",
-			$start_date . ' 00:00:00',
-			$end_date . ' 23:59:59'
-		) );
+				$start_date . ' 00:00:00',
+				$end_date . ' 23:59:59'
+			)
+		);
 		foreach ( $currencies as $row ) {
 			$by_currency[ $row->currency ] = floatval( $row->total );
 		}
@@ -271,25 +285,27 @@ class SCRM_Dashboard {
 	 */
 	public static function get_revenue_chart_data( $period = '30days' ) {
 		global $wpdb;
-		$table = $wpdb->prefix . 'scrm_transactions';
+		$table            = $wpdb->prefix . 'scrm_transactions';
 		$default_currency = scrm_get_default_currency();
 
-		$end_date = current_time( 'Y-m-d' );
-		$start_date = self::get_start_date( $period );
+		$end_date   = current_time( 'Y-m-d' );
+		$start_date = self::get_start_gmdate( $period );
 
 		// Get daily revenue.
-		$results = $wpdb->get_results( $wpdb->prepare(
-			"SELECT DATE(created_at) as date, SUM(amount) as total
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT DATE(created_at) as date, SUM(amount) as total
 			FROM {$table}
 			WHERE type = 'payment' AND status = 'completed'
 			AND currency = %s
 			AND created_at >= %s AND created_at <= %s
 			GROUP BY DATE(created_at)
 			ORDER BY date ASC",
-			$default_currency,
-			$start_date . ' 00:00:00',
-			$end_date . ' 23:59:59'
-		) );
+				$default_currency,
+				$start_date . ' 00:00:00',
+				$end_date . ' 23:59:59'
+			)
+		);
 
 		$data = array();
 		foreach ( $results as $row ) {
@@ -297,16 +313,16 @@ class SCRM_Dashboard {
 		}
 
 		// Fill in missing dates.
-		$labels = array();
-		$values = array();
+		$labels  = array();
+		$values  = array();
 		$current = strtotime( $start_date );
-		$end = strtotime( $end_date );
+		$end     = strtotime( $end_date );
 
 		while ( $current <= $end ) {
-			$date = date( 'Y-m-d', $current );
-			$labels[] = date( 'M j', $current );
+			$date     = gmdate( 'Y-m-d', $current );
+			$labels[] = gmdate( 'M j', $current );
 			$values[] = $data[ $date ] ?? 0;
-			$current = strtotime( '+1 day', $current );
+			$current  = strtotime( '+1 day', $current );
 		}
 
 		return array(
@@ -330,24 +346,28 @@ class SCRM_Dashboard {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_contacts';
 
-		$end_date = current_time( 'Y-m-d' );
-		$start_date = self::get_start_date( $period );
+		$end_date   = current_time( 'Y-m-d' );
+		$start_date = self::get_start_gmdate( $period );
 
 		// Get cumulative contacts.
-		$total_before = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$table} WHERE created_at < %s",
-			$start_date . ' 00:00:00'
-		) );
+		$total_before = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE created_at < %s",
+				$start_date . ' 00:00:00'
+			)
+		);
 
-		$daily = $wpdb->get_results( $wpdb->prepare(
-			"SELECT DATE(created_at) as date, COUNT(*) as count
+		$daily = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT DATE(created_at) as date, COUNT(*) as count
 			FROM {$table}
 			WHERE created_at >= %s AND created_at <= %s
 			GROUP BY DATE(created_at)
 			ORDER BY date ASC",
-			$start_date . ' 00:00:00',
-			$end_date . ' 23:59:59'
-		) );
+				$start_date . ' 00:00:00',
+				$end_date . ' 23:59:59'
+			)
+		);
 
 		$daily_data = array();
 		foreach ( $daily as $row ) {
@@ -355,18 +375,18 @@ class SCRM_Dashboard {
 		}
 
 		// Build cumulative data.
-		$labels = array();
-		$values = array();
+		$labels     = array();
+		$values     = array();
 		$cumulative = $total_before;
-		$current = strtotime( $start_date );
-		$end = strtotime( $end_date );
+		$current    = strtotime( $start_date );
+		$end        = strtotime( $end_date );
 
 		while ( $current <= $end ) {
-			$date = date( 'Y-m-d', $current );
+			$date        = gmdate( 'Y-m-d', $current );
 			$cumulative += $daily_data[ $date ] ?? 0;
-			$labels[] = date( 'M j', $current );
-			$values[] = $cumulative;
-			$current = strtotime( '+1 day', $current );
+			$labels[]    = gmdate( 'M j', $current );
+			$values[]    = $cumulative;
+			$current     = strtotime( '+1 day', $current );
 		}
 
 		return array(
@@ -390,10 +410,12 @@ class SCRM_Dashboard {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_activity_log';
 
-		$results = $wpdb->get_results( $wpdb->prepare(
-			"SELECT * FROM {$table} ORDER BY created_at DESC LIMIT %d",
-			$limit
-		) );
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} ORDER BY created_at DESC LIMIT %d",
+				$limit
+			)
+		);
 
 		$activity = array();
 

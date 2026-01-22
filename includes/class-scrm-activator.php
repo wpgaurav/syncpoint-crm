@@ -83,7 +83,7 @@ class SCRM_Activator {
 
 		// Contacts table.
 		$table_name = $wpdb->prefix . 'scrm_contacts';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			contact_id varchar(50) NOT NULL,
 			type varchar(20) NOT NULL DEFAULT 'customer',
@@ -117,7 +117,7 @@ class SCRM_Activator {
 
 		// Companies table.
 		$table_name = $wpdb->prefix . 'scrm_companies';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			company_id varchar(50) NOT NULL,
 			name varchar(255) NOT NULL,
@@ -144,7 +144,7 @@ class SCRM_Activator {
 
 		// Transactions table.
 		$table_name = $wpdb->prefix . 'scrm_transactions';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			transaction_id varchar(100) NOT NULL,
 			contact_id bigint(20) unsigned NOT NULL,
@@ -171,7 +171,7 @@ class SCRM_Activator {
 
 		// Tags table.
 		$table_name = $wpdb->prefix . 'scrm_tags';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			name varchar(100) NOT NULL,
 			slug varchar(100) NOT NULL,
@@ -185,7 +185,7 @@ class SCRM_Activator {
 
 		// Tag relationships table.
 		$table_name = $wpdb->prefix . 'scrm_tag_relationships';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			tag_id bigint(20) unsigned NOT NULL,
 			object_id bigint(20) unsigned NOT NULL,
@@ -198,7 +198,7 @@ class SCRM_Activator {
 
 		// Invoices table.
 		$table_name = $wpdb->prefix . 'scrm_invoices';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			invoice_number varchar(50) NOT NULL,
 			contact_id bigint(20) unsigned NOT NULL,
@@ -234,7 +234,7 @@ class SCRM_Activator {
 
 		// Invoice items table.
 		$table_name = $wpdb->prefix . 'scrm_invoice_items';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			invoice_id bigint(20) unsigned NOT NULL,
 			description text NOT NULL,
@@ -250,7 +250,7 @@ class SCRM_Activator {
 
 		// Activity log table.
 		$table_name = $wpdb->prefix . 'scrm_activity_log';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			object_id bigint(20) unsigned NOT NULL,
 			object_type varchar(50) NOT NULL,
@@ -268,7 +268,7 @@ class SCRM_Activator {
 
 		// Webhook log table.
 		$table_name = $wpdb->prefix . 'scrm_webhook_log';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			source varchar(100) NOT NULL,
 			endpoint varchar(255) DEFAULT '',
@@ -286,7 +286,7 @@ class SCRM_Activator {
 
 		// Gateway sync log table.
 		$table_name = $wpdb->prefix . 'scrm_sync_log';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			gateway varchar(50) NOT NULL,
 			sync_type varchar(20) NOT NULL DEFAULT 'manual',
@@ -306,7 +306,7 @@ class SCRM_Activator {
 
 		// Email log table.
 		$table_name = $wpdb->prefix . 'scrm_email_log';
-		$sql = "CREATE TABLE {$table_name} (
+		$sql        = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			contact_id bigint(20) unsigned NOT NULL,
 			subject varchar(255) NOT NULL,
@@ -334,15 +334,15 @@ class SCRM_Activator {
 		}
 
 		$default_settings = array(
-			'general' => array(
-				'default_currency'     => 'USD',
-				'date_format'          => get_option( 'date_format', 'Y-m-d' ),
-				'contact_id_prefix'    => 'CUST',
-				'company_id_prefix'    => 'COMP',
-				'invoice_prefix'       => 'INV',
-				'next_contact_number'  => 1,
-				'next_company_number'  => 1,
-				'next_invoice_number'  => 1,
+			'general'  => array(
+				'default_currency'        => 'USD',
+				'date_format'             => get_option( 'date_format', 'Y-m-d' ),
+				'contact_id_prefix'       => 'CUST',
+				'company_id_prefix'       => 'COMP',
+				'invoice_prefix'          => 'INV',
+				'next_contact_number'     => 1,
+				'next_company_number'     => 1,
+				'next_invoice_number'     => 1,
 				'next_transaction_number' => 1,
 			),
 			'paypal'   => array(

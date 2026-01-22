@@ -136,7 +136,7 @@ foreach ( $events as $event ) {
 /**
  * Remove uploaded files (invoices PDFs, exports, etc.)
  */
-$upload_dir = wp_upload_dir();
+$upload_dir  = wp_upload_dir();
 $directories = array(
 	$upload_dir['basedir'] . '/syncpoint-crm',
 	$upload_dir['basedir'] . '/scrm-exports',

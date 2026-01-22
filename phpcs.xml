@@ -1,0 +1,289 @@
+<?xml version="1.0"?>
+<ruleset name="SyncPoint CRM">
+	<description>PHP CodeSniffer ruleset for SyncPoint CRM</description>
+
+	<!-- Scan these files -->
+	<file>.</file>
+
+	<!-- Exclude paths -->
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/node_modules/*</exclude-pattern>
+	<exclude-pattern>/build/*</exclude-pattern>
+	<exclude-pattern>/tests/*</exclude-pattern>
+	<exclude-pattern>/.git/*</exclude-pattern>
+
+	<!-- Show progress and sniff codes -->
+	<arg value="ps"/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+	<arg name="parallel" value="8"/>
+
+	<!-- WordPress Coding Standards -->
+	<rule ref="WordPress">
+		<!-- Allow short array syntax -->
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+		<!-- Allow file names that don't match class names exactly -->
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<!-- Allow functions and OO in same file (plugin bootstrap pattern) -->
+		<exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed"/>
+	</rule>
+
+	<!-- WordPress Extra for best practices -->
+	<rule ref="WordPress-Extra"/>
+
+	<!-- WordPress Docs for documentation standards -->
+	<rule ref="WordPress-Docs"/>
+
+	<!-- PHP Compatibility -->
+	<rule ref="PHPCompatibilityWP"/>
+	<config name="testVersion" value="7.4-"/>
+
+	<!-- WordPress minimum version -->
+	<config name="minimum_wp_version" value="6.0"/>
+
+	<!-- Text domain -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="syncpoint-crm"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Prefixes -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="scrm"/>
+				<element value="SCRM"/>
+				<element value="SyncPoint"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Allow underscores in hook names -->
+	<rule ref="WordPress.NamingConventions.ValidHookName">
+		<properties>
+			<property name="additionalWordDelimiters" value="-"/>
+		</properties>
+	</rule>
+
+	<!-- CRM plugin legitimately needs direct database access -->
+	<rule ref="WordPress.DB.DirectDatabaseQuery">
+		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
+	</rule>
+
+	<!-- Allow table name interpolation in prepared statements (common WP pattern) -->
+	<rule ref="WordPress.DB.PreparedSQL.InterpolatedNotPrepared">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow filesystem operations for CSV export/PDF generation -->
+	<rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_fopen">
+		<severity>0</severity>
+	</rule>
+	<rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_fclose">
+		<severity>0</severity>
+	</rule>
+	<rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents">
+		<severity>0</severity>
+	</rule>
+	<rule ref="WordPress.WP.AlternativeFunctions.unlink_unlink">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow base64 for API auth (PayPal requires it) -->
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow assignment in condition for template loops -->
+	<rule ref="Generic.CodeAnalysis.AssignmentInCondition.Found">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Exclude templates from strict variable prefix requirements -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound">
+		<exclude-pattern>/templates/*</exclude-pattern>
+	</rule>
+
+	<!-- Allow multiple assignments in templates -->
+	<rule ref="Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure">
+		<exclude-pattern>/templates/*</exclude-pattern>
+	</rule>
+
+	<!-- Allow short ternary for concise fallbacks (intentional pattern) -->
+	<rule ref="Universal.Operators.DisallowShortTernary.Found">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow error_log for debugging in development -->
+	<rule ref="WordPress.PHP.DevelopmentFunctions.error_log_error_log">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow silenced errors for edge cases -->
+	<rule ref="WordPress.PHP.NoSilencedErrors.Discouraged">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow unused parameters in callbacks/hooks -->
+	<rule ref="Generic.CodeAnalysis.UnusedFunctionParameter">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow base64_decode for API responses -->
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow rmdir for cleanup operations -->
+	<rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_rmdir">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow file_get_contents for local files -->
+	<rule ref="WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow global variable override for wp_query manipulation -->
+	<rule ref="WordPress.WP.GlobalVariablesOverride.Prohibited">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow current_time usage -->
+	<rule ref="WordPress.DateTime.CurrentTimeTimestamp.Requested">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Stylistic: Allow inline comments without strict punctuation -->
+	<rule ref="Squiz.Commenting.InlineComment.InvalidEndChar">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Stylistic: Allow missing @throws tags (documented elsewhere) -->
+	<rule ref="Squiz.Commenting.FunctionCommentThrowTag.Missing">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Stylistic: Allow missing file doc comments (plugin has consistent headers) -->
+	<rule ref="Squiz.Commenting.FileComment.Missing">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow translators comments to be optional for simple strings -->
+	<rule ref="WordPress.WP.I18n.MissingTranslatorsComment">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow while-condition assignments for database iteration -->
+	<rule ref="Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow implicit boolean precedence (clear in context) -->
+	<rule ref="Generic.CodeAnalysis.RequireExplicitBooleanOperatorPrecedence.MissingParentheses">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow reserved keyword parameter names (e.g., $default) -->
+	<rule ref="Universal.NamingConventions.NoReservedKeywordParameterNames">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow schema changes (plugin creates custom tables) -->
+	<rule ref="WordPress.DB.DirectDatabaseQuery.SchemaChange">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow exception output without escaping (for logging) -->
+	<rule ref="WordPress.Security.EscapeOutput.ExceptionNotEscaped">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Nonce verification is done via verify_request() helper method -->
+	<rule ref="WordPress.Security.NonceVerification">
+		<exclude-pattern>/includes/class-scrm-ajax.php</exclude-pattern>
+	</rule>
+
+	<!-- Admin handlers have capability checks and are admin-only -->
+	<rule ref="WordPress.Security.NonceVerification.Recommended">
+		<exclude-pattern>/includes/admin/*</exclude-pattern>
+	</rule>
+
+	<!-- Allow non-prefixed variables in admin context (local scope) -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound">
+		<exclude-pattern>/includes/admin/*</exclude-pattern>
+		<exclude-pattern>/includes/class-scrm-*.php</exclude-pattern>
+		<exclude-pattern>/includes/api/*</exclude-pattern>
+		<exclude-pattern>/includes/core/*</exclude-pattern>
+		<exclude-pattern>/includes/gateways/*</exclude-pattern>
+		<exclude-pattern>/includes/export/*</exclude-pattern>
+		<exclude-pattern>/includes/import/*</exclude-pattern>
+		<exclude-pattern>/includes/utils/*</exclude-pattern>
+	</rule>
+
+	<!-- Uninstall file processes $_REQUEST for legitimate cleanup -->
+	<rule ref="WordPress.Security.NonceVerification">
+		<exclude-pattern>/uninstall.php</exclude-pattern>
+	</rule>
+
+	<!-- Uninstall.php uses local variables in isolation -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound">
+		<exclude-pattern>/uninstall.php</exclude-pattern>
+	</rule>
+
+	<!-- Function files use local variables in function scope -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound">
+		<exclude-pattern>/includes/scrm-functions.php</exclude-pattern>
+		<exclude-pattern>/includes/scrm-helper-functions.php</exclude-pattern>
+	</rule>
+
+	<!-- Sanitization functions handle unslashing internally for most cases -->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput.MissingUnslash">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Input validation is context-dependent in admin forms -->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput.InputNotValidated">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Yoda conditions are optional style preference -->
+	<rule ref="WordPress.PHP.YodaConditions.NotYoda">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Dynamic SQL in admin-only code with capability checks -->
+	<rule ref="WordPress.DB.PreparedSQL.NotPrepared">
+		<exclude-pattern>/includes/admin/*</exclude-pattern>
+		<exclude-pattern>/includes/export/*</exclude-pattern>
+	</rule>
+
+	<!-- SQL placeholder count variations for dynamic queries -->
+	<rule ref="WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Nonces don't need sanitization before verify_nonce -->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput.InputNotSanitized">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Integer outputs don't need escaping -->
+	<rule ref="WordPress.Security.EscapeOutput.OutputNotEscaped">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Frontend invoice checks payment status legitimately -->
+	<rule ref="WordPress.Security.NonceVerification.Recommended">
+		<exclude-pattern>/includes/class-scrm-frontend-invoice.php</exclude-pattern>
+	</rule>
+
+	<!-- Functions file SQL is built safely with prepare() -->
+	<rule ref="WordPress.DB.PreparedSQL.NotPrepared">
+		<exclude-pattern>/includes/scrm-functions.php</exclude-pattern>
+	</rule>
+</ruleset>

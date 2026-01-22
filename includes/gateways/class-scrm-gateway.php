@@ -107,12 +107,14 @@ abstract class Gateway {
 	 */
 	protected function log( $message, $context = array() ) {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( sprintf(
-				'[SCRM %s] %s: %s',
-				strtoupper( $this->id ),
-				$message,
-				wp_json_encode( $context )
-			) );
+			error_log(
+				sprintf(
+					'[SCRM %s] %s: %s',
+					strtoupper( $this->id ),
+					$message,
+					wp_json_encode( $context )
+				)
+			);
 		}
 	}
 }

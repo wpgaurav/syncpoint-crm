@@ -225,13 +225,27 @@ function scrm_update_contact( $contact_id, $data ) {
 	}
 
 	$db_id = $existing->id;
-	$data = apply_filters( 'scrm_contact_data_before_save', $data );
+	$data  = apply_filters( 'scrm_contact_data_before_save', $data );
 
-	$update_data = array();
+	$update_data    = array();
 	$allowed_fields = array(
-		'type', 'status', 'first_name', 'last_name', 'email', 'phone',
-		'company_id', 'currency', 'tax_id', 'address_line_1', 'address_line_2',
-		'city', 'state', 'postal_code', 'country', 'custom_fields', 'source',
+		'type',
+		'status',
+		'first_name',
+		'last_name',
+		'email',
+		'phone',
+		'company_id',
+		'currency',
+		'tax_id',
+		'address_line_1',
+		'address_line_2',
+		'city',
+		'state',
+		'postal_code',
+		'country',
+		'custom_fields',
+		'source',
 	);
 
 	foreach ( $allowed_fields as $field ) {
@@ -263,7 +277,7 @@ function scrm_update_contact( $contact_id, $data ) {
 
 	$update_data['updated_at'] = current_time( 'mysql' );
 
-	$result = $wpdb->update( $table, $update_data, array( 'id' => $db_id ) );
+	$result = $wpdb->upgmdate( $table, $update_data, array( 'id' => $db_id ) );
 
 	if ( false === $result ) {
 		return new WP_Error( 'db_error', __( 'Failed to update contact.', 'syncpoint-crm' ), $wpdb->last_error );
@@ -367,47 +381,47 @@ function scrm_get_contacts( $args = array() ) {
 
 	$args = wp_parse_args( $args, $defaults );
 
-	$where = array( '1=1' );
+	$where  = array( '1=1' );
 	$values = array();
 
 	if ( ! empty( $args['type'] ) ) {
-		$where[] = 'type = %s';
+		$where[]  = 'type = %s';
 		$values[] = $args['type'];
 	}
 
 	if ( ! empty( $args['status'] ) ) {
-		$where[] = 'status = %s';
+		$where[]  = 'status = %s';
 		$values[] = $args['status'];
 	} else {
 		$where[] = "status != 'archived'";
 	}
 
 	if ( ! empty( $args['company_id'] ) ) {
-		$where[] = 'company_id = %d';
+		$where[]  = 'company_id = %d';
 		$values[] = absint( $args['company_id'] );
 	}
 
 	if ( ! empty( $args['search'] ) ) {
-		$search = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-		$where[] = '(first_name LIKE %s OR last_name LIKE %s OR email LIKE %s)';
+		$search   = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+		$where[]  = '(first_name LIKE %s OR last_name LIKE %s OR email LIKE %s)';
 		$values[] = $search;
 		$values[] = $search;
 		$values[] = $search;
 	}
 
 	if ( ! empty( $args['created_after'] ) ) {
-		$where[] = 'created_at >= %s';
+		$where[]  = 'created_at >= %s';
 		$values[] = $args['created_after'];
 	}
 
 	if ( ! empty( $args['created_before'] ) ) {
-		$where[] = 'created_at <= %s';
+		$where[]  = 'created_at <= %s';
 		$values[] = $args['created_before'];
 	}
 
 	$allowed_orderby = array( 'id', 'first_name', 'last_name', 'email', 'created_at', 'updated_at' );
-	$orderby = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'created_at';
-	$order = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
+	$orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'created_at';
+	$order           = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
 
 	$where_clause = implode( ' AND ', $where );
 
@@ -431,9 +445,12 @@ function scrm_get_contacts( $args = array() ) {
 		$tag_id = is_numeric( $args['tag'] ) ? $args['tag'] : scrm_get_tag_id_by_slug( $args['tag'] );
 		if ( $tag_id ) {
 			$tagged_ids = scrm_get_tagged_object_ids( $tag_id, 'contact' );
-			$contacts = array_filter( $contacts, function( $c ) use ( $tagged_ids ) {
-				return in_array( $c->id, $tagged_ids, true );
-			} );
+			$contacts   = array_filter(
+				$contacts,
+				function ( $c ) use ( $tagged_ids ) {
+					return in_array( $c->id, $tagged_ids, true );
+				}
+			);
 		}
 	}
 
@@ -451,23 +468,23 @@ function scrm_count_contacts( $args = array() ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_contacts';
 
-	$where = array( '1=1' );
+	$where  = array( '1=1' );
 	$values = array();
 
 	if ( ! empty( $args['type'] ) ) {
-		$where[] = 'type = %s';
+		$where[]  = 'type = %s';
 		$values[] = $args['type'];
 	}
 
 	if ( ! empty( $args['status'] ) ) {
-		$where[] = 'status = %s';
+		$where[]  = 'status = %s';
 		$values[] = $args['status'];
 	} else {
 		$where[] = "status != 'archived'";
 	}
 
 	$where_clause = implode( ' AND ', $where );
-	$sql = "SELECT COUNT(*) FROM {$table} WHERE {$where_clause}";
+	$sql          = "SELECT COUNT(*) FROM {$table} WHERE {$where_clause}";
 
 	if ( ! empty( $values ) ) {
 		$sql = $wpdb->prepare( $sql, $values );
@@ -523,10 +540,12 @@ function scrm_get_company_by_name( $name ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_companies';
 
-	$company = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM {$table} WHERE name = %s",
-		sanitize_text_field( $name )
-	) );
+	$company = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE name = %s",
+			sanitize_text_field( $name )
+		)
+	);
 
 	if ( ! $company ) {
 		return null;
@@ -595,9 +614,9 @@ function scrm_create_company( $data ) {
 		$insert_data['address_line_1'] = sanitize_text_field( $data['address']['line_1'] ?? '' );
 		$insert_data['address_line_2'] = sanitize_text_field( $data['address']['line_2'] ?? '' );
 		$insert_data['city']           = sanitize_text_field( $data['address']['city'] ?? '' );
-		$insert_data['state']          = sanitize_text_field( $data['address']['state' ] ?? '' );
+		$insert_data['state']          = sanitize_text_field( $data['address']['state'] ?? '' );
 		$insert_data['postal_code']    = sanitize_text_field( $data['address']['postal_code'] ?? '' );
-		$insert_data['country']        = sanitize_text_field( $data['address']['country' ] ?? '' );
+		$insert_data['country']        = sanitize_text_field( $data['address']['country'] ?? '' );
 	}
 
 	$result = $wpdb->insert( $table, $insert_data );
@@ -634,11 +653,21 @@ function scrm_update_company( $company_id, $data ) {
 
 	$db_id = $existing->id;
 
-	$update_data = array();
+	$update_data    = array();
 	$allowed_fields = array(
-		'name', 'website', 'email', 'phone', 'tax_id',
-		'address_line_1', 'address_line_2', 'city', 'state',
-		'postal_code', 'country', 'industry', 'custom_fields',
+		'name',
+		'website',
+		'email',
+		'phone',
+		'tax_id',
+		'address_line_1',
+		'address_line_2',
+		'city',
+		'state',
+		'postal_code',
+		'country',
+		'industry',
+		'custom_fields',
 	);
 
 	foreach ( $allowed_fields as $field ) {
@@ -659,9 +688,9 @@ function scrm_update_company( $company_id, $data ) {
 		$update_data['address_line_1'] = sanitize_text_field( $data['address']['line_1'] ?? '' );
 		$update_data['address_line_2'] = sanitize_text_field( $data['address']['line_2'] ?? '' );
 		$update_data['city']           = sanitize_text_field( $data['address']['city'] ?? '' );
-		$update_data['state']          = sanitize_text_field( $data['address']['state' ] ?? '' );
+		$update_data['state']          = sanitize_text_field( $data['address']['state'] ?? '' );
 		$update_data['postal_code']    = sanitize_text_field( $data['address']['postal_code'] ?? '' );
-		$update_data['country']        = sanitize_text_field( $data['address']['country' ] ?? '' );
+		$update_data['country']        = sanitize_text_field( $data['address']['country'] ?? '' );
 	}
 
 	if ( empty( $update_data ) ) {
@@ -670,7 +699,7 @@ function scrm_update_company( $company_id, $data ) {
 
 	$update_data['updated_at'] = current_time( 'mysql' );
 
-	$result = $wpdb->update( $table, $update_data, array( 'id' => $db_id ) );
+	$result = $wpdb->upgmdate( $table, $update_data, array( 'id' => $db_id ) );
 
 	if ( false === $result ) {
 		return new WP_Error( 'db_error', __( 'Failed to update company.', 'syncpoint-crm' ), $wpdb->last_error );
@@ -701,7 +730,7 @@ function scrm_delete_company( $company_id ) {
 
 	$db_id = $company->id;
 
-	$wpdb->update(
+	$wpdb->upgmdate(
 		$wpdb->prefix . 'scrm_contacts',
 		array( 'company_id' => null ),
 		array( 'company_id' => $db_id )
@@ -742,26 +771,26 @@ function scrm_get_companies( $args = array() ) {
 
 	$args = wp_parse_args( $args, $defaults );
 
-	$where = array( '1=1' );
+	$where  = array( '1=1' );
 	$values = array();
 
 	if ( ! empty( $args['search'] ) ) {
-		$search = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-		$where[] = 'name LIKE %s';
+		$search   = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+		$where[]  = 'name LIKE %s';
 		$values[] = $search;
 	}
 
 	if ( ! empty( $args['industry'] ) ) {
-		$where[] = 'industry = %s';
+		$where[]  = 'industry = %s';
 		$values[] = $args['industry'];
 	}
 
 	$allowed_orderby = array( 'id', 'name', 'created_at' );
-	$orderby = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'name';
-	$order = strtoupper( $args['order'] ) === 'DESC' ? 'DESC' : 'ASC';
+	$orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'name';
+	$order           = strtoupper( $args['order'] ) === 'DESC' ? 'DESC' : 'ASC';
 
 	$where_clause = implode( ' AND ', $where );
-	$sql = "SELECT * FROM {$table} WHERE {$where_clause} ORDER BY {$orderby} {$order}";
+	$sql          = "SELECT * FROM {$table} WHERE {$where_clause} ORDER BY {$orderby} {$order}";
 
 	if ( $args['limit'] > 0 ) {
 		$sql .= $wpdb->prepare( ' LIMIT %d OFFSET %d', $args['limit'], $args['offset'] );
@@ -889,11 +918,16 @@ function scrm_create_transaction( $data ) {
 
 	$txn_id = $wpdb->insert_id;
 
-	scrm_log_activity( 'transaction', $txn_id, 'created', sprintf(
-		__( 'Transaction recorded: %1$s %2$s', 'syncpoint-crm' ),
-		$data['amount'],
-		$data['currency']
-	) );
+	scrm_log_activity(
+		'transaction',
+		$txn_id,
+		'created',
+		sprintf(
+			__( 'Transaction recorded: %1$s %2$s', 'syncpoint-crm' ),
+			$data['amount'],
+			$data['currency']
+		)
+	);
 
 	do_action( 'scrm_transaction_created', $txn_id, $data );
 
@@ -933,27 +967,27 @@ function scrm_get_contact_transactions( $contact_id, $args = array() ) {
 
 	$args = wp_parse_args( $args, $defaults );
 
-	$where = array( 'contact_id = %d' );
+	$where  = array( 'contact_id = %d' );
 	$values = array( $contact->id );
 
 	if ( ! empty( $args['type'] ) ) {
-		$where[] = 'type = %s';
+		$where[]  = 'type = %s';
 		$values[] = $args['type'];
 	}
 
 	if ( ! empty( $args['gateway'] ) ) {
-		$where[] = 'gateway = %s';
+		$where[]  = 'gateway = %s';
 		$values[] = $args['gateway'];
 	}
 
 	if ( ! empty( $args['status'] ) ) {
-		$where[] = 'status = %s';
+		$where[]  = 'status = %s';
 		$values[] = $args['status'];
 	}
 
 	$where_clause = implode( ' AND ', $where );
-	$orderby = $args['orderby'];
-	$order = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
+	$orderby      = $args['orderby'];
+	$order        = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
 
 	$sql = $wpdb->prepare(
 		"SELECT * FROM {$table} WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d",
@@ -990,11 +1024,13 @@ function scrm_get_contact_ltv( $contact_id, $currency = '' ) {
 		$currency = $contact->currency ?: scrm_get_default_currency();
 	}
 
-	$sum = $wpdb->get_var( $wpdb->prepare(
-		"SELECT SUM(amount) FROM {$table} WHERE contact_id = %d AND type = 'payment' AND status = 'completed' AND currency = %s",
-		$contact->id,
-		$currency
-	) );
+	$sum = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT SUM(amount) FROM {$table} WHERE contact_id = %d AND type = 'payment' AND status = 'completed' AND currency = %s",
+			$contact->id,
+			$currency
+		)
+	);
 
 	return floatval( $sum ) ?: 0.0;
 }
@@ -1145,22 +1181,27 @@ function scrm_assign_tag( $tag_id, $object_id, $object_type ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_tag_relationships';
 
-	$exists = $wpdb->get_var( $wpdb->prepare(
-		"SELECT id FROM {$table} WHERE tag_id = %d AND object_id = %d AND object_type = %s",
-		$tag_id,
-		$object_id,
-		$object_type
-	) );
+	$exists = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT id FROM {$table} WHERE tag_id = %d AND object_id = %d AND object_type = %s",
+			$tag_id,
+			$object_id,
+			$object_type
+		)
+	);
 
 	if ( $exists ) {
 		return true;
 	}
 
-	$result = $wpdb->insert( $table, array(
-		'tag_id'      => absint( $tag_id ),
-		'object_id'   => absint( $object_id ),
-		'object_type' => sanitize_text_field( $object_type ),
-	) );
+	$result = $wpdb->insert(
+		$table,
+		array(
+			'tag_id'      => absint( $tag_id ),
+			'object_id'   => absint( $object_id ),
+			'object_type' => sanitize_text_field( $object_type ),
+		)
+	);
 
 	if ( $result ) {
 		do_action( 'scrm_tag_assigned', $tag_id, $object_id, $object_type );
@@ -1182,11 +1223,14 @@ function scrm_remove_tag( $tag_id, $object_id, $object_type ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_tag_relationships';
 
-	$result = $wpdb->delete( $table, array(
-		'tag_id'      => absint( $tag_id ),
-		'object_id'   => absint( $object_id ),
-		'object_type' => sanitize_text_field( $object_type ),
-	) );
+	$result = $wpdb->delete(
+		$table,
+		array(
+			'tag_id'      => absint( $tag_id ),
+			'object_id'   => absint( $object_id ),
+			'object_type' => sanitize_text_field( $object_type ),
+		)
+	);
 
 	if ( $result ) {
 		do_action( 'scrm_tag_removed', $tag_id, $object_id, $object_type );
@@ -1207,10 +1251,13 @@ function scrm_remove_all_tags( $object_id, $object_type ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_tag_relationships';
 
-	return (bool) $wpdb->delete( $table, array(
-		'object_id'   => absint( $object_id ),
-		'object_type' => sanitize_text_field( $object_type ),
-	) );
+	return (bool) $wpdb->delete(
+		$table,
+		array(
+			'object_id'   => absint( $object_id ),
+			'object_type' => sanitize_text_field( $object_type ),
+		)
+	);
 }
 
 /**
@@ -1224,16 +1271,18 @@ function scrm_remove_all_tags( $object_id, $object_type ) {
 function scrm_get_object_tags( $object_id, $object_type ) {
 	global $wpdb;
 	$tags_table = $wpdb->prefix . 'scrm_tags';
-	$rel_table = $wpdb->prefix . 'scrm_tag_relationships';
+	$rel_table  = $wpdb->prefix . 'scrm_tag_relationships';
 
-	return $wpdb->get_results( $wpdb->prepare(
-		"SELECT t.* FROM {$tags_table} t
+	return $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT t.* FROM {$tags_table} t
 		INNER JOIN {$rel_table} r ON t.id = r.tag_id
 		WHERE r.object_id = %d AND r.object_type = %s
 		ORDER BY t.name ASC",
-		$object_id,
-		$object_type
-	) );
+			$object_id,
+			$object_type
+		)
+	);
 }
 
 /**
@@ -1255,12 +1304,14 @@ function scrm_object_has_tag( $object_id, $object_type, $tag ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_tag_relationships';
 
-	$exists = $wpdb->get_var( $wpdb->prepare(
-		"SELECT id FROM {$table} WHERE tag_id = %d AND object_id = %d AND object_type = %s",
-		$tag_id,
-		$object_id,
-		$object_type
-	) );
+	$exists = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT id FROM {$table} WHERE tag_id = %d AND object_id = %d AND object_type = %s",
+			$tag_id,
+			$object_id,
+			$object_type
+		)
+	);
 
 	return (bool) $exists;
 }
@@ -1277,11 +1328,13 @@ function scrm_get_tagged_object_ids( $tag_id, $object_type ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_tag_relationships';
 
-	return $wpdb->get_col( $wpdb->prepare(
-		"SELECT object_id FROM {$table} WHERE tag_id = %d AND object_type = %s",
-		$tag_id,
-		$object_type
-	) );
+	return $wpdb->get_col(
+		$wpdb->prepare(
+			"SELECT object_id FROM {$table} WHERE tag_id = %d AND object_type = %s",
+			$tag_id,
+			$object_type
+		)
+	);
 }
 
 /*
@@ -1305,16 +1358,19 @@ function scrm_log_activity( $object_type, $object_id, $action, $description = ''
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_activity_log';
 
-	$result = $wpdb->insert( $table, array(
-		'object_type' => sanitize_text_field( $object_type ),
-		'object_id'   => absint( $object_id ),
-		'action'      => sanitize_text_field( $action ),
-		'description' => sanitize_textarea_field( $description ),
-		'metadata'    => wp_json_encode( $metadata ),
-		'user_id'     => get_current_user_id(),
-		'ip_address'  => scrm_get_client_ip(),
-		'created_at'  => current_time( 'mysql' ),
-	) );
+	$result = $wpdb->insert(
+		$table,
+		array(
+			'object_type' => sanitize_text_field( $object_type ),
+			'object_id'   => absint( $object_id ),
+			'action'      => sanitize_text_field( $action ),
+			'description' => sanitize_textarea_field( $description ),
+			'metadata'    => wp_json_encode( $metadata ),
+			'user_id'     => get_current_user_id(),
+			'ip_address'  => scrm_get_client_ip(),
+			'created_at'  => current_time( 'mysql' ),
+		)
+	);
 
 	if ( $result ) {
 		$log_id = $wpdb->insert_id;
@@ -1338,12 +1394,14 @@ function scrm_get_activity_log( $object_type, $object_id, $limit = 20 ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'scrm_activity_log';
 
-	$results = $wpdb->get_results( $wpdb->prepare(
-		"SELECT * FROM {$table} WHERE object_type = %s AND object_id = %d ORDER BY created_at DESC LIMIT %d",
-		$object_type,
-		$object_id,
-		$limit
-	) );
+	$results = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE object_type = %s AND object_id = %d ORDER BY created_at DESC LIMIT %d",
+			$object_type,
+			$object_id,
+			$limit
+		)
+	);
 
 	foreach ( $results as &$entry ) {
 		$entry->metadata = json_decode( $entry->metadata, true ) ?: array();

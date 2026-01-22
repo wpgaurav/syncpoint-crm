@@ -56,14 +56,16 @@ class SCRM_Cron {
 		$table = $wpdb->prefix . 'scrm_invoices';
 
 		// Find invoices that just became overdue.
-		$overdue = $wpdb->get_results( $wpdb->prepare(
-			"SELECT id FROM {$table}
+		$overdue = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id FROM {$table}
 			WHERE status IN ('sent', 'viewed')
 			AND due_date < %s
 			AND due_date >= %s",
-			current_time( 'Y-m-d' ),
-			date( 'Y-m-d', strtotime( '-1 day' ) )
-		) );
+				current_time( 'Y-m-d' ),
+				gmdate( 'Y-m-d', strtotime( '-1 day' ) )
+			)
+		);
 
 		foreach ( $overdue as $row ) {
 			do_action( 'scrm_invoice_overdue', $row->id );
@@ -80,12 +82,14 @@ class SCRM_Cron {
 		$table = $wpdb->prefix . 'scrm_invoices';
 
 		// Find invoices due in 3 days that haven't been reminded.
-		$upcoming = $wpdb->get_results( $wpdb->prepare(
-			"SELECT id FROM {$table}
+		$upcoming = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id FROM {$table}
 			WHERE status IN ('sent', 'viewed')
 			AND due_date = %s",
-			date( 'Y-m-d', strtotime( '+3 days' ) )
-		) );
+				gmdate( 'Y-m-d', strtotime( '+3 days' ) )
+			)
+		);
 
 		foreach ( $upcoming as $row ) {
 			$invoice = new SCRM\Core\Invoice( $row->id );
@@ -96,12 +100,14 @@ class SCRM_Cron {
 		}
 
 		// Send reminders for overdue invoices (every 7 days).
-		$overdue = $wpdb->get_results( $wpdb->prepare(
-			"SELECT id, due_date FROM {$table}
+		$overdue = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, due_date FROM {$table}
 			WHERE status IN ('sent', 'viewed')
 			AND due_date < %s",
-			current_time( 'Y-m-d' )
-		) );
+				current_time( 'Y-m-d' )
+			)
+		);
 
 		foreach ( $overdue as $row ) {
 			$days_overdue = floor( ( strtotime( 'today' ) - strtotime( $row->due_date ) ) / DAY_IN_SECONDS );
@@ -122,14 +128,14 @@ class SCRM_Cron {
 	 */
 	private function cleanup_temp_files() {
 		$upload_dir = wp_upload_dir();
-		$temp_dir = $upload_dir['basedir'] . '/starter-crm/temp';
+		$temp_dir   = $upload_dir['basedir'] . '/starter-crm/temp';
 
 		if ( ! is_dir( $temp_dir ) ) {
 			return;
 		}
 
 		$files = glob( $temp_dir . '/*' );
-		$now = time();
+		$now   = time();
 
 		foreach ( $files as $file ) {
 			if ( is_file( $file ) && ( $now - filemtime( $file ) ) > DAY_IN_SECONDS ) {
@@ -146,10 +152,12 @@ class SCRM_Cron {
 		$table = $wpdb->prefix . 'scrm_webhook_log';
 
 		// Delete logs older than 30 days.
-		$wpdb->query( $wpdb->prepare(
-			"DELETE FROM {$table} WHERE created_at < %s",
-			date( 'Y-m-d H:i:s', strtotime( '-30 days' ) )
-		) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$table} WHERE created_at < %s",
+				gmdate( 'Y-m-d H:i:s', strtotime( '-30 days' ) )
+			)
+		);
 	}
 
 	/**
@@ -160,10 +168,12 @@ class SCRM_Cron {
 		$table = $wpdb->prefix . 'scrm_activity_log';
 
 		// Delete logs older than 90 days.
-		$wpdb->query( $wpdb->prepare(
-			"DELETE FROM {$table} WHERE created_at < %s",
-			date( 'Y-m-d H:i:s', strtotime( '-90 days' ) )
-		) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$table} WHERE created_at < %s",
+				gmdate( 'Y-m-d H:i:s', strtotime( '-90 days' ) )
+			)
+		);
 	}
 
 	/**
@@ -256,10 +266,12 @@ class SCRM_Cron {
 		$table = $wpdb->prefix . 'scrm_sync_log';
 
 		// Delete logs older than 30 days.
-		$wpdb->query( $wpdb->prepare(
-			"DELETE FROM {$table} WHERE started_at < %s",
-			date( 'Y-m-d H:i:s', strtotime( '-30 days' ) )
-		) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$table} WHERE started_at < %s",
+				gmdate( 'Y-m-d H:i:s', strtotime( '-30 days' ) )
+			)
+		);
 	}
 }
 

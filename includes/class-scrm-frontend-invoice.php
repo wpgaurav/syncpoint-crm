@@ -124,7 +124,7 @@ class SCRM_Frontend_Invoice {
 		$items = $invoice->get_items();
 
 		// Get company settings.
-		$settings = scrm_get_settings( 'invoices' );
+		$settings        = scrm_get_settings( 'invoices' );
 		$company_name    = $settings['company_name'] ?? get_bloginfo( 'name' );
 		$company_address = $settings['company_address'] ?? '';
 		$company_tax_id  = $settings['company_tax_id'] ?? '';
@@ -159,17 +159,23 @@ class SCRM_Frontend_Invoice {
 	private function handle_payment_return( $invoice, $payment_status ) {
 		if ( 'success' === $payment_status ) {
 			// Payment success, but actual status update happens via webhook.
-			add_action( 'scrm_before_invoice_display', function() {
-				echo '<div class="scrm-notice scrm-notice--success">' .
+			add_action(
+				'scrm_before_invoice_display',
+				function () {
+					echo '<div class="scrm-notice scrm-notice--success">' .
 					esc_html__( 'Thank you! Your payment is being processed.', 'syncpoint-crm' ) .
 					'</div>';
-			} );
+				}
+			);
 		} elseif ( 'cancelled' === $payment_status ) {
-			add_action( 'scrm_before_invoice_display', function() {
-				echo '<div class="scrm-notice scrm-notice--warning">' .
+			add_action(
+				'scrm_before_invoice_display',
+				function () {
+					echo '<div class="scrm-notice scrm-notice--warning">' .
 					esc_html__( 'Payment was cancelled. You can try again using the buttons below.', 'syncpoint-crm' ) .
 					'</div>';
-			} );
+				}
+			);
 		}
 	}
 }

@@ -165,10 +165,12 @@ class Company {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_companies';
 
-		$row = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$table} WHERE id = %d",
-			$id
-		) );
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE id = %d",
+				$id
+			)
+		);
 
 		if ( $row ) {
 			$this->set_props( $row );
@@ -212,7 +214,7 @@ class Company {
 	 */
 	public function save() {
 		if ( $this->id ) {
-			return $this->update();
+			return $this->upgmdate();
 		}
 		return $this->create();
 	}
@@ -272,7 +274,7 @@ class Company {
 	 *
 	 * @return bool|\WP_Error True or error.
 	 */
-	public function update() {
+	public function upgmdate() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'scrm_companies';
 
@@ -293,7 +295,7 @@ class Company {
 			'updated_at'     => current_time( 'mysql' ),
 		);
 
-		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
+		$result = $wpdb->upgmdate( $table, $data, array( 'id' => $this->id ) );
 
 		if ( false === $result ) {
 			return new \WP_Error( 'db_error', $wpdb->last_error );
@@ -314,7 +316,7 @@ class Company {
 		$table = $wpdb->prefix . 'scrm_companies';
 
 		// Remove company from contacts.
-		$wpdb->update(
+		$wpdb->upgmdate(
 			$wpdb->prefix . 'scrm_contacts',
 			array( 'company_id' => null ),
 			array( 'company_id' => $this->id )
@@ -363,15 +365,17 @@ class Company {
 	public function get_total_revenue( $currency = 'USD' ) {
 		global $wpdb;
 		$contacts_table = $wpdb->prefix . 'scrm_contacts';
-		$txn_table = $wpdb->prefix . 'scrm_transactions';
+		$txn_table      = $wpdb->prefix . 'scrm_transactions';
 
-		$total = $wpdb->get_var( $wpdb->prepare(
-			"SELECT SUM(t.amount) FROM {$txn_table} t
+		$total = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT SUM(t.amount) FROM {$txn_table} t
 			INNER JOIN {$contacts_table} c ON t.contact_id = c.id
 			WHERE c.company_id = %d AND t.type = 'payment' AND t.status = 'completed' AND t.currency = %s",
-			$this->id,
-			$currency
-		) );
+				$this->id,
+				$currency
+			)
+		);
 
 		return floatval( $total ) ?: 0.0;
 	}
@@ -391,14 +395,16 @@ class Company {
 	 * @return string Formatted address.
 	 */
 	public function get_formatted_address() {
-		$parts = array_filter( array(
-			$this->address_line_1,
-			$this->address_line_2,
-			$this->city,
-			$this->state,
-			$this->postal_code,
-			$this->country,
-		) );
+		$parts = array_filter(
+			array(
+				$this->address_line_1,
+				$this->address_line_2,
+				$this->city,
+				$this->state,
+				$this->postal_code,
+				$this->country,
+			)
+		);
 
 		return implode( ', ', $parts );
 	}

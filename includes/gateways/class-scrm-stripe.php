@@ -91,7 +91,7 @@ class Stripe extends Gateway {
 	 */
 	public function is_available() {
 		$credentials = $this->get_credentials();
-		
+
 		if ( empty( $credentials['enabled'] ) ) {
 			return false;
 		}
@@ -148,7 +148,13 @@ class Stripe extends Gateway {
 		$response = wp_remote_request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$this->log( 'API error', array( 'endpoint' => $endpoint, 'error' => $response->get_error_message() ) );
+			$this->log(
+				'API error',
+				array(
+					'endpoint' => $endpoint,
+					'error'    => $response->get_error_message(),
+				)
+			);
 			return $response;
 		}
 
@@ -177,10 +183,12 @@ class Stripe extends Gateway {
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$query = http_build_query( array(
-			'limit'       => $args['limit'],
-			'created[gt]' => $args['created_gt'],
-		) );
+		$query = http_build_query(
+			array(
+				'limit'       => $args['limit'],
+				'created[gt]' => $args['created_gt'],
+			)
+		);
 
 		$response = $this->api_request( '/charges?' . $query );
 
@@ -197,14 +205,14 @@ class Stripe extends Gateway {
 			$result = $this->process_charge( $charge );
 
 			if ( is_wp_error( $result ) ) {
-				$skipped++;
+				++$skipped;
 			} elseif ( 'contact_created' === $result ) {
-				$synced++;
-				$contacts_added++;
+				++$synced;
+				++$contacts_added;
 			} elseif ( true === $result ) {
-				$synced++;
+				++$synced;
 			} else {
-				$skipped++;
+				++$skipped;
 			}
 		}
 
@@ -234,10 +242,12 @@ class Stripe extends Gateway {
 		}
 
 		global $wpdb;
-		$existing = $wpdb->get_var( $wpdb->prepare(
-			"SELECT id FROM {$wpdb->prefix}scrm_transactions WHERE gateway = 'stripe' AND gateway_transaction_id = %s",
-			$charge_id
-		) );
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}scrm_transactions WHERE gateway = 'stripe' AND gateway_transaction_id = %s",
+				$charge_id
+			)
+		);
 
 		if ( $existing ) {
 			return 'exists';
@@ -256,13 +266,15 @@ class Stripe extends Gateway {
 			$name       = $charge['billing_details']['name'] ?? '';
 			$name_parts = explode( ' ', $name, 2 );
 
-			$contact_id = scrm_create_contact( array(
-				'email'      => $email,
-				'first_name' => $name_parts[0] ?? '',
-				'last_name'  => $name_parts[1] ?? '',
-				'type'       => 'customer',
-				'source'     => 'stripe',
-			) );
+			$contact_id = scrm_create_contact(
+				array(
+					'email'      => $email,
+					'first_name' => $name_parts[0] ?? '',
+					'last_name'  => $name_parts[1] ?? '',
+					'type'       => 'customer',
+					'source'     => 'stripe',
+				)
+			);
 
 			if ( is_wp_error( $contact_id ) ) {
 				return $contact_id;
@@ -275,16 +287,18 @@ class Stripe extends Gateway {
 		$amount   = ( $charge['amount'] ?? 0 ) / 100;
 		$currency = strtoupper( $charge['currency'] ?? 'usd' );
 
-		scrm_create_transaction( array(
-			'contact_id'             => $contact->id,
-			'type'                   => 'payment',
-			'gateway'                => 'stripe',
-			'gateway_transaction_id' => $charge_id,
-			'amount'                 => $amount,
-			'currency'               => $currency,
-			'status'                 => 'completed',
-			'description'            => $charge['description'] ?? '',
-		) );
+		scrm_create_transaction(
+			array(
+				'contact_id'             => $contact->id,
+				'type'                   => 'payment',
+				'gateway'                => 'stripe',
+				'gateway_transaction_id' => $charge_id,
+				'amount'                 => $amount,
+				'currency'               => $currency,
+				'status'                 => 'completed',
+				'description'            => $charge['description'] ?? '',
+			)
+		);
 
 		return $contact_created ? 'contact_created' : true;
 	}
