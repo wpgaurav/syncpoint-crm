@@ -172,6 +172,10 @@ final class SyncPoint_CRM {
 		// Frontend invoice handler.
 		require_once SCRM_PLUGIN_DIR . 'includes/class-scrm-frontend-invoice.php';
 
+		// License Manager (loads on both admin and frontend for update checks).
+		require_once SCRM_PLUGIN_DIR . 'includes/admin/class-scrm-license-manager.php';
+		SCRM_License_Manager::init();
+
 		// Admin includes.
 		if ( is_admin() ) {
 			require_once SCRM_PLUGIN_DIR . 'includes/admin/class-scrm-admin.php';
